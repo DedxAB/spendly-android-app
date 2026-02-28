@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/features/transactions/data/repositories/transactions_repository_impl.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
 
@@ -14,11 +14,9 @@ final monthlyTransactionsProvider = StreamProvider((ref) {
   final month = ref.watch(selectedMonthProvider);
   final type = ref.watch(transactionTypeFilterProvider);
   final categoryId = ref.watch(transactionCategoryFilterProvider);
-  return ref.watch(transactionsRepositoryProvider).watchByMonth(
-        month,
-        type: type,
-        categoryId: categoryId,
-      );
+  return ref
+      .watch(transactionsRepositoryProvider)
+      .watchByMonth(month, type: type, categoryId: categoryId);
 });
 
 final recentTransactionsProvider = StreamProvider((ref) {
@@ -53,4 +51,3 @@ class TransactionActions {
 }
 
 final transactionActionsProvider = Provider(TransactionActions.new);
-

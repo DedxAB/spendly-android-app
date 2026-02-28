@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/constants/app_constants.dart';
@@ -56,7 +56,9 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a category.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a category.')),
+      );
       return;
     }
 
@@ -68,7 +70,9 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       amount: amount,
       categoryId: _selectedCategoryId!,
       paymentMode: _paymentMode,
-      note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+      note: _noteController.text.trim().isEmpty
+          ? null
+          : _noteController.text.trim(),
       date: _date,
       createdAt: widget.existing?.createdAt ?? now,
       updatedAt: now,
@@ -91,7 +95,11 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     final categories = ref.watch(categoryByTypeProvider(_type.value));
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.existing == null ? 'Add Transaction' : 'Edit Transaction')),
+      appBar: AppBar(
+        title: Text(
+          widget.existing == null ? 'Add Transaction' : 'Edit Transaction',
+        ),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -103,8 +111,14 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                 child: SegmentedButton<TransactionType>(
                   showSelectedIcon: false,
                   segments: const [
-                    ButtonSegment(value: TransactionType.income, label: Text('Income')),
-                    ButtonSegment(value: TransactionType.expense, label: Text('Expense')),
+                    ButtonSegment(
+                      value: TransactionType.income,
+                      label: Text('Income'),
+                    ),
+                    ButtonSegment(
+                      value: TransactionType.expense,
+                      label: Text('Expense'),
+                    ),
                   ],
                   selected: {_type},
                   onSelectionChanged: (value) => setState(() {
@@ -122,14 +136,17 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                   controller: _amountController,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineMedium,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
                     labelText: 'Amount',
                     prefixText: '${AppConstants.currencySymbol} ',
                   ),
                   validator: (value) {
                     final parsed = double.tryParse(value ?? '');
-                    if (parsed == null || parsed <= 0) return 'Enter a valid amount';
+                    if (parsed == null || parsed <= 0)
+                      return 'Enter a valid amount';
                     return null;
                   },
                 ),
@@ -144,34 +161,50 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                   children: [
                     Row(
                       children: [
-                        Text('Category', style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          'Category',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const Spacer(),
                         TextButton(
-                          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CategoriesPage())),
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CategoriesPage(),
+                            ),
+                          ),
                           child: const Text('Manage'),
                         ),
                       ],
                     ),
                     categories.when(
                       data: (items) {
-                        if (items.isEmpty) return const Text('No categories available for this type.');
+                        if (items.isEmpty)
+                          return const Text(
+                            'No categories available for this type.',
+                          );
                         return Wrap(
                           spacing: AppSpacing.xs,
                           runSpacing: AppSpacing.xs,
                           children: items
                               .map(
                                 (item) => FilterChip(
-                                  avatar: const Icon(Icons.grid_view_rounded, size: 16),
+                                  avatar: const Icon(
+                                    Icons.grid_view_rounded,
+                                    size: 16,
+                                  ),
                                   label: Text(item.name),
                                   selected: _selectedCategoryId == item.id,
-                                  onSelected: (_) => setState(() => _selectedCategoryId = item.id),
+                                  onSelected: (_) => setState(
+                                    () => _selectedCategoryId = item.id,
+                                  ),
                                 ),
                               )
                               .toList(growable: false),
                         );
                       },
                       loading: () => const CircularProgressIndicator(),
-                      error: (error, _) => Text('Failed to load categories: $error'),
+                      error: (error, _) =>
+                          Text('Failed to load categories: $error'),
                     ),
                   ],
                 ),
@@ -184,7 +217,10 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Payment Mode', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Payment Mode',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: AppSpacing.xs),
                     Wrap(
                       spacing: AppSpacing.xs,
@@ -197,7 +233,9 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                     const SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _noteController,
-                      decoration: const InputDecoration(labelText: 'Note (optional)'),
+                      decoration: const InputDecoration(
+                        labelText: 'Note (optional)',
+                      ),
                       maxLines: 2,
                     ),
                     const SizedBox(height: AppSpacing.xs),
@@ -210,7 +248,9 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                         final selected = await showDatePicker(
                           context: context,
                           firstDate: DateTime(2020),
-                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 365),
+                          ),
                           initialDate: _date,
                         );
                         if (selected != null) setState(() => _date = selected);

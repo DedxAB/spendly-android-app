@@ -1,4 +1,4 @@
-﻿import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 
 part 'settings_entity.freezed.dart';
@@ -11,10 +11,10 @@ class SettingsEntity with _$SettingsEntity {
     @Default(0) double monthlyBudget,
     @Default('INR') String currency,
     @Default(AppThemeMode.system) AppThemeMode themeMode,
+    @Default(false) bool transactionHintsSeen,
     required DateTime updatedAt,
   }) = _SettingsEntity;
 
   factory SettingsEntity.fromJson(Map<String, dynamic> json) =>
       _$SettingsEntityFromJson(json);
 }
-

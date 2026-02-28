@@ -1,4 +1,4 @@
-﻿import 'package:fl_chart/fl_chart.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -35,7 +35,8 @@ class _InsightsPageState extends ConsumerState<InsightsPage> {
               height: 260,
               child: distribution.when(
                 data: (items) {
-                  if (items.isEmpty) return const Center(child: Text('No expense data'));
+                  if (items.isEmpty)
+                    return const Center(child: Text('No expense data'));
                   return Padding(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     child: Column(
@@ -49,7 +50,9 @@ class _InsightsPageState extends ConsumerState<InsightsPage> {
                                 for (final slice in items)
                                   PieChartSectionData(
                                     value: slice.total,
-                                    color: Formatters.parseHexColor(slice.color),
+                                    color: Formatters.parseHexColor(
+                                      slice.color,
+                                    ),
                                     radius: 56,
                                     title: '',
                                   ),
@@ -85,14 +88,18 @@ class _InsightsPageState extends ConsumerState<InsightsPage> {
               height: 300,
               child: trend.when(
                 data: (items) {
-                  if (items.isEmpty) return const Center(child: Text('No trend data'));
-                  if (_selectedSpotIndex >= items.length) _selectedSpotIndex = items.length - 1;
+                  if (items.isEmpty)
+                    return const Center(child: Text('No trend data'));
+                  if (_selectedSpotIndex >= items.length)
+                    _selectedSpotIndex = items.length - 1;
                   return _ReferenceStyleTrendCard(
                     points: items,
                     selectedRange: _selectedRange,
                     selectedSpotIndex: _selectedSpotIndex,
-                    onRangeChanged: (value) => setState(() => _selectedRange = value),
-                    onSpotChanged: (value) => setState(() => _selectedSpotIndex = value),
+                    onRangeChanged: (value) =>
+                        setState(() => _selectedRange = value),
+                    onSpotChanged: (value) =>
+                        setState(() => _selectedSpotIndex = value),
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -116,21 +123,52 @@ class _InsightsPageState extends ConsumerState<InsightsPage> {
                       BarChartData(
                         maxY: maxY == 0 ? 1 : maxY,
                         borderData: FlBorderData(show: false),
-                        gridData: FlGridData(show: true, drawVerticalLine: false),
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: false,
+                        ),
                         titlesData: FlTitlesData(
-                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          leftTitles: const AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 40,
+                            ),
+                          ),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              getTitlesWidget: (value, _) => Text(value == 0 ? 'Income' : 'Expense'),
+                              getTitlesWidget: (value, _) =>
+                                  Text(value == 0 ? 'Income' : 'Expense'),
                             ),
                           ),
                         ),
                         barGroups: [
-                          BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: income, color: AppColors.income, width: 24)]),
-                          BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: expense, color: AppColors.expense, width: 24)]),
+                          BarChartGroupData(
+                            x: 0,
+                            barRods: [
+                              BarChartRodData(
+                                toY: income,
+                                color: AppColors.income,
+                                width: 24,
+                              ),
+                            ],
+                          ),
+                          BarChartGroupData(
+                            x: 1,
+                            barRods: [
+                              BarChartRodData(
+                                toY: expense,
+                                color: AppColors.expense,
+                                width: 24,
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -165,7 +203,9 @@ class _ReferenceStyleTrendCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedPoint = points[selectedSpotIndex];
-    final monthLabels = points.map((e) => DateFormat('MMM').format(e.date)).toList(growable: false);
+    final monthLabels = points
+        .map((e) => DateFormat('MMM').format(e.date))
+        .toList(growable: false);
     final maxY = points.map((e) => e.value).reduce((a, b) => a > b ? a : b);
     final dark = Theme.of(context).brightness == Brightness.dark;
     final chartColor = dark ? Colors.white : const Color(0xFF171A1D);
@@ -176,16 +216,23 @@ class _ReferenceStyleTrendCard extends StatelessWidget {
         children: [
           Text(
             Formatters.currency(selectedPoint.value),
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 2),
-          Text(DateFormat('dd MMM, yyyy').format(selectedPoint.date), style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            DateFormat('dd MMM, yyyy').format(selectedPoint.date),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           const SizedBox(height: AppSpacing.sm),
           SegmentedButton<int>(
             showSelectedIcon: false,
             style: ButtonStyle(
               visualDensity: VisualDensity.compact,
-              shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+              shape: WidgetStatePropertyAll(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
             ),
             segments: const [
               ButtonSegment(value: 0, label: Text('Week')),
@@ -207,24 +254,37 @@ class _ReferenceStyleTrendCard extends StatelessWidget {
                     gridData: const FlGridData(show: false),
                     borderData: FlBorderData(show: false),
                     titlesData: FlTitlesData(
-                      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
                           interval: 1,
                           getTitlesWidget: (value, _) {
                             final idx = value.toInt();
-                            if (idx < 0 || idx >= monthLabels.length) return const SizedBox.shrink();
+                            if (idx < 0 || idx >= monthLabels.length)
+                              return const SizedBox.shrink();
                             final selected = idx == selectedSpotIndex;
                             return Padding(
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 monthLabels[idx],
                                 style: TextStyle(
-                                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                                  color: selected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).textTheme.bodySmall?.color,
+                                  fontWeight: selected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: selected
+                                      ? Theme.of(context).colorScheme.onSurface
+                                      : Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.color,
                                 ),
                               ),
                             );
@@ -232,36 +292,46 @@ class _ReferenceStyleTrendCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    extraLinesData: ExtraLinesData(verticalLines: [
-                      VerticalLine(
-                        x: selectedSpotIndex.toDouble(),
-                        color: Theme.of(context).dividerColor,
-                        dashArray: const [4, 4],
-                        strokeWidth: 1,
-                      ),
-                    ]),
+                    extraLinesData: ExtraLinesData(
+                      verticalLines: [
+                        VerticalLine(
+                          x: selectedSpotIndex.toDouble(),
+                          color: Theme.of(context).dividerColor,
+                          dashArray: const [4, 4],
+                          strokeWidth: 1,
+                        ),
+                      ],
+                    ),
                     lineTouchData: LineTouchData(
                       enabled: true,
-                      touchTooltipData: LineTouchTooltipData(getTooltipColor: (_) => Colors.transparent, tooltipPadding: EdgeInsets.zero, tooltipMargin: 0, getTooltipItems: (_) => []),
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipColor: (_) => Colors.transparent,
+                        tooltipPadding: EdgeInsets.zero,
+                        tooltipMargin: 0,
+                        getTooltipItems: (_) => [],
+                      ),
                       getTouchedSpotIndicator: (barData, spotIndexes) {
                         return spotIndexes.map((_) {
                           return TouchedSpotIndicatorData(
                             FlLine(color: Colors.transparent),
                             FlDotData(
                               show: true,
-                              getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
-                                radius: 8,
-                                color: Colors.white,
-                                strokeColor: chartColor,
-                                strokeWidth: 3,
-                              ),
+                              getDotPainter: (spot, _, __, ___) =>
+                                  FlDotCirclePainter(
+                                    radius: 8,
+                                    color: Colors.white,
+                                    strokeColor: chartColor,
+                                    strokeWidth: 3,
+                                  ),
                             ),
                           );
                         }).toList();
                       },
                       touchCallback: (event, response) {
                         if (response?.lineBarSpots?.isNotEmpty == true) {
-                          onSpotChanged(response!.lineBarSpots!.first.spotIndex);
+                          onSpotChanged(
+                            response!.lineBarSpots!.first.spotIndex,
+                          );
                         }
                       },
                     ),
@@ -272,27 +342,40 @@ class _ReferenceStyleTrendCard extends StatelessWidget {
                         barWidth: 3.2,
                         dotData: FlDotData(
                           show: true,
-                          checkToShowDot: (spot, barData) => spot.x.toInt() == selectedSpotIndex,
-                          getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
-                            radius: 8,
-                            color: Colors.white,
-                            strokeColor: chartColor,
-                            strokeWidth: 3,
-                          ),
+                          checkToShowDot: (spot, barData) =>
+                              spot.x.toInt() == selectedSpotIndex,
+                          getDotPainter: (spot, _, __, ___) =>
+                              FlDotCirclePainter(
+                                radius: 8,
+                                color: Colors.white,
+                                strokeColor: chartColor,
+                                strokeWidth: 3,
+                              ),
                         ),
                         belowBarData: BarAreaData(show: false),
-                        spots: [for (var i = 0; i < points.length; i++) FlSpot(i.toDouble(), points[i].value)],
+                        spots: [
+                          for (var i = 0; i < points.length; i++)
+                            FlSpot(i.toDouble(), points[i].value),
+                        ],
                       ),
                     ],
                   ),
                 ),
                 Positioned(
-                  left: (selectedSpotIndex / (points.length <= 1 ? 1 : points.length - 1)) * (MediaQuery.of(context).size.width - 120),
+                  left:
+                      (selectedSpotIndex /
+                          (points.length <= 1 ? 1 : points.length - 1)) *
+                      (MediaQuery.of(context).size.width - 120),
                   top: 14,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: dark ? Colors.white.withValues(alpha: 0.14) : Colors.black.withValues(alpha: 0.08),
+                      color: dark
+                          ? Colors.white.withValues(alpha: 0.14)
+                          : Colors.black.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -336,12 +419,18 @@ class _LegendChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadii.sm),
-        color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkSurfaceAlt : AppColors.lightSurfaceAlt,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkSurfaceAlt
+            : AppColors.lightSurfaceAlt,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
           const SizedBox(width: 6),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],

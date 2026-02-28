@@ -1,4 +1,4 @@
-﻿import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'dashboard_summary.freezed.dart';
 
@@ -11,4 +11,3 @@ class DashboardSummary with _$DashboardSummary {
     required double remainingBudget,
   }) = _DashboardSummary;
 }
-

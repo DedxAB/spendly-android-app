@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/features/home/presentation/pages/home_page.dart';
+import 'package:spendly/features/investments/presentation/pages/investments_page.dart';
 import 'package:spendly/features/insights/presentation/pages/insights_page.dart';
 import 'package:spendly/features/settings/presentation/pages/settings_page.dart';
 import 'package:spendly/features/transactions/presentation/pages/add_transaction_page.dart';
@@ -17,12 +18,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => AppShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (context, state) => const HomePage()),
-          GoRoute(path: '/transactions', builder: (context, state) => const TransactionsPage()),
-          GoRoute(path: '/insights', builder: (context, state) => const InsightsPage()),
+          GoRoute(
+            path: '/transactions',
+            builder: (context, state) => const TransactionsPage(),
+          ),
+          GoRoute(
+            path: '/investments',
+            builder: (context, state) => const InvestmentsPage(),
+          ),
+          GoRoute(
+            path: '/insights',
+            builder: (context, state) => const InsightsPage(),
+          ),
         ],
       ),
-      GoRoute(path: '/transactions/new', builder: (context, state) => const AddTransactionPage()),
-      GoRoute(path: '/settings', builder: (context, state) => const SettingsPage()),
+      GoRoute(
+        path: '/transactions/new',
+        builder: (context, state) => const AddTransactionPage(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsPage(),
+      ),
     ],
   );
 });
@@ -34,7 +51,8 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
@@ -72,10 +90,17 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
         ),
         child: Center(
           child: FadeTransition(
-            opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+            opacity: CurvedAnimation(
+              parent: _controller,
+              curve: Curves.easeOut,
+            ),
             child: ScaleTransition(
-              scale: Tween<double>(begin: 0.96, end: 1)
-                  .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic)),
+              scale: Tween<double>(begin: 0.96, end: 1).animate(
+                CurvedAnimation(
+                  parent: _controller,
+                  curve: Curves.easeOutCubic,
+                ),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -89,7 +114,10 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Text('Spendly', style: Theme.of(context).textTheme.headlineMedium),
+                  Text(
+                    'Spendly',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
                 ],
               ),
             ),
@@ -107,7 +135,8 @@ class AppShell extends StatelessWidget {
 
   int _indexForLocation(String location) {
     if (location.startsWith('/transactions')) return 1;
-    if (location.startsWith('/insights')) return 2;
+    if (location.startsWith('/investments')) return 2;
+    if (location.startsWith('/insights')) return 3;
     return 0;
   }
 
@@ -142,8 +171,18 @@ class AppShell extends StatelessWidget {
         selectedIndex: selectedIndex,
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.receipt_long), label: 'Transactions'),
-          NavigationDestination(icon: Icon(Icons.insights_outlined), label: 'Insights'),
+          NavigationDestination(
+            icon: Icon(Icons.receipt_long),
+            label: 'Transactions',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.trending_up_outlined),
+            label: 'Investments',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.insights_outlined),
+            label: 'Insights',
+          ),
         ],
         onDestinationSelected: (value) {
           switch (value) {
@@ -152,6 +191,8 @@ class AppShell extends StatelessWidget {
             case 1:
               context.go('/transactions');
             case 2:
+              context.go('/investments');
+            case 3:
               context.go('/insights');
           }
         },

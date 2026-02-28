@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
@@ -18,8 +18,12 @@ class GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.62);
-    final border = isDark ? Colors.white.withValues(alpha: 0.14) : Colors.white.withValues(alpha: 0.75);
+    final bg = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.white.withValues(alpha: 0.62);
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.14)
+        : Colors.white.withValues(alpha: 0.75);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),

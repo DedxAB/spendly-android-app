@@ -1,8 +1,10 @@
-﻿enum TransactionType { income, expense }
+enum TransactionType { income, expense }
 
 enum PaymentMode { cash, upi, card }
 
 enum AppThemeMode { system, light, dark }
+
+enum RecurringFrequency { weekly, monthly, yearly }
 
 extension TransactionTypeX on TransactionType {
   String get value {
@@ -75,3 +77,27 @@ extension AppThemeModeX on AppThemeMode {
   }
 }
 
+extension RecurringFrequencyX on RecurringFrequency {
+  String get value {
+    switch (this) {
+      case RecurringFrequency.weekly:
+        return 'weekly';
+      case RecurringFrequency.monthly:
+        return 'monthly';
+      case RecurringFrequency.yearly:
+        return 'yearly';
+    }
+  }
+
+  static RecurringFrequency fromValue(String value) {
+    switch (value.toLowerCase()) {
+      case 'weekly':
+        return RecurringFrequency.weekly;
+      case 'yearly':
+        return RecurringFrequency.yearly;
+      case 'monthly':
+      default:
+        return RecurringFrequency.monthly;
+    }
+  }
+}

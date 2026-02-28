@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/database/mappers.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
@@ -11,7 +11,9 @@ class CategoriesRepositoryImpl implements CategoriesRepository {
 
   @override
   Future<void> add(CategoryEntity category) async {
-    await _ref.read(appDatabaseProvider).upsertCategory(categoryToCompanion(category));
+    await _ref
+        .read(appDatabaseProvider)
+        .upsertCategory(categoryToCompanion(category));
   }
 
   @override
@@ -26,7 +28,9 @@ class CategoriesRepositoryImpl implements CategoriesRepository {
 
   @override
   Future<void> update(CategoryEntity category) async {
-    await _ref.read(appDatabaseProvider).upsertCategory(categoryToCompanion(category));
+    await _ref
+        .read(appDatabaseProvider)
+        .upsertCategory(categoryToCompanion(category));
   }
 
   @override
@@ -34,7 +38,9 @@ class CategoriesRepositoryImpl implements CategoriesRepository {
     return _ref
         .read(appDatabaseProvider)
         .watchCategories()
-        .map((rows) => rows.map((row) => row.toEntity()).toList(growable: false));
+        .map(
+          (rows) => rows.map((row) => row.toEntity()).toList(growable: false),
+        );
   }
 
   @override
@@ -42,11 +48,12 @@ class CategoriesRepositoryImpl implements CategoriesRepository {
     return _ref
         .read(appDatabaseProvider)
         .watchCategories(type: type)
-        .map((rows) => rows.map((row) => row.toEntity()).toList(growable: false));
+        .map(
+          (rows) => rows.map((row) => row.toEntity()).toList(growable: false),
+        );
   }
 }
 
 final categoriesRepositoryProvider = Provider<CategoriesRepository>((ref) {
   return CategoriesRepositoryImpl(ref);
 });
-

@@ -1,4 +1,4 @@
-﻿class AppException implements Exception {
+class AppException implements Exception {
   const AppException(this.message);
 
   final String message;
@@ -14,4 +14,3 @@ class ValidationException extends AppException {
 class DataException extends AppException {
   const DataException(super.message);
 }
-

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spendly/core/constants/app_enums.dart';
@@ -30,9 +30,15 @@ class HomePage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          Text('Good Evening, Arnab', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Good Evening, Arnab',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: AppSpacing.xs),
-          Text('Your financial overview', style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            'Your financial overview',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           const SizedBox(height: AppSpacing.md),
           summary.when(
             data: (data) => _HeroBalanceCard(
@@ -41,8 +47,12 @@ class HomePage extends ConsumerWidget {
               expense: data.monthlyExpense,
               remainingBudget: data.remainingBudget,
             ),
-            loading: () => const SizedBox(height: 220, child: Center(child: CircularProgressIndicator())),
-            error: (error, _) => GlassCard(child: Text('Failed to load: $error')),
+            loading: () => const SizedBox(
+              height: 220,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (error, _) =>
+                GlassCard(child: Text('Failed to load: $error')),
           ),
           const SizedBox(height: AppSpacing.md),
           Text('Quick Stats', style: Theme.of(context).textTheme.titleMedium),
@@ -51,22 +61,32 @@ class HomePage extends ConsumerWidget {
             data: (data) {
               final savingsPct = data.monthlyIncome <= 0
                   ? 0.0
-                  : ((data.monthlyIncome - data.monthlyExpense) / data.monthlyIncome) * 100;
+                  : ((data.monthlyIncome - data.monthlyExpense) /
+                            data.monthlyIncome) *
+                        100;
               return SizedBox(
                 height: 96,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _StatPill(title: 'Today Spent', value: Formatters.currency(todaySpent), color: AppColors.expense),
+                    _StatPill(
+                      title: 'Today Spent',
+                      value: Formatters.currency(todaySpent),
+                      color: AppColors.expense,
+                    ),
                     _StatPill(
                       title: 'Remaining Budget',
                       value: Formatters.currency(data.remainingBudget),
-                      color: data.remainingBudget < 0 ? AppColors.expense : AppColors.emerald,
+                      color: data.remainingBudget < 0
+                          ? AppColors.expense
+                          : AppColors.emerald,
                     ),
                     _StatPill(
                       title: 'Savings %',
                       value: '${savingsPct.toStringAsFixed(1)}%',
-                      color: savingsPct < 0 ? AppColors.expense : AppColors.income,
+                      color: savingsPct < 0
+                          ? AppColors.expense
+                          : AppColors.income,
                     ),
                   ],
                 ),
@@ -76,13 +96,18 @@ class HomePage extends ConsumerWidget {
             error: (_, _) => const SizedBox.shrink(),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text('Recent Activity', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Recent Activity',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: AppSpacing.xs),
           recent.when(
             data: (items) {
               if (items.isEmpty) {
                 return const GlassCard(
-                  child: Text('No transactions yet. Add your first transaction.'),
+                  child: Text(
+                    'No transactions yet. Add your first transaction.',
+                  ),
                 );
               }
               return Column(
@@ -91,23 +116,42 @@ class HomePage extends ConsumerWidget {
                       (e) => Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                         child: GlassCard(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
                             leading: CircleAvatar(
-                              backgroundColor: (e.type == TransactionType.income ? AppColors.income : AppColors.expense)
-                                  .withValues(alpha: 0.15),
+                              backgroundColor:
+                                  (e.type == TransactionType.income
+                                          ? AppColors.income
+                                          : AppColors.expense)
+                                      .withValues(alpha: 0.15),
                               child: Icon(
-                                e.type == TransactionType.income ? Icons.south_west_rounded : Icons.north_east_rounded,
-                                color: e.type == TransactionType.income ? AppColors.income : AppColors.expense,
+                                e.type == TransactionType.income
+                                    ? Icons.south_west_rounded
+                                    : Icons.north_east_rounded,
+                                color: e.type == TransactionType.income
+                                    ? AppColors.income
+                                    : AppColors.expense,
                               ),
                             ),
-                            title: Text(e.note?.isNotEmpty == true ? e.note! : e.categoryId),
+                            title: Text(
+                              e.note?.isNotEmpty == true
+                                  ? e.note!
+                                  : e.categoryId,
+                            ),
                             subtitle: Text(Formatters.date(e.date)),
                             trailing: Text(
                               Formatters.currency(e.amount),
                               style: TextStyle(
-                                color: e.type == TransactionType.income ? AppColors.income : AppColors.expense,
+                                color: e.type == TransactionType.income
+                                    ? AppColors.income
+                                    : AppColors.expense,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -153,7 +197,10 @@ class _HeroBalanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Current Balance', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            'Current Balance',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             Formatters.currency(balance),
@@ -162,16 +209,28 @@ class _HeroBalanceCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
-              Expanded(child: _Metric(label: 'Monthly Income', value: income, color: AppColors.income)),
-              Expanded(child: _Metric(label: 'Monthly Expense', value: expense, color: AppColors.expense)),
+              Expanded(
+                child: _Metric(
+                  label: 'Monthly Income',
+                  value: income,
+                  color: AppColors.income,
+                ),
+              ),
+              Expanded(
+                child: _Metric(
+                  label: 'Monthly Expense',
+                  value: expense,
+                  color: AppColors.expense,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Remaining Budget: ${Formatters.currency(remainingBudget)}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: remainingBudget < 0 ? AppColors.expense : null,
-                ),
+              color: remainingBudget < 0 ? AppColors.expense : null,
+            ),
           ),
         ],
       ),
@@ -180,7 +239,11 @@ class _HeroBalanceCard extends StatelessWidget {
 }
 
 class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value, required this.color});
+  const _Metric({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   final String label;
   final double value;
@@ -195,7 +258,9 @@ class _Metric extends StatelessWidget {
         const SizedBox(height: AppSpacing.xxs),
         Text(
           Formatters.currency(value),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: color),
         ),
       ],
     );
@@ -203,7 +268,11 @@ class _Metric extends StatelessWidget {
 }
 
 class _StatPill extends StatelessWidget {
-  const _StatPill({required this.title, required this.value, required this.color});
+  const _StatPill({
+    required this.title,
+    required this.value,
+    required this.color,
+  });
 
   final String title;
   final String value;
@@ -225,12 +294,14 @@ class _StatPill extends StatelessWidget {
         children: [
           Text(title, style: Theme.of(context).textTheme.labelMedium),
           const SizedBox(height: AppSpacing.xs),
-          Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color)),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: color),
+          ),
         ],
       ),
     );
   }
 }
-
-
-

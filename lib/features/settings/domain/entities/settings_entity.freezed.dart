@@ -25,6 +25,7 @@ mixin _$SettingsEntity {
   double get monthlyBudget => throw _privateConstructorUsedError;
   String get currency => throw _privateConstructorUsedError;
   AppThemeMode get themeMode => throw _privateConstructorUsedError;
+  bool get transactionHintsSeen => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this SettingsEntity to a JSON map.
@@ -49,6 +50,7 @@ abstract class $SettingsEntityCopyWith<$Res> {
     double monthlyBudget,
     String currency,
     AppThemeMode themeMode,
+    bool transactionHintsSeen,
     DateTime updatedAt,
   });
 }
@@ -72,6 +74,7 @@ class _$SettingsEntityCopyWithImpl<$Res, $Val extends SettingsEntity>
     Object? monthlyBudget = null,
     Object? currency = null,
     Object? themeMode = null,
+    Object? transactionHintsSeen = null,
     Object? updatedAt = null,
   }) {
     return _then(
@@ -92,6 +95,10 @@ class _$SettingsEntityCopyWithImpl<$Res, $Val extends SettingsEntity>
                 ? _value.themeMode
                 : themeMode // ignore: cast_nullable_to_non_nullable
                       as AppThemeMode,
+            transactionHintsSeen: null == transactionHintsSeen
+                ? _value.transactionHintsSeen
+                : transactionHintsSeen // ignore: cast_nullable_to_non_nullable
+                      as bool,
             updatedAt: null == updatedAt
                 ? _value.updatedAt
                 : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -116,6 +123,7 @@ abstract class _$$SettingsEntityImplCopyWith<$Res>
     double monthlyBudget,
     String currency,
     AppThemeMode themeMode,
+    bool transactionHintsSeen,
     DateTime updatedAt,
   });
 }
@@ -138,6 +146,7 @@ class __$$SettingsEntityImplCopyWithImpl<$Res>
     Object? monthlyBudget = null,
     Object? currency = null,
     Object? themeMode = null,
+    Object? transactionHintsSeen = null,
     Object? updatedAt = null,
   }) {
     return _then(
@@ -158,6 +167,10 @@ class __$$SettingsEntityImplCopyWithImpl<$Res>
             ? _value.themeMode
             : themeMode // ignore: cast_nullable_to_non_nullable
                   as AppThemeMode,
+        transactionHintsSeen: null == transactionHintsSeen
+            ? _value.transactionHintsSeen
+            : transactionHintsSeen // ignore: cast_nullable_to_non_nullable
+                  as bool,
         updatedAt: null == updatedAt
             ? _value.updatedAt
             : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -175,6 +188,7 @@ class _$SettingsEntityImpl implements _SettingsEntity {
     this.monthlyBudget = 0,
     this.currency = 'INR',
     this.themeMode = AppThemeMode.system,
+    this.transactionHintsSeen = false,
     required this.updatedAt,
   });
 
@@ -194,11 +208,14 @@ class _$SettingsEntityImpl implements _SettingsEntity {
   @JsonKey()
   final AppThemeMode themeMode;
   @override
+  @JsonKey()
+  final bool transactionHintsSeen;
+  @override
   final DateTime updatedAt;
 
   @override
   String toString() {
-    return 'SettingsEntity(id: $id, monthlyBudget: $monthlyBudget, currency: $currency, themeMode: $themeMode, updatedAt: $updatedAt)';
+    return 'SettingsEntity(id: $id, monthlyBudget: $monthlyBudget, currency: $currency, themeMode: $themeMode, transactionHintsSeen: $transactionHintsSeen, updatedAt: $updatedAt)';
   }
 
   @override
@@ -213,6 +230,8 @@ class _$SettingsEntityImpl implements _SettingsEntity {
                 other.currency == currency) &&
             (identical(other.themeMode, themeMode) ||
                 other.themeMode == themeMode) &&
+            (identical(other.transactionHintsSeen, transactionHintsSeen) ||
+                other.transactionHintsSeen == transactionHintsSeen) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt));
   }
@@ -225,6 +244,7 @@ class _$SettingsEntityImpl implements _SettingsEntity {
     monthlyBudget,
     currency,
     themeMode,
+    transactionHintsSeen,
     updatedAt,
   );
 
@@ -251,6 +271,7 @@ abstract class _SettingsEntity implements SettingsEntity {
     final double monthlyBudget,
     final String currency,
     final AppThemeMode themeMode,
+    final bool transactionHintsSeen,
     required final DateTime updatedAt,
   }) = _$SettingsEntityImpl;
 
@@ -265,6 +286,8 @@ abstract class _SettingsEntity implements SettingsEntity {
   String get currency;
   @override
   AppThemeMode get themeMode;
+  @override
+  bool get transactionHintsSeen;
   @override
   DateTime get updatedAt;
 

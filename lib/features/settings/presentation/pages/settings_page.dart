@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/constants/app_constants.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/widgets/glass_card.dart';
+import 'package:spendly/features/investments/presentation/pages/investments_page.dart';
+import 'package:spendly/features/recurring/presentation/pages/recurring_page.dart';
 import 'package:spendly/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:spendly/features/settings/presentation/providers/settings_provider.dart';
 
@@ -19,7 +21,12 @@ class SettingsPage extends ConsumerWidget {
           width: 420,
           child: SingleChildScrollView(child: SelectableText(payload)),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
@@ -36,19 +43,30 @@ class SettingsPage extends ConsumerWidget {
           decoration: const InputDecoration(hintText: 'Paste export payload'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () async {
               try {
-                await ref.read(settingsRepositoryProvider).importJson(controller.text.trim());
+                await ref
+                    .read(settingsRepositoryProvider)
+                    .importJson(controller.text.trim());
                 if (context.mounted) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Import successful')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Import successful')),
+                  );
                 }
               } catch (_) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invalid import payload. Please try again.')),
+                    const SnackBar(
+                      content: Text(
+                        'Invalid import payload. Please try again.',
+                      ),
+                    ),
                   );
                 }
               }
@@ -75,7 +93,9 @@ class SettingsPage extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSpacing.md),
               child: TextFormField(
                 initialValue: (settings?.monthlyBudget ?? 0).toStringAsFixed(2),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(
                   prefixText: '${AppConstants.currencySymbol} ',
                   hintText: 'Set your monthly budget',
@@ -83,7 +103,9 @@ class SettingsPage extends ConsumerWidget {
                 onFieldSubmitted: (value) async {
                   final amount = double.tryParse(value);
                   if (amount != null) {
-                    await ref.read(settingsRepositoryProvider).setBudget(amount);
+                    await ref
+                        .read(settingsRepositoryProvider)
+                        .setBudget(amount);
                   }
                 },
               ),
@@ -96,13 +118,21 @@ class SettingsPage extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSpacing.md),
               child: SegmentedButton<AppThemeMode>(
                 segments: const [
-                  ButtonSegment(value: AppThemeMode.system, label: Text('System')),
-                  ButtonSegment(value: AppThemeMode.light, label: Text('Light')),
+                  ButtonSegment(
+                    value: AppThemeMode.system,
+                    label: Text('System'),
+                  ),
+                  ButtonSegment(
+                    value: AppThemeMode.light,
+                    label: Text('Light'),
+                  ),
                   ButtonSegment(value: AppThemeMode.dark, label: Text('Dark')),
                 ],
                 selected: {settings?.themeMode ?? AppThemeMode.system},
                 onSelectionChanged: (value) {
-                  ref.read(settingsRepositoryProvider).setThemeMode(value.first.value);
+                  ref
+                      .read(settingsRepositoryProvider)
+                      .setThemeMode(value.first.value);
                 },
               ),
             ),
@@ -115,20 +145,54 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.file_upload_outlined),
                   title: const Text('Export JSON'),
-                  subtitle: const Text('Download all transactions and settings'),
+                  subtitle: const Text(
+                    'Download all transactions and settings',
+                  ),
                   onTap: () async {
-                    final payload = await ref.read(settingsRepositoryProvider).exportJson();
-                    if (context.mounted) await _showExportDialog(context, payload);
+                    final payload = await ref
+                        .read(settingsRepositoryProvider)
+                        .exportJson();
+                    if (context.mounted)
+                      await _showExportDialog(context, payload);
                   },
                 ),
                 ListTile(
                   leading: const Icon(Icons.file_download_outlined),
                   title: const Text('Import JSON'),
-                  subtitle: const Text('Restore data from exported file content'),
+                  subtitle: const Text(
+                    'Restore data from exported file content',
+                  ),
                   onTap: () => _showImportDialog(context, ref),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.delete_outline, color: AppColors.expense),
+                  leading: const Icon(Icons.trending_up),
+                  title: const Text('Investments'),
+                  subtitle: const Text('Track stock and fund investments'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const InvestmentsPage(),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.repeat),
+                  title: const Text('Recurring'),
+                  subtitle: const Text(
+                    'Manage subscriptions and recurring expenses',
+                  ),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const RecurringPage()),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.expense,
+                  ),
                   title: const Text('Clear all data'),
                   subtitle: const Text('This cannot be undone'),
                   onTap: () async {
@@ -149,7 +213,9 @@ class SettingsPage extends ConsumerWidget {
             child: ListTile(
               leading: Icon(Icons.info_outline),
               title: Text('Spendly v1.0.0'),
-              subtitle: Text('Offline-first personal finance app\nGitHub: DedxAB/spendly-android-app'),
+              subtitle: Text(
+                'Offline-first personal finance app\nGitHub: DedxAB/spendly-android-app',
+              ),
             ),
           ),
         ],
@@ -171,5 +237,3 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
-
-

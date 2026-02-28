@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +7,8 @@ import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/glass_card.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
+import 'package:spendly/features/settings/data/repositories/settings_repository_impl.dart';
+import 'package:spendly/features/settings/presentation/providers/settings_provider.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:spendly/features/transactions/presentation/pages/add_transaction_page.dart';
 import 'package:spendly/features/transactions/presentation/providers/transactions_provider.dart';
@@ -19,6 +21,7 @@ class TransactionsPage extends ConsumerWidget {
     final transactions = ref.watch(monthlyTransactionsProvider);
     final categories = ref.watch(allCategoriesProvider).valueOrNull ?? const [];
     final month = ref.watch(selectedMonthProvider);
+    final settings = ref.watch(settingsStreamProvider).valueOrNull;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Transactions')),
@@ -39,10 +42,13 @@ class TransactionsPage extends ConsumerWidget {
                               context: context,
                               initialDate: month,
                               firstDate: DateTime(2020),
-                              lastDate: DateTime.now().add(const Duration(days: 365)),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 365),
+                              ),
                             );
                             if (selected != null) {
-                              ref.read(selectedMonthProvider.notifier).state = DateTime(selected.year, selected.month, 1);
+                              ref.read(selectedMonthProvider.notifier).state =
+                                  DateTime(selected.year, selected.month, 1);
                             }
                           },
                           icon: const Icon(Icons.calendar_today),
@@ -53,26 +59,58 @@ class TransactionsPage extends ConsumerWidget {
                           value: ref.watch(transactionTypeFilterProvider),
                           items: const [
                             DropdownMenuItem(value: null, child: Text('All')),
-                            DropdownMenuItem(value: 'income', child: Text('Income')),
-                            DropdownMenuItem(value: 'expense', child: Text('Expense')),
+                            DropdownMenuItem(
+                              value: 'income',
+                              child: Text('Income'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'expense',
+                              child: Text('Expense'),
+                            ),
                           ],
-                          onChanged: (value) => ref.read(transactionTypeFilterProvider.notifier).state = value,
+                          onChanged: (value) {
+                            ref
+                                    .read(
+                                      transactionTypeFilterProvider.notifier,
+                                    )
+                                    .state =
+                                value;
+                          },
                         ),
                       ],
                     ),
                     Row(
                       children: [
-                        const Text('Category:', style: TextStyle(fontWeight: FontWeight.w600)),
+                        const Text(
+                          'Category:',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
                         const SizedBox(width: AppSpacing.xs),
                         Expanded(
                           child: DropdownButton<String?>(
                             isExpanded: true,
                             value: ref.watch(transactionCategoryFilterProvider),
                             items: [
-                              const DropdownMenuItem<String?>(value: null, child: Text('All categories')),
-                              ...categories.map((c) => DropdownMenuItem<String?>(value: c.id, child: Text(c.name))),
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('All categories'),
+                              ),
+                              ...categories.map(
+                                (c) => DropdownMenuItem<String?>(
+                                  value: c.id,
+                                  child: Text(c.name),
+                                ),
+                              ),
                             ],
-                            onChanged: (value) => ref.read(transactionCategoryFilterProvider.notifier).state = value,
+                            onChanged: (value) {
+                              ref
+                                      .read(
+                                        transactionCategoryFilterProvider
+                                            .notifier,
+                                      )
+                                      .state =
+                                  value;
+                            },
                           ),
                         ),
                       ],
@@ -85,108 +123,191 @@ class TransactionsPage extends ConsumerWidget {
             Expanded(
               child: transactions.when(
                 data: (items) {
-                  if (items.isEmpty) return const Center(child: Text('No transactions yet'));
+                  if (items.isEmpty)
+                    return const Center(child: Text('No transactions yet'));
 
                   final groups = <String, List<TransactionEntity>>{};
                   for (final item in items) {
                     final key = DateFormat('dd MMM yyyy').format(item.date);
                     groups.putIfAbsent(key, () => []).add(item);
                   }
-
                   final sectionKeys = groups.keys.toList(growable: false);
-                  return ListView.builder(
-                    itemCount: sectionKeys.length,
-                    itemBuilder: (context, sectionIndex) {
-                      final day = sectionKeys[sectionIndex];
-                      final dayItems = groups[day]!;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
-                            child: Text(day, style: Theme.of(context).textTheme.labelLarge),
+                  final shouldShowHint =
+                      !(settings?.transactionHintsSeen ?? false);
+
+                  return ListView(
+                    children: [
+                      if (shouldShowHint)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: GlassCard(
+                            child: ListTile(
+                              leading: const Icon(Icons.swipe_rounded),
+                              title: const Text('Quick actions'),
+                              subtitle: const Text(
+                                'Swipe right to edit, swipe left to delete.',
+                              ),
+                              trailing: TextButton(
+                                onPressed: () async {
+                                  await ref
+                                      .read(settingsRepositoryProvider)
+                                      .markTransactionHintsSeen();
+                                },
+                                child: const Text('Got it'),
+                              ),
+                            ),
                           ),
-                          ...dayItems.map((item) {
-                            final categoryName = categories
-                                    .where((c) => c.id == item.categoryId)
-                                    .map((e) => e.name)
-                                    .firstOrNull ??
-                                item.categoryId;
-                            final isIncome = item.type == TransactionType.income;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                              child: Dismissible(
-                                key: ValueKey(item.id),
-                                background: Container(
-                                  alignment: Alignment.centerLeft,
-                                  decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(AppRadii.md)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                                  child: const Icon(Icons.edit, color: Colors.white),
+                        ),
+                      for (final day in sectionKeys) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: AppSpacing.sm,
+                            bottom: AppSpacing.xs,
+                          ),
+                          child: Text(
+                            day,
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                        ),
+                        ...groups[day]!.map((item) {
+                          final categoryName =
+                              categories
+                                  .where((c) => c.id == item.categoryId)
+                                  .map((e) => e.name)
+                                  .firstOrNull ??
+                              item.categoryId;
+                          final isIncome = item.type == TransactionType.income;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.sm,
+                            ),
+                            child: Dismissible(
+                              key: ValueKey(item.id),
+                              background: Container(
+                                alignment: Alignment.centerLeft,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.md,
+                                  ),
                                 ),
-                                secondaryBackground: Container(
-                                  alignment: Alignment.centerRight,
-                                  decoration: BoxDecoration(color: AppColors.expense, borderRadius: BorderRadius.circular(AppRadii.md)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                                  child: const Icon(Icons.delete, color: Colors.white),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
                                 ),
-                                confirmDismiss: (direction) async {
-                                  if (direction == DismissDirection.startToEnd) {
-                                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddTransactionPage(existing: item)));
-                                    return false;
-                                  }
-                                  return true;
-                                },
-                                onDismissed: (_) async {
-                                  await ref.read(transactionActionsProvider).softDelete(item.id);
-                                  HapticFeedback.mediumImpact();
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text('Transaction deleted'),
-                                        action: SnackBarAction(
-                                          label: 'Undo',
-                                          onPressed: () => ref.read(transactionActionsProvider).restore(item.id),
-                                        ),
+                                child: const Icon(
+                                  Icons.edit,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              secondaryBackground: Container(
+                                alignment: Alignment.centerRight,
+                                decoration: BoxDecoration(
+                                  color: AppColors.expense,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadii.md,
+                                  ),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
+                                child: const Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              confirmDismiss: (direction) async {
+                                if (direction == DismissDirection.startToEnd) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          AddTransactionPage(existing: item),
+                                    ),
+                                  );
+                                  return false;
+                                }
+                                return true;
+                              },
+                              onDismissed: (_) async {
+                                await ref
+                                    .read(transactionActionsProvider)
+                                    .softDelete(item.id);
+                                HapticFeedback.mediumImpact();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                        'Transaction deleted',
                                       ),
-                                    );
-                                  }
-                                },
-                                child: GlassCard(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                    leading: CircleAvatar(
-                                      backgroundColor: (isIncome ? AppColors.income : AppColors.expense).withValues(alpha: 0.15),
-                                      child: Icon(
-                                        isIncome ? Icons.south_west_rounded : Icons.north_east_rounded,
-                                        color: isIncome ? AppColors.income : AppColors.expense,
+                                      action: SnackBarAction(
+                                        label: 'Undo',
+                                        onPressed: () {
+                                          ref
+                                              .read(transactionActionsProvider)
+                                              .restore(item.id);
+                                        },
                                       ),
                                     ),
-                                    title: Text(categoryName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                    subtitle: Text(
-                                      '${item.note ?? 'No note'} • ${item.paymentMode.value.toUpperCase()}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                  );
+                                }
+                              },
+                              child: GlassCard(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 6,
+                                  ),
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        (isIncome
+                                                ? AppColors.income
+                                                : AppColors.expense)
+                                            .withValues(alpha: 0.15),
+                                    child: Icon(
+                                      isIncome
+                                          ? Icons.south_west_rounded
+                                          : Icons.north_east_rounded,
+                                      color: isIncome
+                                          ? AppColors.income
+                                          : AppColors.expense,
                                     ),
-                                    trailing: Text(
-                                      Formatters.currency(item.amount),
-                                      style: TextStyle(
-                                        color: isIncome ? AppColors.income : AppColors.expense,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                  ),
+                                  title: Text(
+                                    categoryName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    '${item.note ?? 'No note'} | ${item.paymentMode.value.toUpperCase()}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  trailing: Text(
+                                    Formatters.currency(item.amount),
+                                    style: TextStyle(
+                                      color: isIncome
+                                          ? AppColors.income
+                                          : AppColors.expense,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
                               ),
-                            );
-                          }),
-                        ],
-                      );
-                    },
+                            ),
+                          );
+                        }),
+                      ],
+                    ],
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => Center(child: Text('Failed to load: $error')),
+                error: (error, _) =>
+                    Center(child: Text('Failed to load: $error')),
               ),
             ),
           ],
@@ -195,4 +316,3 @@ class TransactionsPage extends ConsumerWidget {
     );
   }
 }
-

@@ -1,4 +1,4 @@
-﻿class AppConstants {
+class AppConstants {
   static const String appName = 'Spendly';
   static const String currencyCode = 'INR';
   static const String currencySymbol = '\u20B9';

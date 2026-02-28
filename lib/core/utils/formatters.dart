@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:spendly/core/constants/app_constants.dart';
 
@@ -24,4 +24,3 @@ class Formatters {
     return Color(value);
   }
 }
-

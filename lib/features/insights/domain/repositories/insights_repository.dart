@@ -1,4 +1,4 @@
-﻿import 'package:spendly/features/insights/domain/entities/expense_slice.dart';
+import 'package:spendly/features/insights/domain/entities/expense_slice.dart';
 import 'package:spendly/features/insights/domain/entities/insight_point.dart';
 
 abstract class InsightsRepository {
@@ -8,4 +8,3 @@ abstract class InsightsRepository {
 
   Stream<Map<String, double>> watchIncomeVsExpense(DateTime month);
 }
-

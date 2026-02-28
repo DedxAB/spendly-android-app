@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/features/home/domain/entities/dashboard_summary.dart';
 import 'package:spendly/features/settings/presentation/providers/settings_provider.dart';
@@ -32,11 +32,13 @@ final todaySpentProvider = StreamProvider<double>((ref) {
       .watch(transactionsRepositoryProvider)
       .watchByMonth(monthStart, type: TransactionType.expense.value)
       .map((items) {
-    return items
-        .where((item) =>
-            item.date.year == now.year &&
-            item.date.month == now.month &&
-            item.date.day == now.day)
-        .fold<double>(0, (sum, item) => sum + item.amount);
-  });
+        return items
+            .where(
+              (item) =>
+                  item.date.year == now.year &&
+                  item.date.month == now.month &&
+                  item.date.day == now.day,
+            )
+            .fold<double>(0, (sum, item) => sum + item.amount);
+      });
 });
