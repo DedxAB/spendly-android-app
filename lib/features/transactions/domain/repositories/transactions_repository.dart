@@ -7,6 +7,8 @@ abstract class TransactionsRepository {
     DateTime month, {
     String? categoryId,
     String? type,
+    DateTime? dateFrom,
+    DateTime? dateTo,
   });
 
   Stream<Map<String, double>> watchMonthlyTotals(DateTime month);

@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const emerald = Color(0xFF0EAD8A);
+  static const emerald = Color(0xFF74D67A);
   static const income = Color(0xFF34C77B);
   static const expense = Color(0xFFE36767);
 
-  static const lightBackground = Color(0xFFF4F7F8);
+  static const lightBackground = Color(0xFFF2F8F3);
   static const lightSurface = Color(0xFFFFFFFF);
-  static const lightSurfaceAlt = Color(0xFFF0F4F6);
-  static const lightTextPrimary = Color(0xFF101828);
-  static const lightTextSecondary = Color(0xFF64748B);
+  static const lightSurfaceAlt = Color(0xFFE9F2EA);
+  static const lightTextPrimary = Color(0xFF122118);
+  static const lightTextSecondary = Color(0xFF587166);
 
-  static const darkBackground = Color(0xFF090E11);
-  static const darkSurface = Color(0xFF131A1F);
-  static const darkSurfaceAlt = Color(0xFF1A232A);
-  static const darkTextPrimary = Color(0xFFE6EEF2);
-  static const darkTextSecondary = Color(0xFF9FB0BD);
+  static const darkBackground = Color(0xFF0D1614);
+  static const darkSurface = Color(0xFF111A18);
+  static const darkSurfaceAlt = Color(0xFF162523);
+  static const darkTextPrimary = Color(0xFFE7F5EB);
+  static const darkTextSecondary = Color(0xFFA5C2B1);
 }
 
 class AppSpacing {

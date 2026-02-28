@@ -81,6 +81,7 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsStreamProvider).valueOrNull;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -90,15 +91,24 @@ class SettingsPage extends ConsumerWidget {
           _SectionTitle('Monthly Budget'),
           GlassCard(
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               child: TextFormField(
                 initialValue: (settings?.monthlyBudget ?? 0).toStringAsFixed(2),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   prefixText: '${AppConstants.currencySymbol} ',
                   hintText: 'Set your monthly budget',
+                  isDense: true,
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.35,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                 ),
                 onFieldSubmitted: (value) async {
                   final amount = double.tryParse(value);
@@ -111,22 +121,55 @@ class SettingsPage extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
           _SectionTitle('Theme Mode'),
           GlassCard(
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xs,
+                vertical: AppSpacing.xs,
+              ),
               child: SegmentedButton<AppThemeMode>(
+                showSelectedIcon: false,
+                style: const ButtonStyle(
+                  minimumSize: WidgetStatePropertyAll(Size(0, 48)),
+                  padding: WidgetStatePropertyAll(
+                    EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 segments: const [
                   ButtonSegment(
                     value: AppThemeMode.system,
-                    label: Text('System'),
+                    label: Text(
+                      'System',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   ButtonSegment(
                     value: AppThemeMode.light,
-                    label: Text('Light'),
+                    label: Text(
+                      'Light',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                  ButtonSegment(value: AppThemeMode.dark, label: Text('Dark')),
+                  ButtonSegment(
+                    value: AppThemeMode.dark,
+                    label: Text(
+                      'Dark',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ],
                 selected: {settings?.themeMode ?? AppThemeMode.system},
                 onSelectionChanged: (value) {
@@ -152,8 +195,9 @@ class SettingsPage extends ConsumerWidget {
                     final payload = await ref
                         .read(settingsRepositoryProvider)
                         .exportJson();
-                    if (context.mounted)
+                    if (context.mounted) {
                       await _showExportDialog(context, payload);
+                    }
                   },
                 ),
                 ListTile(

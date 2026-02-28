@@ -38,10 +38,18 @@ class TransactionsRepositoryImpl implements TransactionsRepository {
     DateTime month, {
     String? categoryId,
     String? type,
+    DateTime? dateFrom,
+    DateTime? dateTo,
   }) {
     return _ref
         .read(appDatabaseProvider)
-        .watchTransactionsByMonth(month, categoryId: categoryId, type: type)
+        .watchTransactionsByMonth(
+          month,
+          categoryId: categoryId,
+          type: type,
+          dateFrom: dateFrom,
+          dateTo: dateTo,
+        )
         .map(
           (rows) => rows.map((row) => row.toEntity()).toList(growable: false),
         );

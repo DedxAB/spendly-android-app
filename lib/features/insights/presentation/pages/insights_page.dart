@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/utils/formatters.dart';
+import 'package:spendly/features/insights/domain/entities/expense_slice.dart';
 import 'package:spendly/features/insights/domain/entities/insight_point.dart';
 import 'package:spendly/features/insights/presentation/providers/insights_provider.dart';
 
@@ -15,65 +18,40 @@ class InsightsPage extends ConsumerStatefulWidget {
 }
 
 class _InsightsPageState extends ConsumerState<InsightsPage> {
-  int _selectedRange = 1; // 0 week, 1 month, 2 year
-  int _selectedSpotIndex = 0;
+  int _touchedPieIndex = -1;
 
   @override
   Widget build(BuildContext context) {
     final distribution = ref.watch(expenseDistributionProvider);
     final trend = ref.watch(dailyTrendProvider);
     final compare = ref.watch(incomeVsExpenseProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Insights')),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          24,
+        ),
         children: [
           _SectionTitle('Expense Distribution'),
           Card(
             child: SizedBox(
-              height: 260,
+              height: 280,
               child: distribution.when(
                 data: (items) {
-                  if (items.isEmpty)
+                  if (items.isEmpty) {
                     return const Center(child: Text('No expense data'));
-                  return Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: PieChart(
-                            PieChartData(
-                              sectionsSpace: 2,
-                              centerSpaceRadius: 38,
-                              sections: [
-                                for (final slice in items)
-                                  PieChartSectionData(
-                                    value: slice.total,
-                                    color: Formatters.parseHexColor(
-                                      slice.color,
-                                    ),
-                                    radius: 56,
-                                    title: '',
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Wrap(
-                          spacing: AppSpacing.sm,
-                          runSpacing: AppSpacing.xs,
-                          children: [
-                            for (final slice in items.take(4))
-                              _LegendChip(
-                                color: Formatters.parseHexColor(slice.color),
-                                label: slice.category,
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  }
+                  return _ExpenseDonutCard(
+                    slices: items,
+                    touchedIndex: _touchedPieIndex,
+                    onTouchIndexChanged: (value) {
+                      setState(() => _touchedPieIndex = value);
+                    },
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -88,19 +66,10 @@ class _InsightsPageState extends ConsumerState<InsightsPage> {
               height: 300,
               child: trend.when(
                 data: (items) {
-                  if (items.isEmpty)
+                  if (items.isEmpty) {
                     return const Center(child: Text('No trend data'));
-                  if (_selectedSpotIndex >= items.length)
-                    _selectedSpotIndex = items.length - 1;
-                  return _ReferenceStyleTrendCard(
-                    points: items,
-                    selectedRange: _selectedRange,
-                    selectedSpotIndex: _selectedSpotIndex,
-                    onRangeChanged: (value) =>
-                        setState(() => _selectedRange = value),
-                    onSpotChanged: (value) =>
-                        setState(() => _selectedSpotIndex = value),
-                  );
+                  }
+                  return _ModernTrendChart(points: items, isDark: isDark);
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => Center(child: Text('Error: $error')),
@@ -111,67 +80,15 @@ class _InsightsPageState extends ConsumerState<InsightsPage> {
           _SectionTitle('Income vs Expense'),
           Card(
             child: SizedBox(
-              height: 240,
+              height: 250,
               child: compare.when(
                 data: (map) {
                   final income = map['income'] ?? 0;
                   final expense = map['expense'] ?? 0;
-                  final maxY = (income > expense ? income : expense) * 1.3;
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
-                    child: BarChart(
-                      BarChartData(
-                        maxY: maxY == 0 ? 1 : maxY,
-                        borderData: FlBorderData(show: false),
-                        gridData: FlGridData(
-                          show: true,
-                          drawVerticalLine: false,
-                        ),
-                        titlesData: FlTitlesData(
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          leftTitles: const AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 40,
-                            ),
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, _) =>
-                                  Text(value == 0 ? 'Income' : 'Expense'),
-                            ),
-                          ),
-                        ),
-                        barGroups: [
-                          BarChartGroupData(
-                            x: 0,
-                            barRods: [
-                              BarChartRodData(
-                                toY: income,
-                                color: AppColors.income,
-                                width: 24,
-                              ),
-                            ],
-                          ),
-                          BarChartGroupData(
-                            x: 1,
-                            barRods: [
-                              BarChartRodData(
-                                toY: expense,
-                                color: AppColors.expense,
-                                width: 24,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                  return _IncomeExpenseBars(
+                    income: income,
+                    expense: expense,
+                    isDark: isDark,
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -185,62 +102,129 @@ class _InsightsPageState extends ConsumerState<InsightsPage> {
   }
 }
 
-class _ReferenceStyleTrendCard extends StatelessWidget {
-  const _ReferenceStyleTrendCard({
-    required this.points,
-    required this.selectedRange,
-    required this.selectedSpotIndex,
-    required this.onRangeChanged,
-    required this.onSpotChanged,
+class _ExpenseDonutCard extends StatelessWidget {
+  const _ExpenseDonutCard({
+    required this.slices,
+    required this.touchedIndex,
+    required this.onTouchIndexChanged,
   });
 
-  final List<InsightPoint> points;
-  final int selectedRange;
-  final int selectedSpotIndex;
-  final ValueChanged<int> onRangeChanged;
-  final ValueChanged<int> onSpotChanged;
+  final List<ExpenseSlice> slices;
+  final int touchedIndex;
+  final ValueChanged<int> onTouchIndexChanged;
 
   @override
   Widget build(BuildContext context) {
-    final selectedPoint = points[selectedSpotIndex];
-    final monthLabels = points
-        .map((e) => DateFormat('MMM').format(e.date))
-        .toList(growable: false);
-    final maxY = points.map((e) => e.value).reduce((a, b) => a > b ? a : b);
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final chartColor = dark ? Colors.white : const Color(0xFF171A1D);
+    final total = slices.fold<double>(0, (sum, item) => sum + item.total);
+    final selected = touchedIndex >= 0 && touchedIndex < slices.length
+        ? slices[touchedIndex]
+        : null;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         children: [
+          Expanded(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                PieChart(
+                  PieChartData(
+                    sectionsSpace: 3,
+                    centerSpaceRadius: 52,
+                    pieTouchData: PieTouchData(
+                      touchCallback: (event, response) {
+                        if (!event.isInterestedForInteractions ||
+                            response?.touchedSection == null) {
+                          onTouchIndexChanged(-1);
+                          return;
+                        }
+                        onTouchIndexChanged(
+                          response!.touchedSection!.touchedSectionIndex,
+                        );
+                      },
+                    ),
+                    sections: [
+                      for (var i = 0; i < slices.length; i++)
+                        PieChartSectionData(
+                          value: slices[i].total,
+                          color: Formatters.parseHexColor(slices[i].color),
+                          radius: i == touchedIndex ? 70 : 62,
+                          title: '',
+                        ),
+                    ],
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      Formatters.currency(selected?.total ?? total),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      selected?.category ?? 'Total Expense',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            children: slices
+                .take(6)
+                .map((slice) {
+                  final percent = total == 0 ? 0 : (slice.total / total) * 100;
+                  return _LegendChip(
+                    color: Formatters.parseHexColor(slice.color),
+                    label: '${slice.category} ${percent.toStringAsFixed(0)}%',
+                  );
+                })
+                .toList(growable: false),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModernTrendChart extends StatelessWidget {
+  const _ModernTrendChart({required this.points, required this.isDark});
+
+  final List<InsightPoint> points;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final weekPoints = points.length > 7
+        ? points.sublist(points.length - 7)
+        : points;
+    final maxY = weekPoints.map((e) => e.value).fold<double>(0, math.max);
+    final safeMaxY = maxY <= 0 ? 1.0 : maxY * 1.25;
+    final total = weekPoints.fold<double>(0, (sum, p) => sum + p.value);
+    final selectedIndex = weekPoints.indexWhere((p) => p.value == maxY);
+    final activeIndex = selectedIndex < 0
+        ? weekPoints.length - 1
+        : selectedIndex;
+    final activePoint = weekPoints[activeIndex];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Total Expenses', style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 2),
           Text(
-            Formatters.currency(selectedPoint.value),
+            Formatters.currency(total),
             style: Theme.of(
               context,
             ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            DateFormat('dd MMM, yyyy').format(selectedPoint.date),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          SegmentedButton<int>(
-            showSelectedIcon: false,
-            style: ButtonStyle(
-              visualDensity: VisualDensity.compact,
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-            ),
-            segments: const [
-              ButtonSegment(value: 0, label: Text('Week')),
-              ButtonSegment(value: 1, label: Text('Month')),
-              ButtonSegment(value: 2, label: Text('Year')),
-            ],
-            selected: {selectedRange},
-            onSelectionChanged: (set) => onRangeChanged(set.first),
           ),
           const SizedBox(height: AppSpacing.sm),
           Expanded(
@@ -250,9 +234,9 @@ class _ReferenceStyleTrendCard extends StatelessWidget {
                 LineChart(
                   LineChartData(
                     minY: 0,
-                    maxY: maxY == 0 ? 1 : maxY * 1.25,
-                    gridData: const FlGridData(show: false),
+                    maxY: safeMaxY,
                     borderData: FlBorderData(show: false),
+                    gridData: const FlGridData(show: false),
                     titlesData: FlTitlesData(
                       leftTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
@@ -267,25 +251,35 @@ class _ReferenceStyleTrendCard extends StatelessWidget {
                         sideTitles: SideTitles(
                           showTitles: true,
                           interval: 1,
-                          getTitlesWidget: (value, _) {
+                          getTitlesWidget: (value, meta) {
                             final idx = value.toInt();
-                            if (idx < 0 || idx >= monthLabels.length)
+                            if (idx < 0 || idx >= weekPoints.length) {
                               return const SizedBox.shrink();
-                            final selected = idx == selectedSpotIndex;
+                            }
+                            final label = DateFormat(
+                              'EEE',
+                            ).format(weekPoints[idx].date);
+                            final shortLabel = label.length > 3
+                                ? label.substring(0, 3)
+                                : label;
+                            final isActive = idx == activeIndex;
                             return Padding(
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(
-                                monthLabels[idx],
-                                style: TextStyle(
-                                  fontWeight: selected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: selected
-                                      ? Theme.of(context).colorScheme.onSurface
-                                      : Theme.of(
-                                          context,
-                                        ).textTheme.bodySmall?.color,
-                                ),
+                                shortLabel,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      fontWeight: isActive
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: isActive
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface
+                                          : Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall?.color,
+                                    ),
                               ),
                             );
                           },
@@ -295,67 +289,50 @@ class _ReferenceStyleTrendCard extends StatelessWidget {
                     extraLinesData: ExtraLinesData(
                       verticalLines: [
                         VerticalLine(
-                          x: selectedSpotIndex.toDouble(),
-                          color: Theme.of(context).dividerColor,
+                          x: activeIndex.toDouble(),
+                          color: Theme.of(
+                            context,
+                          ).dividerColor.withValues(alpha: 0.5),
                           dashArray: const [4, 4],
                           strokeWidth: 1,
                         ),
                       ],
                     ),
-                    lineTouchData: LineTouchData(
-                      enabled: true,
-                      touchTooltipData: LineTouchTooltipData(
-                        getTooltipColor: (_) => Colors.transparent,
-                        tooltipPadding: EdgeInsets.zero,
-                        tooltipMargin: 0,
-                        getTooltipItems: (_) => [],
-                      ),
-                      getTouchedSpotIndicator: (barData, spotIndexes) {
-                        return spotIndexes.map((_) {
-                          return TouchedSpotIndicatorData(
-                            FlLine(color: Colors.transparent),
-                            FlDotData(
-                              show: true,
-                              getDotPainter: (spot, _, __, ___) =>
-                                  FlDotCirclePainter(
-                                    radius: 8,
-                                    color: Colors.white,
-                                    strokeColor: chartColor,
-                                    strokeWidth: 3,
-                                  ),
-                            ),
-                          );
-                        }).toList();
-                      },
-                      touchCallback: (event, response) {
-                        if (response?.lineBarSpots?.isNotEmpty == true) {
-                          onSpotChanged(
-                            response!.lineBarSpots!.first.spotIndex,
-                          );
-                        }
-                      },
-                    ),
+                    lineTouchData: LineTouchData(enabled: false),
                     lineBarsData: [
                       LineChartBarData(
                         isCurved: true,
-                        color: chartColor,
+                        color: AppColors.emerald,
                         barWidth: 3.2,
+                        isStrokeCapRound: true,
                         dotData: FlDotData(
                           show: true,
                           checkToShowDot: (spot, barData) =>
-                              spot.x.toInt() == selectedSpotIndex,
+                              spot.x.toInt() == activeIndex,
                           getDotPainter: (spot, _, __, ___) =>
                               FlDotCirclePainter(
-                                radius: 8,
-                                color: Colors.white,
-                                strokeColor: chartColor,
+                                radius: 6.5,
+                                color: Theme.of(
+                                  context,
+                                ).scaffoldBackgroundColor,
+                                strokeColor: AppColors.emerald,
                                 strokeWidth: 3,
                               ),
                         ),
-                        belowBarData: BarAreaData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppColors.emerald.withValues(alpha: 0.26),
+                              AppColors.emerald.withValues(alpha: 0.01),
+                            ],
+                          ),
+                        ),
                         spots: [
-                          for (var i = 0; i < points.length; i++)
-                            FlSpot(i.toDouble(), points[i].value),
+                          for (var i = 0; i < weekPoints.length; i++)
+                            FlSpot(i.toDouble(), weekPoints[i].value),
                         ],
                       ),
                     ],
@@ -363,24 +340,28 @@ class _ReferenceStyleTrendCard extends StatelessWidget {
                 ),
                 Positioned(
                   left:
-                      (selectedSpotIndex /
-                          (points.length <= 1 ? 1 : points.length - 1)) *
-                      (MediaQuery.of(context).size.width - 120),
-                  top: 14,
+                      (activeIndex /
+                          (weekPoints.length <= 1
+                              ? 1
+                              : weekPoints.length - 1)) *
+                      (MediaQuery.of(context).size.width - 130),
+                  top: 10,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: dark
-                          ? Colors.white.withValues(alpha: 0.14)
-                          : Colors.black.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.emerald.withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      Formatters.currency(selectedPoint.value),
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      Formatters.currency(activePoint.value),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ),
@@ -389,6 +370,112 @@ class _ReferenceStyleTrendCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _IncomeExpenseBars extends StatelessWidget {
+  const _IncomeExpenseBars({
+    required this.income,
+    required this.expense,
+    required this.isDark,
+  });
+
+  final double income;
+  final double expense;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxY = math.max(income, expense);
+    final safeMaxY = maxY <= 0 ? 1.0 : maxY * 1.25;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
+      child: BarChart(
+        BarChartData(
+          maxY: safeMaxY,
+          borderData: FlBorderData(show: false),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: safeMaxY / 4,
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.06),
+              strokeWidth: 1,
+            ),
+          ),
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            leftTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(value == 0 ? 'Income' : 'Expense'),
+                  );
+                },
+              ),
+            ),
+          ),
+          barTouchData: BarTouchData(
+            enabled: true,
+            touchTooltipData: BarTouchTooltipData(
+              tooltipPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
+              getTooltipColor: (group) =>
+                  isDark ? AppColors.darkSurfaceAlt : AppColors.lightSurface,
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                final label = group.x == 0 ? 'Income' : 'Expense';
+                return BarTooltipItem(
+                  '$label\n${Formatters.currency(rod.toY)}',
+                  TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
+                  ),
+                );
+              },
+            ),
+          ),
+          barGroups: [
+            _barGroup(0, income, AppColors.income),
+            _barGroup(1, expense, AppColors.expense),
+          ],
+        ),
+      ),
+    );
+  }
+
+  BarChartGroupData _barGroup(int x, double value, Color color) {
+    return BarChartGroupData(
+      x: x,
+      barRods: [
+        BarChartRodData(
+          toY: value,
+          width: 34,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [color, color.withValues(alpha: 0.7)],
+          ),
+        ),
+      ],
     );
   }
 }

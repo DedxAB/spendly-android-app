@@ -204,6 +204,7 @@ class InvestmentsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Investments')),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddDialog(context, ref),
         icon: const Icon(Icons.add),
@@ -215,7 +216,12 @@ class InvestmentsPage extends ConsumerWidget {
             return const Center(child: Text('No investments added yet.'));
           }
           return ListView.builder(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              24,
+            ),
             itemCount: items.length,
             itemBuilder: (context, index) {
               final item = items[index];
@@ -240,7 +246,10 @@ class InvestmentsPage extends ConsumerWidget {
                       children: [
                         Text(
                           Formatters.currency(item.amountInvested),
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         if (pnl != null)
                           Text(

@@ -18,10 +18,11 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.lightBackground,
       textTheme: _textTheme(Brightness.light),
       cardTheme: CardThemeData(
-        color: AppColors.lightSurface,
+        color: AppColors.lightSurface.withValues(alpha: 0.74),
         elevation: AppElevation.card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.xl),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.78)),
         ),
       ),
       appBarTheme: const AppBarTheme(
@@ -33,6 +34,14 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.lightSurfaceAlt,
+        labelStyle: const TextStyle(
+          color: AppColors.lightTextSecondary,
+          fontWeight: FontWeight.w600,
+        ),
+        hintStyle: const TextStyle(
+          color: AppColors.lightTextSecondary,
+          fontWeight: FontWeight.w500,
+        ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
@@ -41,10 +50,37 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppRadii.md),
           borderSide: BorderSide.none,
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          borderSide: BorderSide(
+            color: AppColors.lightSurfaceAlt.withValues(alpha: 0.9),
+            width: 1,
+          ),
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.md),
           borderSide: const BorderSide(color: AppColors.emerald, width: 1.25),
         ),
+        floatingLabelStyle: const TextStyle(
+          color: AppColors.emerald,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadii.md),
+            ),
+          ),
+          backgroundColor: const WidgetStatePropertyAll(AppColors.lightSurface),
+          side: WidgetStatePropertyAll(
+            BorderSide(
+              color: AppColors.lightSurfaceAlt.withValues(alpha: 0.85),
+            ),
+          ),
+        ),
+        textStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
@@ -57,8 +93,42 @@ class AppTheme {
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(54),
           elevation: 0,
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.md),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(0, 48),
+          side: BorderSide(
+            color: AppColors.lightSurfaceAlt.withValues(alpha: 0.85),
+          ),
+          backgroundColor: AppColors.lightSurface,
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadii.md),
+          ),
+        ),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          textStyle: const WidgetStatePropertyAll(
+            TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+          ),
+          side: WidgetStatePropertyAll(
+            BorderSide(
+              color: AppColors.lightSurfaceAlt.withValues(alpha: 0.85),
+            ),
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadii.md),
+            ),
+          ),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(vertical: 10, horizontal: 8),
           ),
         ),
       ),
@@ -86,10 +156,11 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.darkBackground,
       textTheme: _textTheme(Brightness.dark),
       cardTheme: CardThemeData(
-        color: AppColors.darkSurface,
+        color: const Color(0xFF4E5A56).withValues(alpha: 0.52),
         elevation: AppElevation.card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.xl),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.20)),
         ),
       ),
       appBarTheme: const AppBarTheme(
@@ -101,6 +172,14 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.darkSurfaceAlt,
+        labelStyle: const TextStyle(
+          color: AppColors.darkTextSecondary,
+          fontWeight: FontWeight.w600,
+        ),
+        hintStyle: const TextStyle(
+          color: AppColors.darkTextSecondary,
+          fontWeight: FontWeight.w500,
+        ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
@@ -109,10 +188,37 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppRadii.md),
           borderSide: BorderSide.none,
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          borderSide: BorderSide(
+            color: AppColors.darkTextSecondary.withValues(alpha: 0.12),
+            width: 1,
+          ),
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.md),
           borderSide: const BorderSide(color: AppColors.emerald, width: 1.25),
         ),
+        floatingLabelStyle: const TextStyle(
+          color: AppColors.emerald,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadii.md),
+            ),
+          ),
+          backgroundColor: const WidgetStatePropertyAll(AppColors.darkSurface),
+          side: WidgetStatePropertyAll(
+            BorderSide(
+              color: AppColors.darkTextSecondary.withValues(alpha: 0.18),
+            ),
+          ),
+        ),
+        textStyle: const TextStyle(fontWeight: FontWeight.w600),
       ),
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
@@ -125,8 +231,42 @@ class AppTheme {
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(54),
           elevation: 0,
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.md),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(0, 48),
+          side: BorderSide(
+            color: AppColors.darkTextSecondary.withValues(alpha: 0.18),
+          ),
+          backgroundColor: AppColors.darkSurfaceAlt,
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadii.md),
+          ),
+        ),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          textStyle: const WidgetStatePropertyAll(
+            TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+          ),
+          side: WidgetStatePropertyAll(
+            BorderSide(
+              color: AppColors.darkTextSecondary.withValues(alpha: 0.2),
+            ),
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadii.md),
+            ),
+          ),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(vertical: 10, horizontal: 8),
           ),
         ),
       ),

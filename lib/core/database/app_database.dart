@@ -105,9 +105,23 @@ class AppDatabase extends _$AppDatabase {
     DateTime month, {
     String? type,
     String? categoryId,
+    DateTime? dateFrom,
+    DateTime? dateTo,
   }) {
-    final start = DateTime(month.year, month.month, 1).millisecondsSinceEpoch;
-    final end = DateTime(month.year, month.month + 1, 1).millisecondsSinceEpoch;
+    final start = dateFrom != null
+        ? DateTime(
+            dateFrom.year,
+            dateFrom.month,
+            dateFrom.day,
+          ).millisecondsSinceEpoch
+        : DateTime(month.year, month.month, 1).millisecondsSinceEpoch;
+    final end = dateTo != null
+        ? DateTime(
+            dateTo.year,
+            dateTo.month,
+            dateTo.day + 1,
+          ).millisecondsSinceEpoch
+        : DateTime(month.year, month.month + 1, 1).millisecondsSinceEpoch;
     final query = select(transactions)
       ..where((tbl) => tbl.isDeleted.equals(false))
       ..where((tbl) => tbl.date.isBiggerOrEqualValue(start))

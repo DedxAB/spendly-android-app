@@ -44,6 +44,10 @@ class RecurringPage extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
+          final dropdownMenuColor =
+              Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF16261E)
+              : Colors.white;
           return AlertDialog(
             title: const Text('Add Recurring Expense'),
             content: SingleChildScrollView(
@@ -67,6 +71,7 @@ class RecurringPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<CategoryEntity>(
+                    dropdownColor: dropdownMenuColor,
                     initialValue: selectedCategory,
                     decoration: const InputDecoration(labelText: 'Category'),
                     items: categories
@@ -83,6 +88,7 @@ class RecurringPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<RecurringFrequency>(
+                    dropdownColor: dropdownMenuColor,
                     initialValue: selectedFrequency,
                     decoration: const InputDecoration(labelText: 'Frequency'),
                     items: const [
@@ -241,7 +247,10 @@ class RecurringPage extends ConsumerWidget {
                       children: [
                         Text(
                           Formatters.currency(item.amount),
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         Switch(
                           value: item.isActive,
