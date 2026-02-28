@@ -52,10 +52,10 @@ extension SettingMapper on Setting {
 TransactionsCompanion transactionToCompanion(TransactionEntity entity) {
   return TransactionsCompanion.insert(
     id: entity.id,
-    type: entity.type.name,
+    type: entity.type.value,
     amount: entity.amount,
     categoryId: entity.categoryId,
-    paymentMode: entity.paymentMode.name,
+    paymentMode: entity.paymentMode.value,
     note: Value(entity.note),
     date: entity.date.millisecondsSinceEpoch,
     createdAt: entity.createdAt.millisecondsSinceEpoch,
@@ -70,7 +70,7 @@ CategoriesCompanion categoryToCompanion(CategoryEntity entity) {
     name: entity.name,
     icon: entity.icon,
     color: entity.color,
-    type: entity.type.name,
+    type: entity.type.value,
     createdAt: entity.createdAt.millisecondsSinceEpoch,
     updatedAt: entity.updatedAt.millisecondsSinceEpoch,
     isDeleted: Value(entity.isDeleted),
@@ -82,7 +82,7 @@ SettingsCompanion settingsToCompanion(SettingsEntity entity) {
     id: Value(entity.id),
     monthlyBudget: Value(entity.monthlyBudget),
     currency: Value(entity.currency),
-    themeMode: Value(entity.themeMode.name),
+    themeMode: Value(entity.themeMode.value),
     updatedAt: entity.updatedAt.millisecondsSinceEpoch,
   );
 }

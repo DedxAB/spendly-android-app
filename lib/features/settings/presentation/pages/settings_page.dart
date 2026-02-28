@@ -2,6 +2,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/constants/app_constants.dart';
 import 'package:spendly/core/constants/app_enums.dart';
+import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/widgets/glass_card.dart';
 import 'package:spendly/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:spendly/features/settings/presentation/providers/settings_provider.dart';
 
@@ -13,7 +15,10 @@ class SettingsPage extends ConsumerWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Export JSON'),
-        content: SizedBox(width: 420, child: SingleChildScrollView(child: SelectableText(payload))),
+        content: SizedBox(
+          width: 420,
+          child: SingleChildScrollView(child: SelectableText(payload)),
+        ),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))],
       ),
     );
@@ -62,77 +67,70 @@ class SettingsPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          Card(
+          _SectionTitle('Monthly Budget'),
+          GlassCard(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Budget', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    initialValue: (settings?.monthlyBudget ?? 0).toStringAsFixed(2),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(prefixText: '${AppConstants.currencySymbol} '),
-                    onFieldSubmitted: (value) async {
-                      final amount = double.tryParse(value);
-                      if (amount != null) {
-                        await ref.read(settingsRepositoryProvider).setBudget(amount);
-                      }
-                    },
-                  ),
-                ],
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: TextFormField(
+                initialValue: (settings?.monthlyBudget ?? 0).toStringAsFixed(2),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  prefixText: '${AppConstants.currencySymbol} ',
+                  hintText: 'Set your monthly budget',
+                ),
+                onFieldSubmitted: (value) async {
+                  final amount = double.tryParse(value);
+                  if (amount != null) {
+                    await ref.read(settingsRepositoryProvider).setBudget(amount);
+                  }
+                },
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Card(
+          const SizedBox(height: AppSpacing.md),
+          _SectionTitle('Theme Mode'),
+          GlassCard(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Theme', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  SegmentedButton<AppThemeMode>(
-                    segments: const [
-                      ButtonSegment(value: AppThemeMode.system, label: Text('System')),
-                      ButtonSegment(value: AppThemeMode.light, label: Text('Light')),
-                      ButtonSegment(value: AppThemeMode.dark, label: Text('Dark')),
-                    ],
-                    selected: {settings?.themeMode ?? AppThemeMode.system},
-                    onSelectionChanged: (value) {
-                      ref.read(settingsRepositoryProvider).setThemeMode(value.first.name);
-                    },
-                  ),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: SegmentedButton<AppThemeMode>(
+                segments: const [
+                  ButtonSegment(value: AppThemeMode.system, label: Text('System')),
+                  ButtonSegment(value: AppThemeMode.light, label: Text('Light')),
+                  ButtonSegment(value: AppThemeMode.dark, label: Text('Dark')),
                 ],
+                selected: {settings?.themeMode ?? AppThemeMode.system},
+                onSelectionChanged: (value) {
+                  ref.read(settingsRepositoryProvider).setThemeMode(value.first.value);
+                },
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Card(
+          const SizedBox(height: AppSpacing.md),
+          _SectionTitle('Data'),
+          GlassCard(
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.upload_file),
+                  leading: const Icon(Icons.file_upload_outlined),
                   title: const Text('Export JSON'),
+                  subtitle: const Text('Download all transactions and settings'),
                   onTap: () async {
                     final payload = await ref.read(settingsRepositoryProvider).exportJson();
-                    if (context.mounted) {
-                      await _showExportDialog(context, payload);
-                    }
+                    if (context.mounted) await _showExportDialog(context, payload);
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.download_for_offline),
+                  leading: const Icon(Icons.file_download_outlined),
                   title: const Text('Import JSON'),
+                  subtitle: const Text('Restore data from exported file content'),
                   onTap: () => _showImportDialog(context, ref),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.delete_forever, color: Colors.red),
+                  leading: const Icon(Icons.delete_outline, color: AppColors.expense),
                   title: const Text('Clear all data'),
+                  subtitle: const Text('This cannot be undone'),
                   onTap: () async {
                     await ref.read(settingsRepositoryProvider).clearAllData();
                     if (context.mounted) {
@@ -145,11 +143,13 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          const Card(
+          const SizedBox(height: AppSpacing.md),
+          _SectionTitle('About'),
+          const GlassCard(
             child: ListTile(
-              title: Text('About'),
-              subtitle: Text('Spendly v1.0.0\nOpen-source ready personal finance app'),
+              leading: Icon(Icons.info_outline),
+              title: Text('Spendly v1.0.0'),
+              subtitle: Text('Offline-first personal finance app\nGitHub: DedxAB/spendly-android-app'),
             ),
           ),
         ],
@@ -157,3 +157,19 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 }
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+    );
+  }
+}
+
+

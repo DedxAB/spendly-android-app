@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/database/default_categories.dart';
 import 'package:spendly/core/database/tables.dart';
 
@@ -68,7 +69,7 @@ class AppDatabase extends _$AppDatabase {
           name: seed.name,
           icon: seed.icon,
           color: seed.color,
-          type: seed.type.name,
+          type: seed.type.value,
           createdAt: now,
           updatedAt: now,
           isDeleted: const Value(false),

@@ -83,7 +83,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
         id: const Value(1),
         monthlyBudget: Value(budget),
         currency: Value(current?.currency ?? 'INR'),
-        themeMode: Value(current?.themeMode ?? AppThemeMode.system.name),
+        themeMode: Value(current?.themeMode ?? AppThemeMode.system.value),
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       ),
     );

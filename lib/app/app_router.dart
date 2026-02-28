@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/features/home/presentation/pages/home_page.dart';
 import 'package:spendly/features/insights/presentation/pages/insights_page.dart';
 import 'package:spendly/features/settings/presentation/pages/settings_page.dart';
@@ -33,25 +34,65 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> {
+class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
   @override
   void initState() {
     super.initState();
-    Future<void>.delayed(const Duration(milliseconds: 1200), () {
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward();
+
+    Future<void>.delayed(const Duration(milliseconds: 1300), () {
       if (mounted) context.go('/home');
     });
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: AnimatedOpacity(
-          opacity: 1,
-          duration: const Duration(milliseconds: 900),
-          child: Text(
-            'Spendly',
-            style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w700),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.emerald.withValues(alpha: 0.20),
+              Theme.of(context).scaffoldBackgroundColor,
+            ],
+          ),
+        ),
+        child: Center(
+          child: FadeTransition(
+            opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.96, end: 1)
+                  .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Image.asset(
+                      'assets/images/spendly_splash.png',
+                      width: 220,
+                      height: 220,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text('Spendly', style: Theme.of(context).textTheme.headlineMedium),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -76,15 +117,27 @@ class AppShell extends StatelessWidget {
     final selectedIndex = _indexForLocation(location);
 
     return Scaffold(
-      body: child,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.emerald.withValues(alpha: 0.08),
+              Theme.of(context).scaffoldBackgroundColor,
+            ],
+          ),
+        ),
+        child: child,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/transactions/new'),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Add'),
       ),
       bottomNavigationBar: NavigationBar(
-        height: 74,
+        height: 72,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         selectedIndex: selectedIndex,
         destinations: const [

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/constants/app_constants.dart';
 import 'package:spendly/core/constants/app_enums.dart';
+import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/features/categories/presentation/pages/categories_page.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
@@ -87,19 +88,20 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = ref.watch(categoryByTypeProvider(_type.name));
+    final categories = ref.watch(categoryByTypeProvider(_type.value));
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.existing == null ? 'Add Transaction' : 'Edit Transaction')),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(AppConstants.screenPadding),
+          padding: const EdgeInsets.all(AppSpacing.md),
           children: [
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: SegmentedButton<TransactionType>(
+                  showSelectedIcon: false,
                   segments: const [
                     ButtonSegment(value: TransactionType.income, label: Text('Income')),
                     ButtonSegment(value: TransactionType.expense, label: Text('Expense')),
@@ -112,14 +114,14 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.sm),
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: TextFormField(
                   controller: _amountController,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(context).textTheme.headlineMedium,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                     labelText: 'Amount',
@@ -133,16 +135,16 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.sm),
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Text('Category', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                        Text('Category', style: Theme.of(context).textTheme.titleMedium),
                         const Spacer(),
                         TextButton(
                           onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CategoriesPage())),
@@ -154,11 +156,12 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                       data: (items) {
                         if (items.isEmpty) return const Text('No categories available for this type.');
                         return Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                          spacing: AppSpacing.xs,
+                          runSpacing: AppSpacing.xs,
                           children: items
                               .map(
-                                (item) => ChoiceChip(
+                                (item) => FilterChip(
+                                  avatar: const Icon(Icons.grid_view_rounded, size: 16),
                                   label: Text(item.name),
                                   selected: _selectedCategoryId == item.id,
                                   onSelected: (_) => setState(() => _selectedCategoryId = item.id),
@@ -174,39 +177,35 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.sm),
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Payment mode', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 8),
+                    Text('Payment Mode', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: AppSpacing.xs),
                     Wrap(
-                      spacing: 8,
-                      children: PaymentMode.values
-                          .map(
-                            (mode) => ChoiceChip(
-                              label: Text(mode.name.toUpperCase()),
-                              selected: _paymentMode == mode,
-                              onSelected: (_) => setState(() => _paymentMode = mode),
-                            ),
-                          )
-                          .toList(growable: false),
+                      spacing: AppSpacing.xs,
+                      children: [
+                        _modeChip('Cash', PaymentMode.cash),
+                        _modeChip('UPI', PaymentMode.upi),
+                        _modeChip('Card', PaymentMode.card),
+                      ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _noteController,
                       decoration: const InputDecoration(labelText: 'Note (optional)'),
                       maxLines: 2,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppSpacing.xs),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Date'),
                       subtitle: Text(Formatters.date(_date)),
-                      trailing: const Icon(Icons.calendar_month),
+                      trailing: const Icon(Icons.calendar_month_outlined),
                       onTap: () async {
                         final selected = await showDatePicker(
                           context: context,
@@ -221,7 +220,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.md),
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.check_rounded),
@@ -230,6 +229,14 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _modeChip(String label, PaymentMode mode) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: _paymentMode == mode,
+      onSelected: (_) => setState(() => _paymentMode = mode),
     );
   }
 }
