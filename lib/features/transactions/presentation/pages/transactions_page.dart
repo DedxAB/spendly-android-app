@@ -7,6 +7,8 @@ import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/glass_card.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
+import 'package:spendly/features/recurring/data/repositories/recurring_repository_impl.dart';
+import 'package:spendly/features/recurring/domain/entities/recurring_rule_entity.dart';
 import 'package:spendly/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:spendly/features/settings/presentation/providers/settings_provider.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
@@ -15,6 +17,186 @@ import 'package:spendly/features/transactions/presentation/providers/transaction
 
 class TransactionsPage extends ConsumerWidget {
   const TransactionsPage({super.key});
+
+  Future<void> _openTransactionDetail(
+    BuildContext context,
+    WidgetRef ref,
+    TransactionEntity transaction,
+    String categoryName,
+  ) async {
+    RecurringRuleEntity? recurringRule;
+    if (transaction.recurringRuleId != null) {
+      recurringRule = await ref
+          .read(recurringRepositoryProvider)
+          .getById(transaction.recurringRuleId!);
+    }
+    if (!context.mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              0,
+              AppSpacing.md,
+              AppSpacing.md,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  categoryName,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  Formatters.currency(transaction.amount),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: transaction.type == TransactionType.income
+                        ? AppColors.income
+                        : AppColors.expense,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text('Date: ${Formatters.date(transaction.date)}'),
+                if (transaction.note?.trim().isNotEmpty == true) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text('Note: ${transaction.note}'),
+                ],
+                const SizedBox(height: AppSpacing.sm),
+                if (recurringRule != null) ...[
+                  Text(
+                    'Recurring: Repeats ${_frequencyLabel(recurringRule.frequency)}',
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      OutlinedButton(
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          await _editRecurring(context, ref, recurringRule!);
+                        },
+                        child: const Text('Edit repeat'),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      TextButton(
+                        onPressed: () async {
+                          await ref
+                              .read(recurringRepositoryProvider)
+                              .setActive(recurringRule!.id, false);
+                          if (context.mounted) Navigator.of(context).pop();
+                        },
+                        child: const Text('Stop recurring'),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _editRecurring(
+    BuildContext context,
+    WidgetRef ref,
+    RecurringRuleEntity rule,
+  ) async {
+    final choice = await showModalBottomSheet<Object?>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Does not repeat'),
+                onTap: () =>
+                    Navigator.of(context).pop(_RecurringEditAction.stop),
+              ),
+              ListTile(
+                title: const Text('Daily'),
+                onTap: () =>
+                    Navigator.of(context).pop(RecurringFrequency.daily),
+              ),
+              ListTile(
+                title: const Text('Weekly'),
+                onTap: () =>
+                    Navigator.of(context).pop(RecurringFrequency.weekly),
+              ),
+              ListTile(
+                title: const Text('Monthly'),
+                onTap: () =>
+                    Navigator.of(context).pop(RecurringFrequency.monthly),
+              ),
+              ListTile(
+                title: const Text('Yearly'),
+                onTap: () =>
+                    Navigator.of(context).pop(RecurringFrequency.yearly),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (choice == null) return;
+    if (choice == _RecurringEditAction.stop) {
+      await ref.read(recurringRepositoryProvider).setActive(rule.id, false);
+      return;
+    }
+    await ref
+        .read(recurringRepositoryProvider)
+        .updateFrequency(rule.id, choice as RecurringFrequency);
+  }
+
+  Future<_RecurringDeleteAction?> _pickRecurringDeleteAction(
+    BuildContext context,
+  ) {
+    return showModalBottomSheet<_RecurringDeleteAction>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Delete this occurrence only'),
+                onTap: () =>
+                    Navigator.of(context).pop(_RecurringDeleteAction.onlyThis),
+              ),
+              ListTile(
+                title: const Text('Delete this and future occurrences'),
+                onTap: () => Navigator.of(
+                  context,
+                ).pop(_RecurringDeleteAction.thisAndFuture),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _frequencyLabel(RecurringFrequency frequency) {
+    switch (frequency) {
+      case RecurringFrequency.daily:
+        return 'Daily';
+      case RecurringFrequency.weekly:
+        return 'Weekly';
+      case RecurringFrequency.monthly:
+        return 'Monthly';
+      case RecurringFrequency.yearly:
+        return 'Yearly';
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -377,6 +559,33 @@ class TransactionsPage extends ConsumerWidget {
                                   );
                                   return false;
                                 }
+                                if (item.recurringRuleId != null &&
+                                    item.isRecurringInstance) {
+                                  final action =
+                                      await _pickRecurringDeleteAction(context);
+                                  if (action == null) return false;
+                                  if (action ==
+                                      _RecurringDeleteAction.thisAndFuture) {
+                                    await ref
+                                        .read(recurringRepositoryProvider)
+                                        .deleteThisAndFuture(
+                                          ruleId: item.recurringRuleId!,
+                                          fromDate: item.date,
+                                        );
+                                  } else {
+                                    await ref
+                                        .read(transactionActionsProvider)
+                                        .softDelete(item.id);
+                                  }
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Recurring updated'),
+                                      ),
+                                    );
+                                  }
+                                  return false;
+                                }
                                 return true;
                               },
                               onDismissed: (_) async {
@@ -427,6 +636,12 @@ class TransactionsPage extends ConsumerWidget {
                                   ),
                                 ),
                                 child: ListTile(
+                                  onTap: () => _openTransactionDetail(
+                                    context,
+                                    ref,
+                                    item,
+                                    categoryName,
+                                  ),
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 14,
                                     vertical: 8,
@@ -450,7 +665,9 @@ class TransactionsPage extends ConsumerWidget {
                                     ),
                                   ),
                                   title: Text(
-                                    categoryName,
+                                    item.isRecurringInstance
+                                        ? '$categoryName  🔁'
+                                        : categoryName,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -499,3 +716,7 @@ class TransactionsPage extends ConsumerWidget {
     );
   }
 }
+
+enum _RecurringDeleteAction { onlyThis, thisAndFuture }
+
+enum _RecurringEditAction { stop }

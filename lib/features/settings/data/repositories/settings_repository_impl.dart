@@ -8,16 +8,110 @@ import 'package:spendly/core/database/app_database.dart';
 import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/database/mappers.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
-import 'package:spendly/features/investments/domain/entities/investment_entity.dart';
+import 'package:spendly/features/lend/domain/entities/lend_entry_entity.dart';
+import 'package:spendly/features/lend/domain/entities/lend_person_entity.dart';
+import 'package:spendly/features/insights/domain/entities/monthly_reflection_entity.dart';
 import 'package:spendly/features/recurring/domain/entities/recurring_rule_entity.dart';
 import 'package:spendly/features/settings/domain/entities/settings_entity.dart';
 import 'package:spendly/features/settings/domain/repositories/settings_repository.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:spendly/features/user/domain/entities/user_profile_entity.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
   SettingsRepositoryImpl(this._ref);
 
   final Ref _ref;
+
+  Map<String, dynamic>? _asObjectMap(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    return null;
+  }
+
+  List<Map<String, dynamic>> _asObjectMapList(dynamic value) {
+    if (value is! List) {
+      return const [];
+    }
+    return value
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
+  }
+
+  int? _parseSchemaVersion(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  void _normalizeDateField(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value is int) {
+      json[key] = DateTime.fromMillisecondsSinceEpoch(value).toIso8601String();
+    }
+  }
+
+  Map<String, dynamic> _normalizeSettingsJson(Map<String, dynamic> json) {
+    final normalized = Map<String, dynamic>.from(json);
+    _normalizeDateField(normalized, 'updatedAt');
+    return normalized;
+  }
+
+  Map<String, dynamic> _normalizeUserProfileJson(Map<String, dynamic> json) {
+    final normalized = Map<String, dynamic>.from(json);
+    _normalizeDateField(normalized, 'createdAt');
+    _normalizeDateField(normalized, 'updatedAt');
+    return normalized;
+  }
+
+  Map<String, dynamic> _normalizeCategoryJson(Map<String, dynamic> json) {
+    final normalized = Map<String, dynamic>.from(json);
+    _normalizeDateField(normalized, 'createdAt');
+    _normalizeDateField(normalized, 'updatedAt');
+    return normalized;
+  }
+
+  Map<String, dynamic> _normalizeTransactionJson(Map<String, dynamic> json) {
+    final normalized = Map<String, dynamic>.from(json);
+    _normalizeDateField(normalized, 'date');
+    _normalizeDateField(normalized, 'createdAt');
+    _normalizeDateField(normalized, 'updatedAt');
+    return normalized;
+  }
+
+  Map<String, dynamic> _normalizeRecurringRuleJson(Map<String, dynamic> json) {
+    final normalized = Map<String, dynamic>.from(json);
+    _normalizeDateField(normalized, 'startDate');
+    _normalizeDateField(normalized, 'nextDueDate');
+    _normalizeDateField(normalized, 'createdAt');
+    _normalizeDateField(normalized, 'updatedAt');
+    return normalized;
+  }
+
+  Map<String, dynamic> _normalizeLendPersonJson(Map<String, dynamic> json) {
+    final normalized = Map<String, dynamic>.from(json);
+    _normalizeDateField(normalized, 'createdAt');
+    _normalizeDateField(normalized, 'updatedAt');
+    return normalized;
+  }
+
+  Map<String, dynamic> _normalizeLendEntryJson(Map<String, dynamic> json) {
+    final normalized = Map<String, dynamic>.from(json);
+    _normalizeDateField(normalized, 'date');
+    _normalizeDateField(normalized, 'createdAt');
+    _normalizeDateField(normalized, 'updatedAt');
+    return normalized;
+  }
+
+  Map<String, dynamic> _normalizeMonthlyReflectionJson(
+    Map<String, dynamic> json,
+  ) {
+    final normalized = Map<String, dynamic>.from(json);
+    _normalizeDateField(normalized, 'updatedAt');
+    return normalized;
+  }
 
   @override
   Future<void> clearAllData() async {
@@ -28,25 +122,37 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Future<String> exportJson() async {
     final db = _ref.read(appDatabaseProvider);
     final settingsRow = await db.getSettingsRow();
+    final userProfileRow = await db.getUserProfileRow();
     final categories = await db.getCategories();
     final transactions = await db.watchAllActiveTransactions().first;
-    final investments = await db.getInvestments();
     final recurringRules = await db.getRecurringRules();
+    final lendPeople = await db.getLendPeople();
+    final lendEntries = await db.getLendEntries();
+    final reflections = await db.getMonthlyReflections();
 
     final payload = {
       'schemaVersion': AppConstants.exportSchemaVersion,
       'exportedAt': DateTime.now().toIso8601String(),
       'data': {
-        'settings': settingsRow?.toJson(),
-        'categories': categories.map((e) => e.toJson()).toList(growable: false),
-        'transactions': transactions
-            .map((e) => e.toJson())
+        'settings': settingsRow?.toEntity().toJson(),
+        'userProfile': userProfileRow?.toEntity().toJson(),
+        'categories': categories
+            .map((e) => e.toEntity().toJson())
             .toList(growable: false),
-        'investments': investments
-            .map((e) => e.toJson())
+        'transactions': transactions
+            .map((e) => e.toEntity().toJson())
             .toList(growable: false),
         'recurringRules': recurringRules
-            .map((e) => e.toJson())
+            .map((e) => e.toEntity().toJson())
+            .toList(growable: false),
+        'lendPeople': lendPeople
+            .map((e) => e.toEntity().toJson())
+            .toList(growable: false),
+        'lendEntries': lendEntries
+            .map((e) => e.toEntity().toJson())
+            .toList(growable: false),
+        'monthlyReflections': reflections
+            .map((e) => e.toEntity().toJson())
             .toList(growable: false),
       },
     };
@@ -57,45 +163,80 @@ class SettingsRepositoryImpl implements SettingsRepository {
   @override
   Future<void> importJson(String payload) async {
     final decoded = jsonDecode(payload) as Map<String, dynamic>;
-    final schemaVersion = decoded['schemaVersion'] as int?;
+    final schemaVersion = _parseSchemaVersion(decoded['schemaVersion']);
     if (schemaVersion != AppConstants.exportSchemaVersion) {
       throw const FormatException('Unsupported schema version');
     }
 
-    final data = decoded['data'] as Map<String, dynamic>;
-    final settingsJson = (data['settings'] as Map?)?.cast<String, dynamic>();
-    final categoriesJson =
-        (data['categories'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
-    final transactionsJson =
-        (data['transactions'] as List?)?.cast<Map<String, dynamic>>() ??
-        const [];
-    final investmentsJson =
-        (data['investments'] as List?)?.cast<Map<String, dynamic>>() ??
-        const [];
-    final recurringJson =
-        (data['recurringRules'] as List?)?.cast<Map<String, dynamic>>() ??
-        const [];
+    final data = _asObjectMap(decoded['data']);
+    if (data == null) {
+      throw const FormatException('Invalid data payload');
+    }
+
+    final settingsJson = _asObjectMap(data['settings']);
+    final userProfileJson = _asObjectMap(data['userProfile']);
+    final categoriesJson = _asObjectMapList(data['categories']);
+    final transactionsJson = _asObjectMapList(data['transactions']);
+    final recurringJson = _asObjectMapList(data['recurringRules']);
+    final lendPeopleJson = _asObjectMapList(data['lendPeople']);
+    final lendEntriesJson = _asObjectMapList(data['lendEntries']);
+    final monthlyReflectionsJson = _asObjectMapList(data['monthlyReflections']);
 
     final settings = settingsJson != null
-        ? SettingsEntity.fromJson(settingsJson)
+        ? SettingsEntity.fromJson(_normalizeSettingsJson(settingsJson))
         : SettingsEntity(updatedAt: DateTime.now());
+    final userProfile = userProfileJson != null
+        ? UserProfileEntity.fromJson(_normalizeUserProfileJson(userProfileJson))
+        : UserProfileEntity(
+            name: 'User',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
 
     final categoryRows = categoriesJson
-        .map((json) => categoryToCompanion(CategoryEntity.fromJson(json)))
+        .map(
+          (json) => categoryToCompanion(
+            CategoryEntity.fromJson(_normalizeCategoryJson(json)),
+          ),
+        )
         .toList(growable: false);
 
     final transactionRows = transactionsJson
-        .map((json) => transactionToCompanion(TransactionEntity.fromJson(json)))
-        .toList(growable: false);
-
-    final investmentRows = investmentsJson
-        .map((json) => investmentToCompanion(InvestmentEntity.fromJson(json)))
+        .map(
+          (json) => transactionToCompanion(
+            TransactionEntity.fromJson(_normalizeTransactionJson(json)),
+          ),
+        )
         .toList(growable: false);
 
     final recurringRows = recurringJson
         .map(
-          (json) =>
-              recurringRuleToCompanion(RecurringRuleEntity.fromJson(json)),
+          (json) => recurringRuleToCompanion(
+            RecurringRuleEntity.fromJson(_normalizeRecurringRuleJson(json)),
+          ),
+        )
+        .toList(growable: false);
+    final lendPeopleRows = lendPeopleJson
+        .map(
+          (json) => lendPersonToCompanion(
+            LendPersonEntity.fromJson(_normalizeLendPersonJson(json)),
+          ),
+        )
+        .toList(growable: false);
+    final lendEntryRows = lendEntriesJson
+        .map(
+          (json) => lendEntryToCompanion(
+            LendEntryEntity.fromJson(_normalizeLendEntryJson(json)),
+          ),
+        )
+        .toList(growable: false);
+    final monthlyReflectionRows = monthlyReflectionsJson
+        .map(
+          (json) => monthlyReflectionToCompanion(
+            MonthlyReflectionEntity.fromJson(
+              _normalizeMonthlyReflectionJson(json),
+            ),
+          ),
         )
         .toList(growable: false);
 
@@ -104,9 +245,12 @@ class SettingsRepositoryImpl implements SettingsRepository {
         .replaceAllData(
           categoryRows: categoryRows,
           transactionRows: transactionRows,
-          investmentRows: investmentRows,
           recurringRuleRows: recurringRows,
+          lendPeopleRows: lendPeopleRows,
+          lendEntryRows: lendEntryRows,
+          monthlyReflectionRows: monthlyReflectionRows,
           settingsRow: settingsToCompanion(settings),
+          userProfileRow: userProfileToCompanion(userProfile),
         );
   }
 

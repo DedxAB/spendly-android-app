@@ -7,6 +7,8 @@ import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/features/categories/presentation/pages/categories_page.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
+import 'package:spendly/features/recurring/data/repositories/recurring_repository_impl.dart';
+import 'package:spendly/features/recurring/domain/entities/recurring_rule_entity.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:spendly/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -29,6 +31,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
   PaymentMode _paymentMode = PaymentMode.cash;
   DateTime _date = DateTime.now();
   String? _selectedCategoryId;
+  RecurringFrequency? _selectedRepeat;
 
   @override
   void initState() {
@@ -39,10 +42,12 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       _paymentMode = existing.paymentMode;
       _date = existing.date;
       _selectedCategoryId = existing.categoryId;
+      _selectedRepeat = null;
       _amountController.text = existing.amount.toStringAsFixed(2);
       _noteController.text = existing.note ?? '';
     } else {
       _type = TransactionType.expense;
+      _selectedRepeat = null;
     }
   }
 
@@ -64,6 +69,45 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
 
     final amount = double.parse(_amountController.text);
     final now = DateTime.now();
+    String? recurringRuleId = widget.existing?.recurringRuleId;
+    var isRecurringInstance = widget.existing?.isRecurringInstance ?? false;
+    var createdRecurringRule = false;
+
+    if (widget.existing == null && _selectedRepeat != null) {
+      final allCategories = ref.read(allCategoriesProvider).valueOrNull;
+      final filtered = allCategories
+          ?.where((category) => category.id == _selectedCategoryId)
+          .toList(growable: false);
+      final matched = (filtered != null && filtered.isNotEmpty)
+          ? filtered.first
+          : null;
+      final categoryName =
+          matched?.name ??
+          (_type == TransactionType.income ? 'Income' : 'Expense');
+      recurringRuleId = const Uuid().v4();
+      final rule = RecurringRuleEntity(
+        id: recurringRuleId,
+        title: categoryName,
+        type: _type,
+        amount: amount,
+        categoryId: _selectedCategoryId!,
+        paymentMode: _paymentMode,
+        frequency: _selectedRepeat!,
+        note: _noteController.text.trim().isEmpty
+            ? null
+            : _noteController.text.trim(),
+        startDate: _date,
+        nextDueDate: _advanceDate(_date, _selectedRepeat!),
+        createdAt: now,
+        updatedAt: now,
+        isActive: true,
+        isDeleted: false,
+      );
+      await ref.read(recurringRepositoryProvider).addOrUpdate(rule);
+      isRecurringInstance = true;
+      createdRecurringRule = true;
+    }
+
     final entity = TransactionEntity(
       id: widget.existing?.id ?? const Uuid().v4(),
       type: _type,
@@ -76,6 +120,8 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       date: _date,
       createdAt: widget.existing?.createdAt ?? now,
       updatedAt: now,
+      recurringRuleId: recurringRuleId,
+      isRecurringInstance: isRecurringInstance,
       isDeleted: false,
     );
 
@@ -84,6 +130,9 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       await actions.save(entity);
     } else {
       await actions.update(entity);
+    }
+    if (createdRecurringRule) {
+      await ref.read(recurringRepositoryProvider).processDueRules();
     }
 
     HapticFeedback.lightImpact();
@@ -256,6 +305,19 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                         if (selected != null) setState(() => _date = selected);
                       },
                     ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Repeat'),
+                      subtitle: Text(
+                        widget.existing?.recurringRuleId != null
+                            ? 'Manage in transaction detail'
+                            : _repeatLabel(_selectedRepeat),
+                      ),
+                      trailing: const Icon(Icons.keyboard_arrow_down_rounded),
+                      onTap: widget.existing != null
+                          ? null
+                          : () => _pickRepeatFrequency(context),
+                    ),
                   ],
                 ),
               ),
@@ -278,5 +340,89 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       selected: _paymentMode == mode,
       onSelected: (_) => setState(() => _paymentMode = mode),
     );
+  }
+
+  String _repeatLabel(RecurringFrequency? frequency) {
+    if (frequency == null) return 'None';
+    switch (frequency) {
+      case RecurringFrequency.daily:
+        return 'Daily';
+      case RecurringFrequency.weekly:
+        return 'Weekly';
+      case RecurringFrequency.monthly:
+        return 'Monthly';
+      case RecurringFrequency.yearly:
+        return 'Yearly';
+    }
+  }
+
+  Future<void> _pickRepeatFrequency(BuildContext context) async {
+    final selected = await showModalBottomSheet<RecurringFrequency?>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Does not repeat'),
+                trailing: _selectedRepeat == null
+                    ? const Icon(Icons.check_rounded)
+                    : null,
+                onTap: () => Navigator.of(context).pop(null),
+              ),
+              ListTile(
+                title: const Text('Daily'),
+                trailing: _selectedRepeat == RecurringFrequency.daily
+                    ? const Icon(Icons.check_rounded)
+                    : null,
+                onTap: () =>
+                    Navigator.of(context).pop(RecurringFrequency.daily),
+              ),
+              ListTile(
+                title: const Text('Weekly'),
+                trailing: _selectedRepeat == RecurringFrequency.weekly
+                    ? const Icon(Icons.check_rounded)
+                    : null,
+                onTap: () =>
+                    Navigator.of(context).pop(RecurringFrequency.weekly),
+              ),
+              ListTile(
+                title: const Text('Monthly'),
+                trailing: _selectedRepeat == RecurringFrequency.monthly
+                    ? const Icon(Icons.check_rounded)
+                    : null,
+                onTap: () =>
+                    Navigator.of(context).pop(RecurringFrequency.monthly),
+              ),
+              ListTile(
+                title: const Text('Yearly'),
+                trailing: _selectedRepeat == RecurringFrequency.yearly
+                    ? const Icon(Icons.check_rounded)
+                    : null,
+                onTap: () =>
+                    Navigator.of(context).pop(RecurringFrequency.yearly),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (!mounted) return;
+    setState(() => _selectedRepeat = selected);
+  }
+
+  DateTime _advanceDate(DateTime date, RecurringFrequency frequency) {
+    switch (frequency) {
+      case RecurringFrequency.daily:
+        return date.add(const Duration(days: 1));
+      case RecurringFrequency.weekly:
+        return date.add(const Duration(days: 7));
+      case RecurringFrequency.monthly:
+        return DateTime(date.year, date.month + 1, date.day);
+      case RecurringFrequency.yearly:
+        return DateTime(date.year + 1, date.month, date.day);
+    }
   }
 }

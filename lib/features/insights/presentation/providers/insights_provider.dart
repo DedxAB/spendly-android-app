@@ -1,21 +1,91 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:spendly/features/insights/data/repositories/insights_repository_impl.dart';
-import 'package:spendly/features/transactions/presentation/providers/transactions_provider.dart';
+import 'package:spendly/features/settings/presentation/providers/settings_provider.dart';
+
+enum InsightsViewMode { monthly, yearly }
+
+final insightsSelectedMonthProvider = StateProvider<DateTime>(
+  (_) => DateTime(DateTime.now().year, DateTime.now().month, 1),
+);
+
+final insightsViewModeProvider = StateProvider<InsightsViewMode>(
+  (_) => InsightsViewMode.monthly,
+);
+
+final insightsMonthKeyProvider = Provider<String>((ref) {
+  final month = ref.watch(insightsSelectedMonthProvider);
+  return DateFormat('yyyy-MM').format(month);
+});
 
 final expenseDistributionProvider = StreamProvider((ref) {
+  final period = ref.watch(insightsSelectedMonthProvider);
+  final yearly = ref.watch(insightsViewModeProvider) == InsightsViewMode.yearly;
   return ref
       .watch(insightsRepositoryProvider)
-      .watchExpenseDistribution(ref.watch(selectedMonthProvider));
+      .watchExpenseDistribution(period, yearly: yearly);
 });
 
 final dailyTrendProvider = StreamProvider((ref) {
+  final period = ref.watch(insightsSelectedMonthProvider);
+  final yearly = ref.watch(insightsViewModeProvider) == InsightsViewMode.yearly;
   return ref
       .watch(insightsRepositoryProvider)
-      .watchDailyTrend(ref.watch(selectedMonthProvider));
+      .watchTrend(period, yearly: yearly);
 });
 
 final incomeVsExpenseProvider = StreamProvider((ref) {
+  final period = ref.watch(insightsSelectedMonthProvider);
+  final yearly = ref.watch(insightsViewModeProvider) == InsightsViewMode.yearly;
   return ref
       .watch(insightsRepositoryProvider)
-      .watchIncomeVsExpense(ref.watch(selectedMonthProvider));
+      .watchIncomeVsExpense(period, yearly: yearly);
 });
+
+final yearlyIncomeVsExpenseProvider = StreamProvider((ref) {
+  final period = ref.watch(insightsSelectedMonthProvider);
+  return ref
+      .watch(insightsRepositoryProvider)
+      .watchYearlyIncomeVsExpense(period.year);
+});
+
+final paymentModeBreakdownProvider = StreamProvider((ref) {
+  final period = ref.watch(insightsSelectedMonthProvider);
+  final yearly = ref.watch(insightsViewModeProvider) == InsightsViewMode.yearly;
+  return ref
+      .watch(insightsRepositoryProvider)
+      .watchPaymentModeBreakdown(period, yearly: yearly);
+});
+
+final projectedExpenseProvider = StreamProvider((ref) {
+  final month = ref.watch(insightsSelectedMonthProvider);
+  return ref.watch(insightsRepositoryProvider).watchProjectedExpense(month);
+});
+
+final expenseChangePercentProvider = StreamProvider((ref) {
+  final period = ref.watch(insightsSelectedMonthProvider);
+  final yearly = ref.watch(insightsViewModeProvider) == InsightsViewMode.yearly;
+  return ref
+      .watch(insightsRepositoryProvider)
+      .watchExpenseChangePercent(period, yearly: yearly);
+});
+
+final monthlyBudgetProvider = Provider<double>((ref) {
+  final settings = ref.watch(settingsStreamProvider).valueOrNull;
+  return settings?.monthlyBudget ?? 0;
+});
+
+final monthlyReflectionProvider = StreamProvider((ref) {
+  final monthKey = ref.watch(insightsMonthKeyProvider);
+  return ref.watch(insightsRepositoryProvider).watchMonthlyReflection(monthKey);
+});
+
+final saveMonthlyReflectionProvider =
+    Provider<Future<void> Function(String note)>((ref) {
+      return (note) {
+        final monthKey = ref.read(insightsMonthKeyProvider);
+        return ref
+            .read(insightsRepositoryProvider)
+            .saveMonthlyReflection(monthKey: monthKey, note: note);
+      };
+    });

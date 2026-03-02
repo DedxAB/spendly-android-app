@@ -21,13 +21,55 @@ class RecurringRepositoryImpl implements RecurringRepository {
   }
 
   @override
+  Future<RecurringRuleEntity?> getById(String ruleId) async {
+    final row = await _db.getRecurringRuleById(ruleId);
+    return row?.toEntity();
+  }
+
+  @override
   Future<void> setActive(String ruleId, bool isActive) async {
     await _db.setRecurringRuleActive(ruleId, isActive);
   }
 
   @override
+  Future<void> updateFrequency(
+    String ruleId,
+    RecurringFrequency frequency,
+  ) async {
+    final existing = await _db.getRecurringRuleById(ruleId);
+    if (existing == null) return;
+    await _db.upsertRecurringRule(
+      existing
+          .copyWith(
+            frequency: frequency.value,
+            updatedAt: DateTime.now().millisecondsSinceEpoch,
+          )
+          .toCompanion(true),
+    );
+  }
+
+  @override
   Future<void> softDelete(String ruleId) async {
     await _db.softDeleteRecurringRule(ruleId);
+  }
+
+  @override
+  Future<void> deleteThisAndFuture({
+    required String ruleId,
+    required DateTime fromDate,
+  }) async {
+    final fromDayStart = DateTime(
+      fromDate.year,
+      fromDate.month,
+      fromDate.day,
+    ).millisecondsSinceEpoch;
+    await _db.transaction(() async {
+      await _db.setRecurringRuleActive(ruleId, false);
+      await _db.softDeleteTransactionsByRecurringRuleFromDate(
+        ruleId,
+        fromDayStart,
+      );
+    });
   }
 
   @override
@@ -49,6 +91,30 @@ class RecurringRepositoryImpl implements RecurringRepository {
         var nextDue = DateTime.fromMillisecondsSinceEpoch(row.nextDueDate);
         var safety = 0;
         while (!nextDue.isAfter(now) && safety < 120) {
+          final dayStart = DateTime(
+            nextDue.year,
+            nextDue.month,
+            nextDue.day,
+          ).millisecondsSinceEpoch;
+          final dayEnd = DateTime(
+            nextDue.year,
+            nextDue.month,
+            nextDue.day + 1,
+          ).millisecondsSinceEpoch;
+          final exists = await _db.hasActiveRecurringOccurrenceOnDate(
+            ruleId: row.id,
+            dayStartEpoch: dayStart,
+            dayEndExclusiveEpoch: dayEnd,
+          );
+          if (exists) {
+            nextDue = _advanceDate(
+              nextDue,
+              RecurringFrequencyX.fromValue(row.frequency),
+            );
+            safety++;
+            continue;
+          }
+
           final transactionDate = DateTime(
             nextDue.year,
             nextDue.month,
@@ -59,7 +125,7 @@ class RecurringRepositoryImpl implements RecurringRepository {
           await _db.upsertTransaction(
             TransactionsCompanion.insert(
               id: const Uuid().v4(),
-              type: TransactionType.expense.value,
+              type: row.type,
               amount: row.amount,
               categoryId: row.categoryId,
               paymentMode: PaymentModeX.fromValue(row.paymentMode).value,
@@ -71,6 +137,8 @@ class RecurringRepositoryImpl implements RecurringRepository {
               date: transactionDate.millisecondsSinceEpoch,
               createdAt: now.millisecondsSinceEpoch,
               updatedAt: now.millisecondsSinceEpoch,
+              recurringRuleId: Value(row.id),
+              isRecurringInstance: const Value(true),
               isDeleted: const Value(false),
             ),
           );
@@ -94,6 +162,8 @@ class RecurringRepositoryImpl implements RecurringRepository {
 
   DateTime _advanceDate(DateTime date, RecurringFrequency frequency) {
     switch (frequency) {
+      case RecurringFrequency.daily:
+        return date.add(const Duration(days: 1));
       case RecurringFrequency.weekly:
         return date.add(const Duration(days: 7));
       case RecurringFrequency.monthly:

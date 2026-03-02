@@ -4,6 +4,7 @@ class RecurringRuleEntity {
   const RecurringRuleEntity({
     required this.id,
     required this.title,
+    required this.type,
     required this.amount,
     required this.categoryId,
     required this.paymentMode,
@@ -19,6 +20,7 @@ class RecurringRuleEntity {
 
   final String id;
   final String title;
+  final TransactionType type;
   final double amount;
   final String categoryId;
   final PaymentMode paymentMode;
@@ -34,6 +36,7 @@ class RecurringRuleEntity {
   RecurringRuleEntity copyWith({
     String? id,
     String? title,
+    TransactionType? type,
     double? amount,
     String? categoryId,
     PaymentMode? paymentMode,
@@ -49,6 +52,7 @@ class RecurringRuleEntity {
     return RecurringRuleEntity(
       id: id ?? this.id,
       title: title ?? this.title,
+      type: type ?? this.type,
       amount: amount ?? this.amount,
       categoryId: categoryId ?? this.categoryId,
       paymentMode: paymentMode ?? this.paymentMode,
@@ -67,6 +71,7 @@ class RecurringRuleEntity {
     return {
       'id': id,
       'title': title,
+      'type': type.value,
       'amount': amount,
       'categoryId': categoryId,
       'paymentMode': paymentMode.value,
@@ -85,6 +90,9 @@ class RecurringRuleEntity {
     return RecurringRuleEntity(
       id: json['id'] as String,
       title: json['title'] as String,
+      type: TransactionTypeX.fromValue(
+        (json['type'] as String?) ?? TransactionType.expense.value,
+      ),
       amount: (json['amount'] as num).toDouble(),
       categoryId: json['categoryId'] as String,
       paymentMode: PaymentModeX.fromValue(json['paymentMode'] as String),

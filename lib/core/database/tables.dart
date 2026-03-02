@@ -10,6 +10,11 @@ class Transactions extends Table {
   IntColumn get date => integer()();
   IntColumn get createdAt => integer().named('created_at')();
   IntColumn get updatedAt => integer().named('updated_at')();
+  TextColumn get recurringRuleId =>
+      text().named('recurring_rule_id').nullable()();
+  BoolColumn get isRecurringInstance => boolean()
+      .named('is_recurring_instance')
+      .withDefault(const Constant(false))();
   BoolColumn get isDeleted =>
       boolean().named('is_deleted').withDefault(const Constant(false))();
 
@@ -35,26 +40,10 @@ class Categories extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-class Investments extends Table {
-  TextColumn get id => text()();
-  TextColumn get name => text()();
-  TextColumn get type => text()();
-  RealColumn get amountInvested => real().named('amount_invested')();
-  RealColumn get currentValue => real().named('current_value').nullable()();
-  IntColumn get investedDate => integer().named('invested_date')();
-  TextColumn get note => text().nullable()();
-  IntColumn get createdAt => integer().named('created_at')();
-  IntColumn get updatedAt => integer().named('updated_at')();
-  BoolColumn get isDeleted =>
-      boolean().named('is_deleted').withDefault(const Constant(false))();
-
-  @override
-  Set<Column<Object>> get primaryKey => {id};
-}
-
 class RecurringRules extends Table {
   TextColumn get id => text()();
   TextColumn get title => text()();
+  TextColumn get type => text().withDefault(const Constant('expense'))();
   RealColumn get amount => real()();
   TextColumn get categoryId => text().named('category_id')();
   TextColumn get paymentMode => text().named('payment_mode')();
@@ -87,4 +76,59 @@ class Settings extends Table {
 
   @override
   Set<Column<Object>> get primaryKey => {id};
+}
+
+class UserProfiles extends Table {
+  IntColumn get id => integer()();
+  TextColumn get name => text().withDefault(const Constant('User'))();
+  TextColumn get imageUrl => text().named('image_url').nullable()();
+  TextColumn get email => text().nullable()();
+  TextColumn get phone => text().nullable()();
+  BoolColumn get onboardingCompleted => boolean()
+      .named('onboarding_completed')
+      .withDefault(const Constant(false))();
+  IntColumn get createdAt => integer().named('created_at')();
+  IntColumn get updatedAt => integer().named('updated_at')();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+class LendPeople extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  IntColumn get createdAt => integer().named('created_at')();
+  IntColumn get updatedAt => integer().named('updated_at')();
+  BoolColumn get isDeleted =>
+      boolean().named('is_deleted').withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+class LendEntries extends Table {
+  TextColumn get id => text()();
+  TextColumn get personId => text().named('person_id')();
+  TextColumn get type => text()();
+  RealColumn get amount => real()();
+  IntColumn get date => integer()();
+  TextColumn get note => text().nullable()();
+  BoolColumn get isSettled =>
+      boolean().named('is_settled').withDefault(const Constant(false))();
+  IntColumn get createdAt => integer().named('created_at')();
+  IntColumn get updatedAt => integer().named('updated_at')();
+  BoolColumn get isDeleted =>
+      boolean().named('is_deleted').withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+class MonthlyReflections extends Table {
+  TextColumn get monthKey => text().named('month_key')();
+  TextColumn get note => text()();
+  IntColumn get updatedAt => integer().named('updated_at')();
+
+  @override
+  Set<Column<Object>> get primaryKey => {monthKey};
 }

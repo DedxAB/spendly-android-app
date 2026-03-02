@@ -5,11 +5,126 @@ import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/glass_card.dart';
+import 'package:spendly/features/categories/data/repositories/categories_repository_impl.dart';
+import 'package:spendly/features/categories/domain/entities/category_entity.dart';
 import 'package:spendly/features/home/presentation/providers/home_provider.dart';
+import 'package:spendly/features/transactions/data/repositories/transactions_repository_impl.dart';
+import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:spendly/features/transactions/presentation/providers/transactions_provider.dart';
+import 'package:spendly/features/user/presentation/providers/user_profile_provider.dart';
+import 'package:uuid/uuid.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
+
+  Future<void> _openQuickAdd(BuildContext context, WidgetRef ref) async {
+    final categories = await ref
+        .read(categoriesRepositoryProvider)
+        .watchByType(TransactionType.expense.value)
+        .first;
+    if (!context.mounted) return;
+
+    if (categories.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Create an expense category first.')),
+      );
+      return;
+    }
+
+    final amountController = TextEditingController();
+    CategoryEntity selectedCategory = categories.first;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.md,
+          MediaQuery.of(sheetContext).viewInsets.bottom + AppSpacing.md,
+        ),
+        child: StatefulBuilder(
+          builder: (sheetContext, setState) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Quick Add Expense',
+                style: Theme.of(sheetContext).textTheme.titleLarge,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: amountController,
+                autofocus: true,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  hintText: 'Amount',
+                  prefixText: '\u20B9 ',
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: categories
+                    .map(
+                      (c) => ChoiceChip(
+                        label: Text(c.name),
+                        selected: selectedCategory.id == c.id,
+                        onSelected: (_) => setState(() => selectedCategory = c),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    final amount = double.tryParse(
+                      amountController.text.trim(),
+                    );
+                    if (amount == null || amount <= 0) return;
+
+                    final now = DateTime.now();
+                    final tx = TransactionEntity(
+                      id: const Uuid().v4(),
+                      type: TransactionType.expense,
+                      amount: amount,
+                      categoryId: selectedCategory.id,
+                      paymentMode: PaymentMode.upi,
+                      note: null,
+                      date: now,
+                      createdAt: now,
+                      updatedAt: now,
+                    );
+
+                    await ref.read(transactionsRepositoryProvider).add(tx);
+                    if (sheetContext.mounted) Navigator.pop(sheetContext);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Expense added'),
+                          duration: Duration(milliseconds: 900),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,6 +132,10 @@ class HomePage extends ConsumerWidget {
     final summary = ref.watch(dashboardSummaryProvider);
     final todaySpent = ref.watch(todaySpentProvider).valueOrNull ?? 0;
     final recent = ref.watch(recentTransactionsProvider);
+    final profile = ref.watch(userProfileProvider).valueOrNull;
+    final name = (profile?.name.trim().isNotEmpty ?? false)
+        ? profile!.name.trim()
+        : 'User';
 
     return Scaffold(
       appBar: AppBar(
@@ -37,7 +156,7 @@ class HomePage extends ConsumerWidget {
         ),
         children: [
           Text(
-            'Good Evening, Arnab',
+            '${_greetingText()}, $name',
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -45,6 +164,8 @@ class HomePage extends ConsumerWidget {
             'Your financial overview',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
+          const SizedBox(height: AppSpacing.md),
+          _QuickAddCard(onTap: () => _openQuickAdd(context, ref)),
           const SizedBox(height: AppSpacing.md),
           summary.when(
             data: (data) => _HeroBalanceCard(
@@ -211,6 +332,57 @@ class HomePage extends ConsumerWidget {
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => Text('Failed to load: $error'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _greetingText() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+}
+
+class _QuickAddCard extends StatelessWidget {
+  const _QuickAddCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Quick Add',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Add expense in seconds',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          FilledButton(
+            onPressed: onTap,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(120, 52),
+              backgroundColor: AppColors.emerald,
+            ),
+            child: const Text(
+              '+\u20B9',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),

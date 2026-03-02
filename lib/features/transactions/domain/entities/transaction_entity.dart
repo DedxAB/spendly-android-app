@@ -16,6 +16,8 @@ class TransactionEntity with _$TransactionEntity {
     required DateTime date,
     required DateTime createdAt,
     required DateTime updatedAt,
+    String? recurringRuleId,
+    @Default(false) bool isRecurringInstance,
     @Default(false) bool isDeleted,
   }) = _TransactionEntity;
 

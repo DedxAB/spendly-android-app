@@ -4,7 +4,9 @@ enum PaymentMode { cash, upi, card }
 
 enum AppThemeMode { system, light, dark }
 
-enum RecurringFrequency { weekly, monthly, yearly }
+enum RecurringFrequency { daily, weekly, monthly, yearly }
+
+enum LendEntryType { lent, borrowed }
 
 extension TransactionTypeX on TransactionType {
   String get value {
@@ -80,6 +82,8 @@ extension AppThemeModeX on AppThemeMode {
 extension RecurringFrequencyX on RecurringFrequency {
   String get value {
     switch (this) {
+      case RecurringFrequency.daily:
+        return 'daily';
       case RecurringFrequency.weekly:
         return 'weekly';
       case RecurringFrequency.monthly:
@@ -91,6 +95,8 @@ extension RecurringFrequencyX on RecurringFrequency {
 
   static RecurringFrequency fromValue(String value) {
     switch (value.toLowerCase()) {
+      case 'daily':
+        return RecurringFrequency.daily;
       case 'weekly':
         return RecurringFrequency.weekly;
       case 'yearly':
@@ -98,6 +104,27 @@ extension RecurringFrequencyX on RecurringFrequency {
       case 'monthly':
       default:
         return RecurringFrequency.monthly;
+    }
+  }
+}
+
+extension LendEntryTypeX on LendEntryType {
+  String get value {
+    switch (this) {
+      case LendEntryType.lent:
+        return 'lent';
+      case LendEntryType.borrowed:
+        return 'borrowed';
+    }
+  }
+
+  static LendEntryType fromValue(String value) {
+    switch (value.toLowerCase()) {
+      case 'borrowed':
+        return LendEntryType.borrowed;
+      case 'lent':
+      default:
+        return LendEntryType.lent;
     }
   }
 }

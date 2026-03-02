@@ -3,18 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/features/cloud_sync/data/repositories/cloud_sync_repository_impl.dart';
 import 'package:spendly/features/home/presentation/pages/home_page.dart';
-import 'package:spendly/features/investments/presentation/pages/investments_page.dart';
 import 'package:spendly/features/insights/presentation/pages/insights_page.dart';
+import 'package:spendly/features/lend/presentation/pages/lend_page.dart';
+import 'package:spendly/features/lend/presentation/pages/lend_person_detail_page.dart';
 import 'package:spendly/features/settings/presentation/pages/settings_page.dart';
 import 'package:spendly/features/transactions/presentation/pages/add_transaction_page.dart';
 import 'package:spendly/features/transactions/presentation/pages/transactions_page.dart';
+import 'package:spendly/features/user/presentation/pages/profile_onboarding_page.dart';
+import 'package:spendly/features/user/presentation/providers/user_profile_provider.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
     routes: [
       GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
+      GoRoute(
+        path: '/onboarding/profile',
+        builder: (context, state) => const ProfileOnboardingPage(),
+      ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
@@ -24,13 +32,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const TransactionsPage(),
           ),
           GoRoute(
-            path: '/investments',
-            builder: (context, state) => const InvestmentsPage(),
-          ),
-          GoRoute(
             path: '/insights',
             builder: (context, state) => const InsightsPage(),
           ),
+          GoRoute(path: '/lend', builder: (context, state) => const LendPage()),
         ],
       ),
       GoRoute(
@@ -41,18 +46,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/settings',
         builder: (context, state) => const SettingsPage(),
       ),
+      GoRoute(
+        path: '/lend/:personId',
+        builder: (context, state) =>
+            LendPersonDetailPage(personId: state.pathParameters['personId']!),
+      ),
     ],
   );
 });
 
-class SplashPage extends StatefulWidget {
+class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 
   @override
-  State<SplashPage> createState() => _SplashPageState();
+  ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage>
+class _SplashPageState extends ConsumerState<SplashPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -64,9 +74,21 @@ class _SplashPageState extends State<SplashPage>
       duration: const Duration(milliseconds: 900),
     )..forward();
 
-    Future<void>.delayed(const Duration(milliseconds: 1300), () {
-      if (mounted) context.go('/home');
-    });
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    await Future<void>.delayed(const Duration(milliseconds: 1300));
+    if (!mounted) return;
+    // Fire-and-forget so cloud sync checks never block splash navigation.
+    ref.read(cloudSyncRepositoryProvider).runDailyBackupIfNeeded();
+    final profile = await ref.read(userProfileProvider.future);
+    if (!mounted) return;
+    if (profile.onboardingCompleted) {
+      context.go('/home');
+      return;
+    }
+    context.go('/onboarding/profile');
   }
 
   @override
@@ -136,7 +158,7 @@ class AppShell extends StatelessWidget {
 
   int _indexForLocation(String location) {
     if (location.startsWith('/transactions')) return 1;
-    if (location.startsWith('/investments')) return 3;
+    if (location.startsWith('/lend')) return 3;
     if (location.startsWith('/insights')) return 4;
     return 0;
   }
@@ -160,8 +182,8 @@ class AppShell extends StatelessWidget {
         isCenterAction: true,
       ),
       _ShellNavItem(
-        icon: CupertinoIcons.square_grid_2x2,
-        selectedIcon: CupertinoIcons.square_grid_2x2_fill,
+        icon: CupertinoIcons.person_2,
+        selectedIcon: CupertinoIcons.person_2_fill,
       ),
       _ShellNavItem(
         icon: CupertinoIcons.chart_pie,
@@ -207,17 +229,24 @@ class AppShell extends StatelessWidget {
                     item: items[i],
                     selected: i == selectedIndex,
                     onTap: () {
-                      switch (i) {
-                        case 0:
-                          context.go('/home');
-                        case 1:
-                          context.go('/transactions');
-                        case 2:
-                          context.push('/transactions/new');
-                        case 3:
-                          context.go('/investments');
-                        case 4:
-                          context.go('/insights');
+                      if (i == 0) {
+                        context.go('/home');
+                        return;
+                      }
+                      if (i == 1) {
+                        context.go('/transactions');
+                        return;
+                      }
+                      if (i == 2) {
+                        context.push('/transactions/new');
+                        return;
+                      }
+                      if (i == 3) {
+                        context.go('/lend');
+                        return;
+                      }
+                      if (i == 4) {
+                        context.go('/insights');
                       }
                     },
                   ),

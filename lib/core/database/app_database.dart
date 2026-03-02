@@ -27,30 +27,59 @@ Future<File> _resolveDatabaseFile() async {
 }
 
 @DriftDatabase(
-  tables: [Transactions, Categories, Investments, RecurringRules, Settings],
+  tables: [
+    Transactions,
+    Categories,
+    RecurringRules,
+    Settings,
+    UserProfiles,
+    LendPeople,
+    LendEntries,
+    MonthlyReflections,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await _ensureDefaultSettings();
+      await _ensureDefaultUserProfile();
       await seedDefaultCategoriesIfNeeded();
     },
     onUpgrade: (m, from, to) async {
-      if (from < 2) {
-        await m.createTable(investments);
-      }
       if (from < 3) {
         await m.createTable(recurringRules);
       }
       if (from < 4) {
         await m.addColumn(settings, settings.transactionHintsSeen);
+      }
+      if (from < 5) {
+        await m.createTable(userProfiles);
+        await _ensureDefaultUserProfile();
+      }
+      if (from < 6) {
+        await m.addColumn(userProfiles, userProfiles.onboardingCompleted);
+      }
+      if (from < 7) {
+        await customStatement('DROP TABLE IF EXISTS investments;');
+      }
+      if (from < 8) {
+        await m.createTable(lendPeople);
+        await m.createTable(lendEntries);
+      }
+      if (from < 9) {
+        await m.createTable(monthlyReflections);
+      }
+      if (from < 10) {
+        await m.addColumn(transactions, transactions.recurringRuleId);
+        await m.addColumn(transactions, transactions.isRecurringInstance);
+        await m.addColumn(recurringRules, recurringRules.type);
       }
     },
   );
@@ -64,6 +93,22 @@ class AppDatabase extends _$AppDatabase {
         themeMode: const Value('system'),
         transactionHintsSeen: const Value(false),
         updatedAt: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+  }
+
+  Future<void> _ensureDefaultUserProfile() async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await into(userProfiles).insertOnConflictUpdate(
+      UserProfilesCompanion.insert(
+        id: const Value(1),
+        name: const Value('User'),
+        imageUrl: const Value(null),
+        email: const Value(null),
+        phone: const Value(null),
+        onboardingCompleted: const Value(false),
+        createdAt: now,
+        updatedAt: now,
       ),
     );
   }
@@ -156,6 +201,44 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<void> softDeleteTransactionsByRecurringRuleFromDate(
+    String ruleId,
+    int fromDateEpoch,
+  ) async {
+    await (update(transactions)
+          ..where((tbl) => tbl.isDeleted.equals(false))
+          ..where((tbl) => tbl.recurringRuleId.equals(ruleId))
+          ..where((tbl) => tbl.date.isBiggerOrEqualValue(fromDateEpoch)))
+        .write(
+          TransactionsCompanion(
+            isDeleted: const Value(true),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          ),
+        );
+  }
+
+  Future<bool> hasActiveRecurringOccurrenceOnDate({
+    required String ruleId,
+    required int dayStartEpoch,
+    required int dayEndExclusiveEpoch,
+  }) async {
+    final countExpr = transactions.id.count();
+    final query = selectOnly(transactions)
+      ..addColumns([countExpr])
+      ..where(transactions.isDeleted.equals(false))
+      ..where(transactions.recurringRuleId.equals(ruleId))
+      ..where(transactions.date.isBiggerOrEqualValue(dayStartEpoch))
+      ..where(transactions.date.isSmallerThanValue(dayEndExclusiveEpoch));
+    final row = await query.getSingle();
+    final count = row.read(countExpr) ?? 0;
+    return count > 0;
+  }
+
+  Future<RecurringRule?> getRecurringRuleById(String ruleId) {
+    final query = select(recurringRules)..where((tbl) => tbl.id.equals(ruleId));
+    return query.getSingleOrNull();
+  }
+
   Future<void> restoreTransaction(String id) async {
     await (update(transactions)..where((tbl) => tbl.id.equals(id))).write(
       TransactionsCompanion(
@@ -187,32 +270,6 @@ class AppDatabase extends _$AppDatabase {
   Future<void> softDeleteCategory(String id) async {
     await (update(categories)..where((tbl) => tbl.id.equals(id))).write(
       CategoriesCompanion(
-        isDeleted: const Value(true),
-        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-      ),
-    );
-  }
-
-  Stream<List<Investment>> watchInvestments() {
-    final query = select(investments)
-      ..where((tbl) => tbl.isDeleted.equals(false))
-      ..orderBy([(tbl) => OrderingTerm.desc(tbl.investedDate)]);
-    return query.watch();
-  }
-
-  Future<List<Investment>> getInvestments() {
-    final query = select(investments)
-      ..where((tbl) => tbl.isDeleted.equals(false));
-    return query.get();
-  }
-
-  Future<void> upsertInvestment(InvestmentsCompanion companion) async {
-    await into(investments).insertOnConflictUpdate(companion);
-  }
-
-  Future<void> softDeleteInvestment(String id) async {
-    await (update(investments)..where((tbl) => tbl.id.equals(id))).write(
-      InvestmentsCompanion(
         isDeleted: const Value(true),
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
@@ -289,28 +346,136 @@ class AppDatabase extends _$AppDatabase {
     await into(settings).insertOnConflictUpdate(companion);
   }
 
+  Stream<UserProfile?> watchUserProfileRow() {
+    final query = select(userProfiles)..where((tbl) => tbl.id.equals(1));
+    return query.watchSingleOrNull();
+  }
+
+  Future<UserProfile?> getUserProfileRow() {
+    final query = select(userProfiles)..where((tbl) => tbl.id.equals(1));
+    return query.getSingleOrNull();
+  }
+
+  Future<void> upsertUserProfile(UserProfilesCompanion companion) async {
+    await into(userProfiles).insertOnConflictUpdate(companion);
+  }
+
+  Stream<List<LendPeopleData>> watchLendPeople() {
+    final query = select(lendPeople)
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..orderBy([(tbl) => OrderingTerm.asc(tbl.name)]);
+    return query.watch();
+  }
+
+  Future<List<LendPeopleData>> getLendPeople() {
+    final query = select(lendPeople)
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..orderBy([(tbl) => OrderingTerm.asc(tbl.name)]);
+    return query.get();
+  }
+
+  Future<void> upsertLendPerson(LendPeopleCompanion companion) async {
+    await into(lendPeople).insertOnConflictUpdate(companion);
+  }
+
+  Future<void> softDeleteLendPerson(String personId) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await (update(lendPeople)..where((tbl) => tbl.id.equals(personId))).write(
+      LendPeopleCompanion(isDeleted: const Value(true), updatedAt: Value(now)),
+    );
+    await (update(
+      lendEntries,
+    )..where((tbl) => tbl.personId.equals(personId))).write(
+      LendEntriesCompanion(isDeleted: const Value(true), updatedAt: Value(now)),
+    );
+  }
+
+  Stream<List<LendEntry>> watchLendEntries() {
+    final query = select(lendEntries)
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..orderBy([(tbl) => OrderingTerm.desc(tbl.date)]);
+    return query.watch();
+  }
+
+  Stream<List<LendEntry>> watchLendEntriesByPerson(String personId) {
+    final query = select(lendEntries)
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..where((tbl) => tbl.personId.equals(personId))
+      ..orderBy([(tbl) => OrderingTerm.desc(tbl.date)]);
+    return query.watch();
+  }
+
+  Future<List<LendEntry>> getLendEntries() {
+    final query = select(lendEntries)
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..orderBy([(tbl) => OrderingTerm.desc(tbl.date)]);
+    return query.get();
+  }
+
+  Future<void> upsertLendEntry(LendEntriesCompanion companion) async {
+    await into(lendEntries).insertOnConflictUpdate(companion);
+  }
+
+  Future<void> setLendEntrySettled(String entryId, bool isSettled) async {
+    await (update(lendEntries)..where((tbl) => tbl.id.equals(entryId))).write(
+      LendEntriesCompanion(
+        isSettled: Value(isSettled),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+  }
+
+  Stream<MonthlyReflection?> watchMonthlyReflection(String monthKey) {
+    final query = select(monthlyReflections)
+      ..where((tbl) => tbl.monthKey.equals(monthKey));
+    return query.watchSingleOrNull();
+  }
+
+  Future<List<MonthlyReflection>> getMonthlyReflections() {
+    return select(monthlyReflections).get();
+  }
+
+  Future<void> upsertMonthlyReflection(
+    MonthlyReflectionsCompanion companion,
+  ) async {
+    await into(monthlyReflections).insertOnConflictUpdate(companion);
+  }
+
   Future<void> replaceAllData({
     required List<CategoriesCompanion> categoryRows,
     required List<TransactionsCompanion> transactionRows,
-    required List<InvestmentsCompanion> investmentRows,
     required List<RecurringRulesCompanion> recurringRuleRows,
+    required List<LendPeopleCompanion> lendPeopleRows,
+    required List<LendEntriesCompanion> lendEntryRows,
+    required List<MonthlyReflectionsCompanion> monthlyReflectionRows,
     required SettingsCompanion settingsRow,
+    required UserProfilesCompanion userProfileRow,
   }) async {
     await transaction(() async {
       await delete(transactions).go();
       await delete(categories).go();
-      await delete(investments).go();
       await delete(recurringRules).go();
+      await delete(lendEntries).go();
+      await delete(lendPeople).go();
+      await delete(monthlyReflections).go();
       await delete(settings).go();
+      await delete(userProfiles).go();
       if (categoryRows.isNotEmpty)
         await batch((b) => b.insertAll(categories, categoryRows));
       if (transactionRows.isNotEmpty)
         await batch((b) => b.insertAll(transactions, transactionRows));
-      if (investmentRows.isNotEmpty)
-        await batch((b) => b.insertAll(investments, investmentRows));
       if (recurringRuleRows.isNotEmpty)
         await batch((b) => b.insertAll(recurringRules, recurringRuleRows));
+      if (lendPeopleRows.isNotEmpty)
+        await batch((b) => b.insertAll(lendPeople, lendPeopleRows));
+      if (lendEntryRows.isNotEmpty)
+        await batch((b) => b.insertAll(lendEntries, lendEntryRows));
+      if (monthlyReflectionRows.isNotEmpty)
+        await batch(
+          (b) => b.insertAll(monthlyReflections, monthlyReflectionRows),
+        );
       await into(settings).insertOnConflictUpdate(settingsRow);
+      await into(userProfiles).insertOnConflictUpdate(userProfileRow);
     });
   }
 
@@ -318,10 +483,14 @@ class AppDatabase extends _$AppDatabase {
     await transaction(() async {
       await delete(transactions).go();
       await delete(categories).go();
-      await delete(investments).go();
       await delete(recurringRules).go();
+      await delete(lendEntries).go();
+      await delete(lendPeople).go();
+      await delete(monthlyReflections).go();
       await delete(settings).go();
+      await delete(userProfiles).go();
       await _ensureDefaultSettings();
+      await _ensureDefaultUserProfile();
       await seedDefaultCategoriesIfNeeded();
     });
   }
