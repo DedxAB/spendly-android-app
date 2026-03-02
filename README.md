@@ -1,4 +1,4 @@
-# spendly
+# Spendly
 
 A new Flutter project.
 
