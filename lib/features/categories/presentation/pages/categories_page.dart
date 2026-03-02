@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/features/categories/data/repositories/categories_repository_impl.dart';
@@ -21,20 +21,33 @@ class CategoriesPage extends ConsumerWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
               const SizedBox(height: 8),
               SegmentedButton<TransactionType>(
                 segments: const [
-                  ButtonSegment(value: TransactionType.income, label: Text('Income')),
-                  ButtonSegment(value: TransactionType.expense, label: Text('Expense')),
+                  ButtonSegment(
+                    value: TransactionType.income,
+                    label: Text('Income'),
+                  ),
+                  ButtonSegment(
+                    value: TransactionType.expense,
+                    label: Text('Expense'),
+                  ),
                 ],
                 selected: {type},
-                onSelectionChanged: (selection) => setState(() => type = selection.first),
+                onSelectionChanged: (selection) =>
+                    setState(() => type = selection.first),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () async {
                 final name = nameController.text.trim();
@@ -66,10 +79,14 @@ class CategoriesPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Categories')),
-      floatingActionButton: FloatingActionButton(onPressed: () => _showCategoryDialog(context, ref), child: const Icon(Icons.add)),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showCategoryDialog(context, ref),
+        child: const Icon(Icons.add),
+      ),
       body: categories.when(
         data: (items) {
-          if (items.isEmpty) return const Center(child: Text('No categories available'));
+          if (items.isEmpty)
+            return const Center(child: Text('No categories available'));
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: items.length,
@@ -82,7 +99,9 @@ class CategoriesPage extends ConsumerWidget {
                   subtitle: Text(category.type.name),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () => ref.read(categoriesRepositoryProvider).softDelete(category.id),
+                    onPressed: () => ref
+                        .read(categoriesRepositoryProvider)
+                        .softDelete(category.id),
                   ),
                 ),
               );
@@ -95,4 +114,3 @@ class CategoriesPage extends ConsumerWidget {
     );
   }
 }
-

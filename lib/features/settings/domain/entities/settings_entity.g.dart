@@ -14,6 +14,7 @@ _$SettingsEntityImpl _$$SettingsEntityImplFromJson(Map<String, dynamic> json) =>
       themeMode:
           $enumDecodeNullable(_$AppThemeModeEnumMap, json['themeMode']) ??
           AppThemeMode.system,
+      transactionHintsSeen: json['transactionHintsSeen'] as bool? ?? false,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
 
@@ -24,6 +25,7 @@ Map<String, dynamic> _$$SettingsEntityImplToJson(
   'monthlyBudget': instance.monthlyBudget,
   'currency': instance.currency,
   'themeMode': _$AppThemeModeEnumMap[instance.themeMode]!,
+  'transactionHintsSeen': instance.transactionHintsSeen,
   'updatedAt': instance.updatedAt.toIso8601String(),
 };
 

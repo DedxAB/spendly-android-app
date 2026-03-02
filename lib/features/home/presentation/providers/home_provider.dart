@@ -1,6 +1,8 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/features/home/domain/entities/dashboard_summary.dart';
 import 'package:spendly/features/settings/presentation/providers/settings_provider.dart';
+import 'package:spendly/features/transactions/data/repositories/transactions_repository_impl.dart';
 import 'package:spendly/features/transactions/presentation/providers/transactions_provider.dart';
 
 final dashboardSummaryProvider = Provider<AsyncValue<DashboardSummary>>((ref) {
@@ -22,3 +24,21 @@ final dashboardSummaryProvider = Provider<AsyncValue<DashboardSummary>>((ref) {
   });
 });
 
+final todaySpentProvider = StreamProvider<double>((ref) {
+  final now = DateTime.now();
+  final monthStart = DateTime(now.year, now.month, 1);
+
+  return ref
+      .watch(transactionsRepositoryProvider)
+      .watchByMonth(monthStart, type: TransactionType.expense.value)
+      .map((items) {
+        return items
+            .where(
+              (item) =>
+                  item.date.year == now.year &&
+                  item.date.month == now.month &&
+                  item.date.day == now.day,
+            )
+            .fold<double>(0, (sum, item) => sum + item.amount);
+      });
+});

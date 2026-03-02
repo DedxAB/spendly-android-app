@@ -1,4 +1,4 @@
-﻿import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'expense_slice.freezed.dart';
 
@@ -10,4 +10,3 @@ class ExpenseSlice with _$ExpenseSlice {
     required double total,
   }) = _ExpenseSlice;
 }
-

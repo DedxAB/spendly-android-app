@@ -1,4 +1,4 @@
-﻿import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 
 part 'transaction_entity.freezed.dart';
@@ -22,4 +22,3 @@ class TransactionEntity with _$TransactionEntity {
   factory TransactionEntity.fromJson(Map<String, dynamic> json) =>
       _$TransactionEntityFromJson(json);
 }
-

@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/database/mappers.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
@@ -11,12 +11,16 @@ class TransactionsRepositoryImpl implements TransactionsRepository {
 
   @override
   Future<void> add(TransactionEntity transaction) async {
-    await _ref.read(appDatabaseProvider).upsertTransaction(transactionToCompanion(transaction));
+    await _ref
+        .read(appDatabaseProvider)
+        .upsertTransaction(transactionToCompanion(transaction));
   }
 
   @override
   Future<void> update(TransactionEntity transaction) async {
-    await _ref.read(appDatabaseProvider).upsertTransaction(transactionToCompanion(transaction));
+    await _ref
+        .read(appDatabaseProvider)
+        .upsertTransaction(transactionToCompanion(transaction));
   }
 
   @override
@@ -30,19 +34,43 @@ class TransactionsRepositoryImpl implements TransactionsRepository {
   }
 
   @override
-  Stream<List<TransactionEntity>> watchByMonth(DateTime month, {String? categoryId, String? type}) {
+  Stream<List<TransactionEntity>> watchByMonth(
+    DateTime month, {
+    String? categoryId,
+    String? type,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) {
     return _ref
         .read(appDatabaseProvider)
-        .watchTransactionsByMonth(month, categoryId: categoryId, type: type)
-        .map((rows) => rows.map((row) => row.toEntity()).toList(growable: false));
+        .watchTransactionsByMonth(
+          month,
+          categoryId: categoryId,
+          type: type,
+          dateFrom: dateFrom,
+          dateTo: dateTo,
+        )
+        .map(
+          (rows) => rows.map((row) => row.toEntity()).toList(growable: false),
+        );
   }
 
   @override
   Stream<Map<String, double>> watchMonthlyTotals(DateTime month) {
-    return _ref.read(appDatabaseProvider).watchTransactionsByMonth(month).map((rows) {
-      final income = rows.where((row) => row.type == 'income').fold<double>(0, (sum, row) => sum + row.amount);
-      final expense = rows.where((row) => row.type == 'expense').fold<double>(0, (sum, row) => sum + row.amount);
-      return {'income': income, 'expense': expense, 'balance': income - expense};
+    return _ref.read(appDatabaseProvider).watchTransactionsByMonth(month).map((
+      rows,
+    ) {
+      final income = rows
+          .where((row) => row.type == 'income')
+          .fold<double>(0, (sum, row) => sum + row.amount);
+      final expense = rows
+          .where((row) => row.type == 'expense')
+          .fold<double>(0, (sum, row) => sum + row.amount);
+      return {
+        'income': income,
+        'expense': expense,
+        'balance': income - expense,
+      };
     });
   }
 
@@ -51,7 +79,9 @@ class TransactionsRepositoryImpl implements TransactionsRepository {
     return _ref
         .read(appDatabaseProvider)
         .watchRecentTransactions(limit: limit)
-        .map((rows) => rows.map((row) => row.toEntity()).toList(growable: false));
+        .map(
+          (rows) => rows.map((row) => row.toEntity()).toList(growable: false),
+        );
   }
 }
 

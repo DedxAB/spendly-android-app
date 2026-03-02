@@ -1,4 +1,4 @@
-﻿import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 
 part 'category_entity.freezed.dart';
@@ -20,4 +20,3 @@ class CategoryEntity with _$CategoryEntity {
   factory CategoryEntity.fromJson(Map<String, dynamic> json) =>
       _$CategoryEntityFromJson(json);
 }
-

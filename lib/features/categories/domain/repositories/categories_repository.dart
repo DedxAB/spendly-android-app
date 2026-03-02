@@ -1,4 +1,4 @@
-﻿import 'package:spendly/features/categories/domain/entities/category_entity.dart';
+import 'package:spendly/features/categories/domain/entities/category_entity.dart';
 
 abstract class CategoriesRepository {
   Stream<List<CategoryEntity>> watchByType(String type);
@@ -12,4 +12,3 @@ abstract class CategoriesRepository {
 
   Future<void> seedDefaultsIfNeeded();
 }
-

@@ -1,4 +1,4 @@
-﻿import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
 
 abstract class TransactionsRepository {
   Stream<List<TransactionEntity>> watchRecent({int limit = 5});
@@ -7,6 +7,8 @@ abstract class TransactionsRepository {
     DateTime month, {
     String? categoryId,
     String? type,
+    DateTime? dateFrom,
+    DateTime? dateTo,
   });
 
   Stream<Map<String, double>> watchMonthlyTotals(DateTime month);
@@ -19,4 +21,3 @@ abstract class TransactionsRepository {
 
   Future<void> restore(String transactionId);
 }
-
