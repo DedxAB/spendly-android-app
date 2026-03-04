@@ -5,11 +5,129 @@ import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/glass_card.dart';
+import 'package:spendly/features/categories/data/repositories/categories_repository_impl.dart';
+import 'package:spendly/features/categories/domain/entities/category_entity.dart';
+import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
+import 'package:spendly/features/cloud_sync/presentation/providers/cloud_sync_provider.dart';
 import 'package:spendly/features/home/presentation/providers/home_provider.dart';
+import 'package:spendly/features/transactions/data/repositories/transactions_repository_impl.dart';
+import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:spendly/features/transactions/presentation/providers/transactions_provider.dart';
+import 'package:spendly/features/user/presentation/providers/user_profile_provider.dart';
+import 'package:uuid/uuid.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
+
+  Future<void> _openQuickAdd(BuildContext context, WidgetRef ref) async {
+    final categories = await ref
+        .read(categoriesRepositoryProvider)
+        .watchByType(TransactionType.expense.value)
+        .first;
+    if (!context.mounted) return;
+
+    if (categories.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Create an expense category first.')),
+      );
+      return;
+    }
+
+    final amountController = TextEditingController();
+    CategoryEntity selectedCategory = categories.first;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.md,
+          MediaQuery.of(sheetContext).viewInsets.bottom + AppSpacing.md,
+        ),
+        child: StatefulBuilder(
+          builder: (sheetContext, setState) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Quick Add Expense',
+                style: Theme.of(sheetContext).textTheme.titleLarge,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: amountController,
+                autofocus: true,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  hintText: 'Amount',
+                  prefixText: '\u20B9 ',
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: categories
+                    .map(
+                      (c) => _quickAddCategoryChip(
+                        context: sheetContext,
+                        label: c.name,
+                        selected: selectedCategory.id == c.id,
+                        onSelected: () => setState(() => selectedCategory = c),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    final amount = double.tryParse(
+                      amountController.text.trim(),
+                    );
+                    if (amount == null || amount <= 0) return;
+
+                    final now = DateTime.now();
+                    final tx = TransactionEntity(
+                      id: const Uuid().v4(),
+                      type: TransactionType.expense,
+                      amount: amount,
+                      categoryId: selectedCategory.id,
+                      paymentMode: PaymentMode.upi,
+                      note: null,
+                      date: now,
+                      createdAt: now,
+                      updatedAt: now,
+                    );
+
+                    await ref.read(transactionsRepositoryProvider).add(tx);
+                    if (sheetContext.mounted) Navigator.pop(sheetContext);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Expense added'),
+                          duration: Duration(milliseconds: 900),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,11 +135,30 @@ class HomePage extends ConsumerWidget {
     final summary = ref.watch(dashboardSummaryProvider);
     final todaySpent = ref.watch(todaySpentProvider).valueOrNull ?? 0;
     final recent = ref.watch(recentTransactionsProvider);
+    final categories = ref.watch(allCategoriesProvider).valueOrNull ?? const [];
+    final categoryLabelById = {for (final c in categories) c.id: c.name};
+    final profile = ref.watch(userProfileProvider).valueOrNull;
+    final cloudSync = ref.watch(cloudSyncControllerProvider).valueOrNull;
+    final name = (profile?.name.trim().isNotEmpty ?? false)
+        ? profile!.name.trim()
+        : 'User';
+    final profileImageUrl = (profile?.imageUrl?.trim().isNotEmpty ?? false)
+        ? profile!.imageUrl!.trim()
+        : null;
+    final isGoogleConnected = cloudSync?.isConnected ?? false;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Spendly'),
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.xs),
+            child: _ProfileAvatar(
+              name: name,
+              imageUrl: isGoogleConnected ? profileImageUrl : null,
+              connectedToGoogle: isGoogleConnected,
+            ),
+          ),
           IconButton(
             onPressed: () => context.push('/settings'),
             icon: const Icon(Icons.settings_outlined),
@@ -37,7 +174,7 @@ class HomePage extends ConsumerWidget {
         ),
         children: [
           Text(
-            'Good Evening, Arnab',
+            '${_greetingText()}, $name',
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -45,6 +182,8 @@ class HomePage extends ConsumerWidget {
             'Your financial overview',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
+          const SizedBox(height: AppSpacing.md),
+          _QuickAddCard(onTap: () => _openQuickAdd(context, ref)),
           const SizedBox(height: AppSpacing.md),
           summary.when(
             data: (data) => _HeroBalanceCard(
@@ -176,7 +315,8 @@ class HomePage extends ConsumerWidget {
                               title: Text(
                                 e.note?.isNotEmpty == true
                                     ? e.note!
-                                    : e.categoryId,
+                                    : (categoryLabelById[e.categoryId] ??
+                                          e.categoryId),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -211,6 +351,153 @@ class HomePage extends ConsumerWidget {
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => Text('Failed to load: $error'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _greetingText() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  Widget _quickAddCategoryChip({
+    required BuildContext context,
+    required String label,
+    required bool selected,
+    required VoidCallback onSelected,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedBg = AppColors.emerald.withValues(alpha: 0.24);
+    final selectedBorder = AppColors.emerald.withValues(alpha: 0.75);
+    final unselectedBg = isDark
+        ? AppColors.darkSurfaceAlt.withValues(alpha: 0.92)
+        : AppColors.lightSurfaceAlt.withValues(alpha: 0.95);
+    final unselectedBorder = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : Colors.black.withValues(alpha: 0.08);
+
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      showCheckmark: false,
+      backgroundColor: unselectedBg,
+      selectedColor: selectedBg,
+      side: BorderSide(
+        color: selected ? selectedBorder : unselectedBorder,
+        width: selected ? 1.2 : 1,
+      ),
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.w700,
+        color: selected
+            ? (isDark ? const Color(0xFFE9F9EC) : const Color(0xFF123122))
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.86),
+      ),
+      onSelected: (_) => onSelected(),
+    );
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({
+    required this.name,
+    required this.imageUrl,
+    required this.connectedToGoogle,
+  });
+
+  final String name;
+  final String? imageUrl;
+  final bool connectedToGoogle;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasGooglePhoto = connectedToGoogle && imageUrl != null;
+    if (hasGooglePhoto) {
+      return CircleAvatar(
+        radius: 16,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+        backgroundImage: NetworkImage(imageUrl!),
+      );
+    }
+
+    return CircleAvatar(
+      radius: 16,
+      backgroundColor: _fallbackColor(name),
+      child: Text(
+        _initials(name),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Color _fallbackColor(String seed) {
+    final colors = <Color>[
+      const Color(0xFF1F8A70),
+      const Color(0xFF2D6A9F),
+      const Color(0xFFB26A00),
+      const Color(0xFF8C4A8B),
+      const Color(0xFF2E7D32),
+      const Color(0xFFAA3A3A),
+    ];
+    return colors[seed.hashCode.abs() % colors.length];
+  }
+
+  String _initials(String value) {
+    final parts = value
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .toList(growable: false);
+    if (parts.isEmpty) return 'U';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+}
+
+class _QuickAddCard extends StatelessWidget {
+  const _QuickAddCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Quick Add',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Add expense in seconds',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          FilledButton(
+            onPressed: onTap,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(120, 52),
+              backgroundColor: AppColors.emerald,
+            ),
+            child: const Text(
+              '+\u20B9',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
@@ -270,13 +557,24 @@ class _HeroBalanceCard extends StatelessWidget {
                       fontSize: 16,
                     ),
                   ),
-                  const Text(
-                    'SPENDLY',
-                    style: TextStyle(
-                      color: Color(0xFF163321),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20,
-                      letterSpacing: 0.4,
+                  Transform(
+                    alignment: Alignment.centerRight,
+                    transform: Matrix4.skewX(-0.16),
+                    child: const Text(
+                      'SPENDLY',
+                      style: TextStyle(
+                        color: Color(0xFF102417),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 21,
+                        letterSpacing: 1.2,
+                        shadows: [
+                          Shadow(
+                            color: Color(0x33000000),
+                            blurRadius: 6,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

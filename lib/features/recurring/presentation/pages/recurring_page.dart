@@ -93,6 +93,10 @@ class RecurringPage extends ConsumerWidget {
                     decoration: const InputDecoration(labelText: 'Frequency'),
                     items: const [
                       DropdownMenuItem(
+                        value: RecurringFrequency.daily,
+                        child: Text('Daily'),
+                      ),
+                      DropdownMenuItem(
                         value: RecurringFrequency.weekly,
                         child: Text('Weekly'),
                       ),
@@ -174,6 +178,7 @@ class RecurringPage extends ConsumerWidget {
                   final rule = RecurringRuleEntity(
                     id: const Uuid().v4(),
                     title: title,
+                    type: TransactionType.expense,
                     amount: amount,
                     categoryId: selectedCategory.id,
                     paymentMode: selectedPaymentMode,

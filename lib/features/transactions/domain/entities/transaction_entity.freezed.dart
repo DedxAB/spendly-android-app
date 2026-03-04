@@ -30,6 +30,8 @@ mixin _$TransactionEntity {
   DateTime get date => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
+  String? get recurringRuleId => throw _privateConstructorUsedError;
+  bool get isRecurringInstance => throw _privateConstructorUsedError;
   bool get isDeleted => throw _privateConstructorUsedError;
 
   /// Serializes this TransactionEntity to a JSON map.
@@ -59,6 +61,8 @@ abstract class $TransactionEntityCopyWith<$Res> {
     DateTime date,
     DateTime createdAt,
     DateTime updatedAt,
+    String? recurringRuleId,
+    bool isRecurringInstance,
     bool isDeleted,
   });
 }
@@ -87,6 +91,8 @@ class _$TransactionEntityCopyWithImpl<$Res, $Val extends TransactionEntity>
     Object? date = null,
     Object? createdAt = null,
     Object? updatedAt = null,
+    Object? recurringRuleId = freezed,
+    Object? isRecurringInstance = null,
     Object? isDeleted = null,
   }) {
     return _then(
@@ -127,6 +133,14 @@ class _$TransactionEntityCopyWithImpl<$Res, $Val extends TransactionEntity>
                 ? _value.updatedAt
                 : updatedAt // ignore: cast_nullable_to_non_nullable
                       as DateTime,
+            recurringRuleId: freezed == recurringRuleId
+                ? _value.recurringRuleId
+                : recurringRuleId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            isRecurringInstance: null == isRecurringInstance
+                ? _value.isRecurringInstance
+                : isRecurringInstance // ignore: cast_nullable_to_non_nullable
+                      as bool,
             isDeleted: null == isDeleted
                 ? _value.isDeleted
                 : isDeleted // ignore: cast_nullable_to_non_nullable
@@ -156,6 +170,8 @@ abstract class _$$TransactionEntityImplCopyWith<$Res>
     DateTime date,
     DateTime createdAt,
     DateTime updatedAt,
+    String? recurringRuleId,
+    bool isRecurringInstance,
     bool isDeleted,
   });
 }
@@ -183,6 +199,8 @@ class __$$TransactionEntityImplCopyWithImpl<$Res>
     Object? date = null,
     Object? createdAt = null,
     Object? updatedAt = null,
+    Object? recurringRuleId = freezed,
+    Object? isRecurringInstance = null,
     Object? isDeleted = null,
   }) {
     return _then(
@@ -223,6 +241,14 @@ class __$$TransactionEntityImplCopyWithImpl<$Res>
             ? _value.updatedAt
             : updatedAt // ignore: cast_nullable_to_non_nullable
                   as DateTime,
+        recurringRuleId: freezed == recurringRuleId
+            ? _value.recurringRuleId
+            : recurringRuleId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        isRecurringInstance: null == isRecurringInstance
+            ? _value.isRecurringInstance
+            : isRecurringInstance // ignore: cast_nullable_to_non_nullable
+                  as bool,
         isDeleted: null == isDeleted
             ? _value.isDeleted
             : isDeleted // ignore: cast_nullable_to_non_nullable
@@ -245,6 +271,8 @@ class _$TransactionEntityImpl implements _TransactionEntity {
     required this.date,
     required this.createdAt,
     required this.updatedAt,
+    this.recurringRuleId,
+    this.isRecurringInstance = false,
     this.isDeleted = false,
   });
 
@@ -270,12 +298,17 @@ class _$TransactionEntityImpl implements _TransactionEntity {
   @override
   final DateTime updatedAt;
   @override
+  final String? recurringRuleId;
+  @override
+  @JsonKey()
+  final bool isRecurringInstance;
+  @override
   @JsonKey()
   final bool isDeleted;
 
   @override
   String toString() {
-    return 'TransactionEntity(id: $id, type: $type, amount: $amount, categoryId: $categoryId, paymentMode: $paymentMode, note: $note, date: $date, createdAt: $createdAt, updatedAt: $updatedAt, isDeleted: $isDeleted)';
+    return 'TransactionEntity(id: $id, type: $type, amount: $amount, categoryId: $categoryId, paymentMode: $paymentMode, note: $note, date: $date, createdAt: $createdAt, updatedAt: $updatedAt, recurringRuleId: $recurringRuleId, isRecurringInstance: $isRecurringInstance, isDeleted: $isDeleted)';
   }
 
   @override
@@ -296,6 +329,10 @@ class _$TransactionEntityImpl implements _TransactionEntity {
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
+            (identical(other.recurringRuleId, recurringRuleId) ||
+                other.recurringRuleId == recurringRuleId) &&
+            (identical(other.isRecurringInstance, isRecurringInstance) ||
+                other.isRecurringInstance == isRecurringInstance) &&
             (identical(other.isDeleted, isDeleted) ||
                 other.isDeleted == isDeleted));
   }
@@ -313,6 +350,8 @@ class _$TransactionEntityImpl implements _TransactionEntity {
     date,
     createdAt,
     updatedAt,
+    recurringRuleId,
+    isRecurringInstance,
     isDeleted,
   );
 
@@ -344,6 +383,8 @@ abstract class _TransactionEntity implements TransactionEntity {
     required final DateTime date,
     required final DateTime createdAt,
     required final DateTime updatedAt,
+    final String? recurringRuleId,
+    final bool isRecurringInstance,
     final bool isDeleted,
   }) = _$TransactionEntityImpl;
 
@@ -368,6 +409,10 @@ abstract class _TransactionEntity implements TransactionEntity {
   DateTime get createdAt;
   @override
   DateTime get updatedAt;
+  @override
+  String? get recurringRuleId;
+  @override
+  bool get isRecurringInstance;
   @override
   bool get isDeleted;
 

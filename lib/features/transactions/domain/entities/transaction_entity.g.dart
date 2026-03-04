@@ -18,6 +18,8 @@ _$TransactionEntityImpl _$$TransactionEntityImplFromJson(
   date: DateTime.parse(json['date'] as String),
   createdAt: DateTime.parse(json['createdAt'] as String),
   updatedAt: DateTime.parse(json['updatedAt'] as String),
+  recurringRuleId: json['recurringRuleId'] as String?,
+  isRecurringInstance: json['isRecurringInstance'] as bool? ?? false,
   isDeleted: json['isDeleted'] as bool? ?? false,
 );
 
@@ -33,6 +35,8 @@ Map<String, dynamic> _$$TransactionEntityImplToJson(
   'date': instance.date.toIso8601String(),
   'createdAt': instance.createdAt.toIso8601String(),
   'updatedAt': instance.updatedAt.toIso8601String(),
+  'recurringRuleId': instance.recurringRuleId,
+  'isRecurringInstance': instance.isRecurringInstance,
   'isDeleted': instance.isDeleted,
 };
 

@@ -98,6 +98,31 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _recurringRuleIdMeta = const VerificationMeta(
+    'recurringRuleId',
+  );
+  @override
+  late final GeneratedColumn<String> recurringRuleId = GeneratedColumn<String>(
+    'recurring_rule_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isRecurringInstanceMeta =
+      const VerificationMeta('isRecurringInstance');
+  @override
+  late final GeneratedColumn<bool> isRecurringInstance = GeneratedColumn<bool>(
+    'is_recurring_instance',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_recurring_instance" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _isDeletedMeta = const VerificationMeta(
     'isDeleted',
   );
@@ -124,6 +149,8 @@ class $TransactionsTable extends Transactions
     date,
     createdAt,
     updatedAt,
+    recurringRuleId,
+    isRecurringInstance,
     isDeleted,
   ];
   @override
@@ -208,6 +235,24 @@ class $TransactionsTable extends Transactions
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('recurring_rule_id')) {
+      context.handle(
+        _recurringRuleIdMeta,
+        recurringRuleId.isAcceptableOrUnknown(
+          data['recurring_rule_id']!,
+          _recurringRuleIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_recurring_instance')) {
+      context.handle(
+        _isRecurringInstanceMeta,
+        isRecurringInstance.isAcceptableOrUnknown(
+          data['is_recurring_instance']!,
+          _isRecurringInstanceMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_deleted')) {
       context.handle(
         _isDeletedMeta,
@@ -259,6 +304,14 @@ class $TransactionsTable extends Transactions
         DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
       )!,
+      recurringRuleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recurring_rule_id'],
+      ),
+      isRecurringInstance: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_recurring_instance'],
+      )!,
       isDeleted: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_deleted'],
@@ -282,6 +335,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final int date;
   final int createdAt;
   final int updatedAt;
+  final String? recurringRuleId;
+  final bool isRecurringInstance;
   final bool isDeleted;
   const Transaction({
     required this.id,
@@ -293,6 +348,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.date,
     required this.createdAt,
     required this.updatedAt,
+    this.recurringRuleId,
+    required this.isRecurringInstance,
     required this.isDeleted,
   });
   @override
@@ -309,6 +366,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['date'] = Variable<int>(date);
     map['created_at'] = Variable<int>(createdAt);
     map['updated_at'] = Variable<int>(updatedAt);
+    if (!nullToAbsent || recurringRuleId != null) {
+      map['recurring_rule_id'] = Variable<String>(recurringRuleId);
+    }
+    map['is_recurring_instance'] = Variable<bool>(isRecurringInstance);
     map['is_deleted'] = Variable<bool>(isDeleted);
     return map;
   }
@@ -324,6 +385,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       date: Value(date),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      recurringRuleId: recurringRuleId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recurringRuleId),
+      isRecurringInstance: Value(isRecurringInstance),
       isDeleted: Value(isDeleted),
     );
   }
@@ -343,6 +408,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       date: serializer.fromJson<int>(json['date']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      recurringRuleId: serializer.fromJson<String?>(json['recurringRuleId']),
+      isRecurringInstance: serializer.fromJson<bool>(
+        json['isRecurringInstance'],
+      ),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
@@ -359,6 +428,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'date': serializer.toJson<int>(date),
       'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
+      'recurringRuleId': serializer.toJson<String?>(recurringRuleId),
+      'isRecurringInstance': serializer.toJson<bool>(isRecurringInstance),
       'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
@@ -373,6 +444,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     int? date,
     int? createdAt,
     int? updatedAt,
+    Value<String?> recurringRuleId = const Value.absent(),
+    bool? isRecurringInstance,
     bool? isDeleted,
   }) => Transaction(
     id: id ?? this.id,
@@ -384,6 +457,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     date: date ?? this.date,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    recurringRuleId: recurringRuleId.present
+        ? recurringRuleId.value
+        : this.recurringRuleId,
+    isRecurringInstance: isRecurringInstance ?? this.isRecurringInstance,
     isDeleted: isDeleted ?? this.isDeleted,
   );
   Transaction copyWithCompanion(TransactionsCompanion data) {
@@ -401,6 +478,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       date: data.date.present ? data.date.value : this.date,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      recurringRuleId: data.recurringRuleId.present
+          ? data.recurringRuleId.value
+          : this.recurringRuleId,
+      isRecurringInstance: data.isRecurringInstance.present
+          ? data.isRecurringInstance.value
+          : this.isRecurringInstance,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
   }
@@ -417,6 +500,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('date: $date, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('recurringRuleId: $recurringRuleId, ')
+          ..write('isRecurringInstance: $isRecurringInstance, ')
           ..write('isDeleted: $isDeleted')
           ..write(')'))
         .toString();
@@ -433,6 +518,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     date,
     createdAt,
     updatedAt,
+    recurringRuleId,
+    isRecurringInstance,
     isDeleted,
   );
   @override
@@ -448,6 +535,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.date == this.date &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
+          other.recurringRuleId == this.recurringRuleId &&
+          other.isRecurringInstance == this.isRecurringInstance &&
           other.isDeleted == this.isDeleted);
 }
 
@@ -461,6 +550,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<int> date;
   final Value<int> createdAt;
   final Value<int> updatedAt;
+  final Value<String?> recurringRuleId;
+  final Value<bool> isRecurringInstance;
   final Value<bool> isDeleted;
   final Value<int> rowid;
   const TransactionsCompanion({
@@ -473,6 +564,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.date = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.recurringRuleId = const Value.absent(),
+    this.isRecurringInstance = const Value.absent(),
     this.isDeleted = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -486,6 +579,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required int date,
     required int createdAt,
     required int updatedAt,
+    this.recurringRuleId = const Value.absent(),
+    this.isRecurringInstance = const Value.absent(),
     this.isDeleted = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -506,6 +601,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<int>? date,
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
+    Expression<String>? recurringRuleId,
+    Expression<bool>? isRecurringInstance,
     Expression<bool>? isDeleted,
     Expression<int>? rowid,
   }) {
@@ -519,6 +616,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (date != null) 'date': date,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (recurringRuleId != null) 'recurring_rule_id': recurringRuleId,
+      if (isRecurringInstance != null)
+        'is_recurring_instance': isRecurringInstance,
       if (isDeleted != null) 'is_deleted': isDeleted,
       if (rowid != null) 'rowid': rowid,
     });
@@ -534,6 +634,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<int>? date,
     Value<int>? createdAt,
     Value<int>? updatedAt,
+    Value<String?>? recurringRuleId,
+    Value<bool>? isRecurringInstance,
     Value<bool>? isDeleted,
     Value<int>? rowid,
   }) {
@@ -547,6 +649,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      recurringRuleId: recurringRuleId ?? this.recurringRuleId,
+      isRecurringInstance: isRecurringInstance ?? this.isRecurringInstance,
       isDeleted: isDeleted ?? this.isDeleted,
       rowid: rowid ?? this.rowid,
     );
@@ -582,6 +686,12 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
     }
+    if (recurringRuleId.present) {
+      map['recurring_rule_id'] = Variable<String>(recurringRuleId.value);
+    }
+    if (isRecurringInstance.present) {
+      map['is_recurring_instance'] = Variable<bool>(isRecurringInstance.value);
+    }
     if (isDeleted.present) {
       map['is_deleted'] = Variable<bool>(isDeleted.value);
     }
@@ -603,6 +713,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('date: $date, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('recurringRuleId: $recurringRuleId, ')
+          ..write('isRecurringInstance: $isRecurringInstance, ')
           ..write('isDeleted: $isDeleted, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1107,624 +1219,6 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   }
 }
 
-class $InvestmentsTable extends Investments
-    with TableInfo<$InvestmentsTable, Investment> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $InvestmentsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-    'name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _typeMeta = const VerificationMeta('type');
-  @override
-  late final GeneratedColumn<String> type = GeneratedColumn<String>(
-    'type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _amountInvestedMeta = const VerificationMeta(
-    'amountInvested',
-  );
-  @override
-  late final GeneratedColumn<double> amountInvested = GeneratedColumn<double>(
-    'amount_invested',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _currentValueMeta = const VerificationMeta(
-    'currentValue',
-  );
-  @override
-  late final GeneratedColumn<double> currentValue = GeneratedColumn<double>(
-    'current_value',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _investedDateMeta = const VerificationMeta(
-    'investedDate',
-  );
-  @override
-  late final GeneratedColumn<int> investedDate = GeneratedColumn<int>(
-    'invested_date',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _noteMeta = const VerificationMeta('note');
-  @override
-  late final GeneratedColumn<String> note = GeneratedColumn<String>(
-    'note',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
-    'isDeleted',
-  );
-  @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-    'is_deleted',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_deleted" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    name,
-    type,
-    amountInvested,
-    currentValue,
-    investedDate,
-    note,
-    createdAt,
-    updatedAt,
-    isDeleted,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'investments';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<Investment> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('name')) {
-      context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_nameMeta);
-    }
-    if (data.containsKey('type')) {
-      context.handle(
-        _typeMeta,
-        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_typeMeta);
-    }
-    if (data.containsKey('amount_invested')) {
-      context.handle(
-        _amountInvestedMeta,
-        amountInvested.isAcceptableOrUnknown(
-          data['amount_invested']!,
-          _amountInvestedMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_amountInvestedMeta);
-    }
-    if (data.containsKey('current_value')) {
-      context.handle(
-        _currentValueMeta,
-        currentValue.isAcceptableOrUnknown(
-          data['current_value']!,
-          _currentValueMeta,
-        ),
-      );
-    }
-    if (data.containsKey('invested_date')) {
-      context.handle(
-        _investedDateMeta,
-        investedDate.isAcceptableOrUnknown(
-          data['invested_date']!,
-          _investedDateMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_investedDateMeta);
-    }
-    if (data.containsKey('note')) {
-      context.handle(
-        _noteMeta,
-        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
-      );
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('is_deleted')) {
-      context.handle(
-        _isDeletedMeta,
-        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  Investment map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Investment(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      )!,
-      type: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}type'],
-      )!,
-      amountInvested: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}amount_invested'],
-      )!,
-      currentValue: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}current_value'],
-      ),
-      investedDate: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}invested_date'],
-      )!,
-      note: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}note'],
-      ),
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}created_at'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      isDeleted: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_deleted'],
-      )!,
-    );
-  }
-
-  @override
-  $InvestmentsTable createAlias(String alias) {
-    return $InvestmentsTable(attachedDatabase, alias);
-  }
-}
-
-class Investment extends DataClass implements Insertable<Investment> {
-  final String id;
-  final String name;
-  final String type;
-  final double amountInvested;
-  final double? currentValue;
-  final int investedDate;
-  final String? note;
-  final int createdAt;
-  final int updatedAt;
-  final bool isDeleted;
-  const Investment({
-    required this.id,
-    required this.name,
-    required this.type,
-    required this.amountInvested,
-    this.currentValue,
-    required this.investedDate,
-    this.note,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.isDeleted,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['name'] = Variable<String>(name);
-    map['type'] = Variable<String>(type);
-    map['amount_invested'] = Variable<double>(amountInvested);
-    if (!nullToAbsent || currentValue != null) {
-      map['current_value'] = Variable<double>(currentValue);
-    }
-    map['invested_date'] = Variable<int>(investedDate);
-    if (!nullToAbsent || note != null) {
-      map['note'] = Variable<String>(note);
-    }
-    map['created_at'] = Variable<int>(createdAt);
-    map['updated_at'] = Variable<int>(updatedAt);
-    map['is_deleted'] = Variable<bool>(isDeleted);
-    return map;
-  }
-
-  InvestmentsCompanion toCompanion(bool nullToAbsent) {
-    return InvestmentsCompanion(
-      id: Value(id),
-      name: Value(name),
-      type: Value(type),
-      amountInvested: Value(amountInvested),
-      currentValue: currentValue == null && nullToAbsent
-          ? const Value.absent()
-          : Value(currentValue),
-      investedDate: Value(investedDate),
-      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
-      createdAt: Value(createdAt),
-      updatedAt: Value(updatedAt),
-      isDeleted: Value(isDeleted),
-    );
-  }
-
-  factory Investment.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Investment(
-      id: serializer.fromJson<String>(json['id']),
-      name: serializer.fromJson<String>(json['name']),
-      type: serializer.fromJson<String>(json['type']),
-      amountInvested: serializer.fromJson<double>(json['amountInvested']),
-      currentValue: serializer.fromJson<double?>(json['currentValue']),
-      investedDate: serializer.fromJson<int>(json['investedDate']),
-      note: serializer.fromJson<String?>(json['note']),
-      createdAt: serializer.fromJson<int>(json['createdAt']),
-      updatedAt: serializer.fromJson<int>(json['updatedAt']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'name': serializer.toJson<String>(name),
-      'type': serializer.toJson<String>(type),
-      'amountInvested': serializer.toJson<double>(amountInvested),
-      'currentValue': serializer.toJson<double?>(currentValue),
-      'investedDate': serializer.toJson<int>(investedDate),
-      'note': serializer.toJson<String?>(note),
-      'createdAt': serializer.toJson<int>(createdAt),
-      'updatedAt': serializer.toJson<int>(updatedAt),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
-    };
-  }
-
-  Investment copyWith({
-    String? id,
-    String? name,
-    String? type,
-    double? amountInvested,
-    Value<double?> currentValue = const Value.absent(),
-    int? investedDate,
-    Value<String?> note = const Value.absent(),
-    int? createdAt,
-    int? updatedAt,
-    bool? isDeleted,
-  }) => Investment(
-    id: id ?? this.id,
-    name: name ?? this.name,
-    type: type ?? this.type,
-    amountInvested: amountInvested ?? this.amountInvested,
-    currentValue: currentValue.present ? currentValue.value : this.currentValue,
-    investedDate: investedDate ?? this.investedDate,
-    note: note.present ? note.value : this.note,
-    createdAt: createdAt ?? this.createdAt,
-    updatedAt: updatedAt ?? this.updatedAt,
-    isDeleted: isDeleted ?? this.isDeleted,
-  );
-  Investment copyWithCompanion(InvestmentsCompanion data) {
-    return Investment(
-      id: data.id.present ? data.id.value : this.id,
-      name: data.name.present ? data.name.value : this.name,
-      type: data.type.present ? data.type.value : this.type,
-      amountInvested: data.amountInvested.present
-          ? data.amountInvested.value
-          : this.amountInvested,
-      currentValue: data.currentValue.present
-          ? data.currentValue.value
-          : this.currentValue,
-      investedDate: data.investedDate.present
-          ? data.investedDate.value
-          : this.investedDate,
-      note: data.note.present ? data.note.value : this.note,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Investment(')
-          ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('type: $type, ')
-          ..write('amountInvested: $amountInvested, ')
-          ..write('currentValue: $currentValue, ')
-          ..write('investedDate: $investedDate, ')
-          ..write('note: $note, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('isDeleted: $isDeleted')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    name,
-    type,
-    amountInvested,
-    currentValue,
-    investedDate,
-    note,
-    createdAt,
-    updatedAt,
-    isDeleted,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Investment &&
-          other.id == this.id &&
-          other.name == this.name &&
-          other.type == this.type &&
-          other.amountInvested == this.amountInvested &&
-          other.currentValue == this.currentValue &&
-          other.investedDate == this.investedDate &&
-          other.note == this.note &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt &&
-          other.isDeleted == this.isDeleted);
-}
-
-class InvestmentsCompanion extends UpdateCompanion<Investment> {
-  final Value<String> id;
-  final Value<String> name;
-  final Value<String> type;
-  final Value<double> amountInvested;
-  final Value<double?> currentValue;
-  final Value<int> investedDate;
-  final Value<String?> note;
-  final Value<int> createdAt;
-  final Value<int> updatedAt;
-  final Value<bool> isDeleted;
-  final Value<int> rowid;
-  const InvestmentsCompanion({
-    this.id = const Value.absent(),
-    this.name = const Value.absent(),
-    this.type = const Value.absent(),
-    this.amountInvested = const Value.absent(),
-    this.currentValue = const Value.absent(),
-    this.investedDate = const Value.absent(),
-    this.note = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.isDeleted = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  InvestmentsCompanion.insert({
-    required String id,
-    required String name,
-    required String type,
-    required double amountInvested,
-    this.currentValue = const Value.absent(),
-    required int investedDate,
-    this.note = const Value.absent(),
-    required int createdAt,
-    required int updatedAt,
-    this.isDeleted = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       name = Value(name),
-       type = Value(type),
-       amountInvested = Value(amountInvested),
-       investedDate = Value(investedDate),
-       createdAt = Value(createdAt),
-       updatedAt = Value(updatedAt);
-  static Insertable<Investment> custom({
-    Expression<String>? id,
-    Expression<String>? name,
-    Expression<String>? type,
-    Expression<double>? amountInvested,
-    Expression<double>? currentValue,
-    Expression<int>? investedDate,
-    Expression<String>? note,
-    Expression<int>? createdAt,
-    Expression<int>? updatedAt,
-    Expression<bool>? isDeleted,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (name != null) 'name': name,
-      if (type != null) 'type': type,
-      if (amountInvested != null) 'amount_invested': amountInvested,
-      if (currentValue != null) 'current_value': currentValue,
-      if (investedDate != null) 'invested_date': investedDate,
-      if (note != null) 'note': note,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (isDeleted != null) 'is_deleted': isDeleted,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  InvestmentsCompanion copyWith({
-    Value<String>? id,
-    Value<String>? name,
-    Value<String>? type,
-    Value<double>? amountInvested,
-    Value<double?>? currentValue,
-    Value<int>? investedDate,
-    Value<String?>? note,
-    Value<int>? createdAt,
-    Value<int>? updatedAt,
-    Value<bool>? isDeleted,
-    Value<int>? rowid,
-  }) {
-    return InvestmentsCompanion(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      type: type ?? this.type,
-      amountInvested: amountInvested ?? this.amountInvested,
-      currentValue: currentValue ?? this.currentValue,
-      investedDate: investedDate ?? this.investedDate,
-      note: note ?? this.note,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      isDeleted: isDeleted ?? this.isDeleted,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
-    }
-    if (type.present) {
-      map['type'] = Variable<String>(type.value);
-    }
-    if (amountInvested.present) {
-      map['amount_invested'] = Variable<double>(amountInvested.value);
-    }
-    if (currentValue.present) {
-      map['current_value'] = Variable<double>(currentValue.value);
-    }
-    if (investedDate.present) {
-      map['invested_date'] = Variable<int>(investedDate.value);
-    }
-    if (note.present) {
-      map['note'] = Variable<String>(note.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<int>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<int>(updatedAt.value);
-    }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('InvestmentsCompanion(')
-          ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('type: $type, ')
-          ..write('amountInvested: $amountInvested, ')
-          ..write('currentValue: $currentValue, ')
-          ..write('investedDate: $investedDate, ')
-          ..write('note: $note, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('isDeleted: $isDeleted, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $RecurringRulesTable extends RecurringRules
     with TableInfo<$RecurringRulesTable, RecurringRule> {
   @override
@@ -1748,6 +1242,16 @@ class $RecurringRulesTable extends RecurringRules
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('expense'),
   );
   static const VerificationMeta _amountMeta = const VerificationMeta('amount');
   @override
@@ -1878,6 +1382,7 @@ class $RecurringRulesTable extends RecurringRules
   List<GeneratedColumn> get $columns => [
     id,
     title,
+    type,
     amount,
     categoryId,
     paymentMode,
@@ -1914,6 +1419,12 @@ class $RecurringRulesTable extends RecurringRules
       );
     } else if (isInserting) {
       context.missing(_titleMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
     }
     if (data.containsKey('amount')) {
       context.handle(
@@ -2020,6 +1531,10 @@ class $RecurringRulesTable extends RecurringRules
         DriftSqlType.string,
         data['${effectivePrefix}title'],
       )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
       amount: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}amount'],
@@ -2076,6 +1591,7 @@ class $RecurringRulesTable extends RecurringRules
 class RecurringRule extends DataClass implements Insertable<RecurringRule> {
   final String id;
   final String title;
+  final String type;
   final double amount;
   final String categoryId;
   final String paymentMode;
@@ -2090,6 +1606,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
   const RecurringRule({
     required this.id,
     required this.title,
+    required this.type,
     required this.amount,
     required this.categoryId,
     required this.paymentMode,
@@ -2107,6 +1624,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['title'] = Variable<String>(title);
+    map['type'] = Variable<String>(type);
     map['amount'] = Variable<double>(amount);
     map['category_id'] = Variable<String>(categoryId);
     map['payment_mode'] = Variable<String>(paymentMode);
@@ -2127,6 +1645,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     return RecurringRulesCompanion(
       id: Value(id),
       title: Value(title),
+      type: Value(type),
       amount: Value(amount),
       categoryId: Value(categoryId),
       paymentMode: Value(paymentMode),
@@ -2149,6 +1668,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     return RecurringRule(
       id: serializer.fromJson<String>(json['id']),
       title: serializer.fromJson<String>(json['title']),
+      type: serializer.fromJson<String>(json['type']),
       amount: serializer.fromJson<double>(json['amount']),
       categoryId: serializer.fromJson<String>(json['categoryId']),
       paymentMode: serializer.fromJson<String>(json['paymentMode']),
@@ -2168,6 +1688,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'title': serializer.toJson<String>(title),
+      'type': serializer.toJson<String>(type),
       'amount': serializer.toJson<double>(amount),
       'categoryId': serializer.toJson<String>(categoryId),
       'paymentMode': serializer.toJson<String>(paymentMode),
@@ -2185,6 +1706,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
   RecurringRule copyWith({
     String? id,
     String? title,
+    String? type,
     double? amount,
     String? categoryId,
     String? paymentMode,
@@ -2199,6 +1721,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
   }) => RecurringRule(
     id: id ?? this.id,
     title: title ?? this.title,
+    type: type ?? this.type,
     amount: amount ?? this.amount,
     categoryId: categoryId ?? this.categoryId,
     paymentMode: paymentMode ?? this.paymentMode,
@@ -2215,6 +1738,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     return RecurringRule(
       id: data.id.present ? data.id.value : this.id,
       title: data.title.present ? data.title.value : this.title,
+      type: data.type.present ? data.type.value : this.type,
       amount: data.amount.present ? data.amount.value : this.amount,
       categoryId: data.categoryId.present
           ? data.categoryId.value
@@ -2240,6 +1764,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     return (StringBuffer('RecurringRule(')
           ..write('id: $id, ')
           ..write('title: $title, ')
+          ..write('type: $type, ')
           ..write('amount: $amount, ')
           ..write('categoryId: $categoryId, ')
           ..write('paymentMode: $paymentMode, ')
@@ -2259,6 +1784,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
   int get hashCode => Object.hash(
     id,
     title,
+    type,
     amount,
     categoryId,
     paymentMode,
@@ -2277,6 +1803,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       (other is RecurringRule &&
           other.id == this.id &&
           other.title == this.title &&
+          other.type == this.type &&
           other.amount == this.amount &&
           other.categoryId == this.categoryId &&
           other.paymentMode == this.paymentMode &&
@@ -2293,6 +1820,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
 class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
   final Value<String> id;
   final Value<String> title;
+  final Value<String> type;
   final Value<double> amount;
   final Value<String> categoryId;
   final Value<String> paymentMode;
@@ -2308,6 +1836,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
   const RecurringRulesCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
+    this.type = const Value.absent(),
     this.amount = const Value.absent(),
     this.categoryId = const Value.absent(),
     this.paymentMode = const Value.absent(),
@@ -2324,6 +1853,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
   RecurringRulesCompanion.insert({
     required String id,
     required String title,
+    this.type = const Value.absent(),
     required double amount,
     required String categoryId,
     required String paymentMode,
@@ -2349,6 +1879,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
   static Insertable<RecurringRule> custom({
     Expression<String>? id,
     Expression<String>? title,
+    Expression<String>? type,
     Expression<double>? amount,
     Expression<String>? categoryId,
     Expression<String>? paymentMode,
@@ -2365,6 +1896,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (title != null) 'title': title,
+      if (type != null) 'type': type,
       if (amount != null) 'amount': amount,
       if (categoryId != null) 'category_id': categoryId,
       if (paymentMode != null) 'payment_mode': paymentMode,
@@ -2383,6 +1915,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
   RecurringRulesCompanion copyWith({
     Value<String>? id,
     Value<String>? title,
+    Value<String>? type,
     Value<double>? amount,
     Value<String>? categoryId,
     Value<String>? paymentMode,
@@ -2399,6 +1932,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     return RecurringRulesCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
+      type: type ?? this.type,
       amount: amount ?? this.amount,
       categoryId: categoryId ?? this.categoryId,
       paymentMode: paymentMode ?? this.paymentMode,
@@ -2422,6 +1956,9 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
     }
     if (amount.present) {
       map['amount'] = Variable<double>(amount.value);
@@ -2467,6 +2004,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     return (StringBuffer('RecurringRulesCompanion(')
           ..write('id: $id, ')
           ..write('title: $title, ')
+          ..write('type: $type, ')
           ..write('amount: $amount, ')
           ..write('categoryId: $categoryId, ')
           ..write('paymentMode: $paymentMode, ')
@@ -2894,14 +2432,1749 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   }
 }
 
+class $UserProfilesTable extends UserProfiles
+    with TableInfo<$UserProfilesTable, UserProfile> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('User'),
+  );
+  static const VerificationMeta _imageUrlMeta = const VerificationMeta(
+    'imageUrl',
+  );
+  @override
+  late final GeneratedColumn<String> imageUrl = GeneratedColumn<String>(
+    'image_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _onboardingCompletedMeta =
+      const VerificationMeta('onboardingCompleted');
+  @override
+  late final GeneratedColumn<bool> onboardingCompleted = GeneratedColumn<bool>(
+    'onboarding_completed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("onboarding_completed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    imageUrl,
+    email,
+    phone,
+    onboardingCompleted,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_profiles';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<UserProfile> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('image_url')) {
+      context.handle(
+        _imageUrlMeta,
+        imageUrl.isAcceptableOrUnknown(data['image_url']!, _imageUrlMeta),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
+    if (data.containsKey('onboarding_completed')) {
+      context.handle(
+        _onboardingCompletedMeta,
+        onboardingCompleted.isAcceptableOrUnknown(
+          data['onboarding_completed']!,
+          _onboardingCompletedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserProfile map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserProfile(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      imageUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_url'],
+      ),
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      ),
+      onboardingCompleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}onboarding_completed'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $UserProfilesTable createAlias(String alias) {
+    return $UserProfilesTable(attachedDatabase, alias);
+  }
+}
+
+class UserProfile extends DataClass implements Insertable<UserProfile> {
+  final int id;
+  final String name;
+  final String? imageUrl;
+  final String? email;
+  final String? phone;
+  final bool onboardingCompleted;
+  final int createdAt;
+  final int updatedAt;
+  const UserProfile({
+    required this.id,
+    required this.name,
+    this.imageUrl,
+    this.email,
+    this.phone,
+    required this.onboardingCompleted,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || imageUrl != null) {
+      map['image_url'] = Variable<String>(imageUrl);
+    }
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    map['onboarding_completed'] = Variable<bool>(onboardingCompleted);
+    map['created_at'] = Variable<int>(createdAt);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  UserProfilesCompanion toCompanion(bool nullToAbsent) {
+    return UserProfilesCompanion(
+      id: Value(id),
+      name: Value(name),
+      imageUrl: imageUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imageUrl),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      phone: phone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phone),
+      onboardingCompleted: Value(onboardingCompleted),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory UserProfile.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserProfile(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      imageUrl: serializer.fromJson<String?>(json['imageUrl']),
+      email: serializer.fromJson<String?>(json['email']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      onboardingCompleted: serializer.fromJson<bool>(
+        json['onboardingCompleted'],
+      ),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'imageUrl': serializer.toJson<String?>(imageUrl),
+      'email': serializer.toJson<String?>(email),
+      'phone': serializer.toJson<String?>(phone),
+      'onboardingCompleted': serializer.toJson<bool>(onboardingCompleted),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  UserProfile copyWith({
+    int? id,
+    String? name,
+    Value<String?> imageUrl = const Value.absent(),
+    Value<String?> email = const Value.absent(),
+    Value<String?> phone = const Value.absent(),
+    bool? onboardingCompleted,
+    int? createdAt,
+    int? updatedAt,
+  }) => UserProfile(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
+    email: email.present ? email.value : this.email,
+    phone: phone.present ? phone.value : this.phone,
+    onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  UserProfile copyWithCompanion(UserProfilesCompanion data) {
+    return UserProfile(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      imageUrl: data.imageUrl.present ? data.imageUrl.value : this.imageUrl,
+      email: data.email.present ? data.email.value : this.email,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      onboardingCompleted: data.onboardingCompleted.present
+          ? data.onboardingCompleted.value
+          : this.onboardingCompleted,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserProfile(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('imageUrl: $imageUrl, ')
+          ..write('email: $email, ')
+          ..write('phone: $phone, ')
+          ..write('onboardingCompleted: $onboardingCompleted, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    name,
+    imageUrl,
+    email,
+    phone,
+    onboardingCompleted,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserProfile &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.imageUrl == this.imageUrl &&
+          other.email == this.email &&
+          other.phone == this.phone &&
+          other.onboardingCompleted == this.onboardingCompleted &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String?> imageUrl;
+  final Value<String?> email;
+  final Value<String?> phone;
+  final Value<bool> onboardingCompleted;
+  final Value<int> createdAt;
+  final Value<int> updatedAt;
+  const UserProfilesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.imageUrl = const Value.absent(),
+    this.email = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.onboardingCompleted = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  UserProfilesCompanion.insert({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.imageUrl = const Value.absent(),
+    this.email = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.onboardingCompleted = const Value.absent(),
+    required int createdAt,
+    required int updatedAt,
+  }) : createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<UserProfile> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? imageUrl,
+    Expression<String>? email,
+    Expression<String>? phone,
+    Expression<bool>? onboardingCompleted,
+    Expression<int>? createdAt,
+    Expression<int>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (imageUrl != null) 'image_url': imageUrl,
+      if (email != null) 'email': email,
+      if (phone != null) 'phone': phone,
+      if (onboardingCompleted != null)
+        'onboarding_completed': onboardingCompleted,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  UserProfilesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String?>? imageUrl,
+    Value<String?>? email,
+    Value<String?>? phone,
+    Value<bool>? onboardingCompleted,
+    Value<int>? createdAt,
+    Value<int>? updatedAt,
+  }) {
+    return UserProfilesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      imageUrl: imageUrl ?? this.imageUrl,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (imageUrl.present) {
+      map['image_url'] = Variable<String>(imageUrl.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (onboardingCompleted.present) {
+      map['onboarding_completed'] = Variable<bool>(onboardingCompleted.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserProfilesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('imageUrl: $imageUrl, ')
+          ..write('email: $email, ')
+          ..write('phone: $phone, ')
+          ..write('onboardingCompleted: $onboardingCompleted, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LendPeopleTable extends LendPeople
+    with TableInfo<$LendPeopleTable, LendPeopleData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LendPeopleTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    createdAt,
+    updatedAt,
+    isDeleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'lend_people';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LendPeopleData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LendPeopleData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LendPeopleData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $LendPeopleTable createAlias(String alias) {
+    return $LendPeopleTable(attachedDatabase, alias);
+  }
+}
+
+class LendPeopleData extends DataClass implements Insertable<LendPeopleData> {
+  final String id;
+  final String name;
+  final int createdAt;
+  final int updatedAt;
+  final bool isDeleted;
+  const LendPeopleData({
+    required this.id,
+    required this.name,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.isDeleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['created_at'] = Variable<int>(createdAt);
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    return map;
+  }
+
+  LendPeopleCompanion toCompanion(bool nullToAbsent) {
+    return LendPeopleCompanion(
+      id: Value(id),
+      name: Value(name),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      isDeleted: Value(isDeleted),
+    );
+  }
+
+  factory LendPeopleData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LendPeopleData(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+    };
+  }
+
+  LendPeopleData copyWith({
+    String? id,
+    String? name,
+    int? createdAt,
+    int? updatedAt,
+    bool? isDeleted,
+  }) => LendPeopleData(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    isDeleted: isDeleted ?? this.isDeleted,
+  );
+  LendPeopleData copyWithCompanion(LendPeopleCompanion data) {
+    return LendPeopleData(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LendPeopleData(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isDeleted: $isDeleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, createdAt, updatedAt, isDeleted);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LendPeopleData &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.isDeleted == this.isDeleted);
+}
+
+class LendPeopleCompanion extends UpdateCompanion<LendPeopleData> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<int> createdAt;
+  final Value<int> updatedAt;
+  final Value<bool> isDeleted;
+  final Value<int> rowid;
+  const LendPeopleCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LendPeopleCompanion.insert({
+    required String id,
+    required String name,
+    required int createdAt,
+    required int updatedAt,
+    this.isDeleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<LendPeopleData> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<int>? createdAt,
+    Expression<int>? updatedAt,
+    Expression<bool>? isDeleted,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LendPeopleCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<int>? createdAt,
+    Value<int>? updatedAt,
+    Value<bool>? isDeleted,
+    Value<int>? rowid,
+  }) {
+    return LendPeopleCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isDeleted: isDeleted ?? this.isDeleted,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LendPeopleCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LendEntriesTable extends LendEntries
+    with TableInfo<$LendEntriesTable, LendEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LendEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _personIdMeta = const VerificationMeta(
+    'personId',
+  );
+  @override
+  late final GeneratedColumn<String> personId = GeneratedColumn<String>(
+    'person_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<int> date = GeneratedColumn<int>(
+    'date',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isSettledMeta = const VerificationMeta(
+    'isSettled',
+  );
+  @override
+  late final GeneratedColumn<bool> isSettled = GeneratedColumn<bool>(
+    'is_settled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_settled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    personId,
+    type,
+    amount,
+    date,
+    note,
+    isSettled,
+    createdAt,
+    updatedAt,
+    isDeleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'lend_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LendEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('person_id')) {
+      context.handle(
+        _personIdMeta,
+        personId.isAcceptableOrUnknown(data['person_id']!, _personIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_personIdMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+        _dateMeta,
+        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('is_settled')) {
+      context.handle(
+        _isSettledMeta,
+        isSettled.isAcceptableOrUnknown(data['is_settled']!, _isSettledMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LendEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LendEntry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      personId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}person_id'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount'],
+      )!,
+      date: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}date'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      isSettled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_settled'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $LendEntriesTable createAlias(String alias) {
+    return $LendEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class LendEntry extends DataClass implements Insertable<LendEntry> {
+  final String id;
+  final String personId;
+  final String type;
+  final double amount;
+  final int date;
+  final String? note;
+  final bool isSettled;
+  final int createdAt;
+  final int updatedAt;
+  final bool isDeleted;
+  const LendEntry({
+    required this.id,
+    required this.personId,
+    required this.type,
+    required this.amount,
+    required this.date,
+    this.note,
+    required this.isSettled,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.isDeleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['person_id'] = Variable<String>(personId);
+    map['type'] = Variable<String>(type);
+    map['amount'] = Variable<double>(amount);
+    map['date'] = Variable<int>(date);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['is_settled'] = Variable<bool>(isSettled);
+    map['created_at'] = Variable<int>(createdAt);
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    return map;
+  }
+
+  LendEntriesCompanion toCompanion(bool nullToAbsent) {
+    return LendEntriesCompanion(
+      id: Value(id),
+      personId: Value(personId),
+      type: Value(type),
+      amount: Value(amount),
+      date: Value(date),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      isSettled: Value(isSettled),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      isDeleted: Value(isDeleted),
+    );
+  }
+
+  factory LendEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LendEntry(
+      id: serializer.fromJson<String>(json['id']),
+      personId: serializer.fromJson<String>(json['personId']),
+      type: serializer.fromJson<String>(json['type']),
+      amount: serializer.fromJson<double>(json['amount']),
+      date: serializer.fromJson<int>(json['date']),
+      note: serializer.fromJson<String?>(json['note']),
+      isSettled: serializer.fromJson<bool>(json['isSettled']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'personId': serializer.toJson<String>(personId),
+      'type': serializer.toJson<String>(type),
+      'amount': serializer.toJson<double>(amount),
+      'date': serializer.toJson<int>(date),
+      'note': serializer.toJson<String?>(note),
+      'isSettled': serializer.toJson<bool>(isSettled),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+    };
+  }
+
+  LendEntry copyWith({
+    String? id,
+    String? personId,
+    String? type,
+    double? amount,
+    int? date,
+    Value<String?> note = const Value.absent(),
+    bool? isSettled,
+    int? createdAt,
+    int? updatedAt,
+    bool? isDeleted,
+  }) => LendEntry(
+    id: id ?? this.id,
+    personId: personId ?? this.personId,
+    type: type ?? this.type,
+    amount: amount ?? this.amount,
+    date: date ?? this.date,
+    note: note.present ? note.value : this.note,
+    isSettled: isSettled ?? this.isSettled,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    isDeleted: isDeleted ?? this.isDeleted,
+  );
+  LendEntry copyWithCompanion(LendEntriesCompanion data) {
+    return LendEntry(
+      id: data.id.present ? data.id.value : this.id,
+      personId: data.personId.present ? data.personId.value : this.personId,
+      type: data.type.present ? data.type.value : this.type,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      date: data.date.present ? data.date.value : this.date,
+      note: data.note.present ? data.note.value : this.note,
+      isSettled: data.isSettled.present ? data.isSettled.value : this.isSettled,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LendEntry(')
+          ..write('id: $id, ')
+          ..write('personId: $personId, ')
+          ..write('type: $type, ')
+          ..write('amount: $amount, ')
+          ..write('date: $date, ')
+          ..write('note: $note, ')
+          ..write('isSettled: $isSettled, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isDeleted: $isDeleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    personId,
+    type,
+    amount,
+    date,
+    note,
+    isSettled,
+    createdAt,
+    updatedAt,
+    isDeleted,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LendEntry &&
+          other.id == this.id &&
+          other.personId == this.personId &&
+          other.type == this.type &&
+          other.amount == this.amount &&
+          other.date == this.date &&
+          other.note == this.note &&
+          other.isSettled == this.isSettled &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.isDeleted == this.isDeleted);
+}
+
+class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
+  final Value<String> id;
+  final Value<String> personId;
+  final Value<String> type;
+  final Value<double> amount;
+  final Value<int> date;
+  final Value<String?> note;
+  final Value<bool> isSettled;
+  final Value<int> createdAt;
+  final Value<int> updatedAt;
+  final Value<bool> isDeleted;
+  final Value<int> rowid;
+  const LendEntriesCompanion({
+    this.id = const Value.absent(),
+    this.personId = const Value.absent(),
+    this.type = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.date = const Value.absent(),
+    this.note = const Value.absent(),
+    this.isSettled = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LendEntriesCompanion.insert({
+    required String id,
+    required String personId,
+    required String type,
+    required double amount,
+    required int date,
+    this.note = const Value.absent(),
+    this.isSettled = const Value.absent(),
+    required int createdAt,
+    required int updatedAt,
+    this.isDeleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       personId = Value(personId),
+       type = Value(type),
+       amount = Value(amount),
+       date = Value(date),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<LendEntry> custom({
+    Expression<String>? id,
+    Expression<String>? personId,
+    Expression<String>? type,
+    Expression<double>? amount,
+    Expression<int>? date,
+    Expression<String>? note,
+    Expression<bool>? isSettled,
+    Expression<int>? createdAt,
+    Expression<int>? updatedAt,
+    Expression<bool>? isDeleted,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (personId != null) 'person_id': personId,
+      if (type != null) 'type': type,
+      if (amount != null) 'amount': amount,
+      if (date != null) 'date': date,
+      if (note != null) 'note': note,
+      if (isSettled != null) 'is_settled': isSettled,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LendEntriesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? personId,
+    Value<String>? type,
+    Value<double>? amount,
+    Value<int>? date,
+    Value<String?>? note,
+    Value<bool>? isSettled,
+    Value<int>? createdAt,
+    Value<int>? updatedAt,
+    Value<bool>? isDeleted,
+    Value<int>? rowid,
+  }) {
+    return LendEntriesCompanion(
+      id: id ?? this.id,
+      personId: personId ?? this.personId,
+      type: type ?? this.type,
+      amount: amount ?? this.amount,
+      date: date ?? this.date,
+      note: note ?? this.note,
+      isSettled: isSettled ?? this.isSettled,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isDeleted: isDeleted ?? this.isDeleted,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (personId.present) {
+      map['person_id'] = Variable<String>(personId.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<int>(date.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (isSettled.present) {
+      map['is_settled'] = Variable<bool>(isSettled.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LendEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('personId: $personId, ')
+          ..write('type: $type, ')
+          ..write('amount: $amount, ')
+          ..write('date: $date, ')
+          ..write('note: $note, ')
+          ..write('isSettled: $isSettled, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MonthlyReflectionsTable extends MonthlyReflections
+    with TableInfo<$MonthlyReflectionsTable, MonthlyReflection> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MonthlyReflectionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _monthKeyMeta = const VerificationMeta(
+    'monthKey',
+  );
+  @override
+  late final GeneratedColumn<String> monthKey = GeneratedColumn<String>(
+    'month_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [monthKey, note, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'monthly_reflections';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MonthlyReflection> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('month_key')) {
+      context.handle(
+        _monthKeyMeta,
+        monthKey.isAcceptableOrUnknown(data['month_key']!, _monthKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_monthKeyMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_noteMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {monthKey};
+  @override
+  MonthlyReflection map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MonthlyReflection(
+      monthKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}month_key'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MonthlyReflectionsTable createAlias(String alias) {
+    return $MonthlyReflectionsTable(attachedDatabase, alias);
+  }
+}
+
+class MonthlyReflection extends DataClass
+    implements Insertable<MonthlyReflection> {
+  final String monthKey;
+  final String note;
+  final int updatedAt;
+  const MonthlyReflection({
+    required this.monthKey,
+    required this.note,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['month_key'] = Variable<String>(monthKey);
+    map['note'] = Variable<String>(note);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  MonthlyReflectionsCompanion toCompanion(bool nullToAbsent) {
+    return MonthlyReflectionsCompanion(
+      monthKey: Value(monthKey),
+      note: Value(note),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory MonthlyReflection.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MonthlyReflection(
+      monthKey: serializer.fromJson<String>(json['monthKey']),
+      note: serializer.fromJson<String>(json['note']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'monthKey': serializer.toJson<String>(monthKey),
+      'note': serializer.toJson<String>(note),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  MonthlyReflection copyWith({
+    String? monthKey,
+    String? note,
+    int? updatedAt,
+  }) => MonthlyReflection(
+    monthKey: monthKey ?? this.monthKey,
+    note: note ?? this.note,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  MonthlyReflection copyWithCompanion(MonthlyReflectionsCompanion data) {
+    return MonthlyReflection(
+      monthKey: data.monthKey.present ? data.monthKey.value : this.monthKey,
+      note: data.note.present ? data.note.value : this.note,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MonthlyReflection(')
+          ..write('monthKey: $monthKey, ')
+          ..write('note: $note, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(monthKey, note, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MonthlyReflection &&
+          other.monthKey == this.monthKey &&
+          other.note == this.note &&
+          other.updatedAt == this.updatedAt);
+}
+
+class MonthlyReflectionsCompanion extends UpdateCompanion<MonthlyReflection> {
+  final Value<String> monthKey;
+  final Value<String> note;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const MonthlyReflectionsCompanion({
+    this.monthKey = const Value.absent(),
+    this.note = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MonthlyReflectionsCompanion.insert({
+    required String monthKey,
+    required String note,
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  }) : monthKey = Value(monthKey),
+       note = Value(note),
+       updatedAt = Value(updatedAt);
+  static Insertable<MonthlyReflection> custom({
+    Expression<String>? monthKey,
+    Expression<String>? note,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (monthKey != null) 'month_key': monthKey,
+      if (note != null) 'note': note,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MonthlyReflectionsCompanion copyWith({
+    Value<String>? monthKey,
+    Value<String>? note,
+    Value<int>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return MonthlyReflectionsCompanion(
+      monthKey: monthKey ?? this.monthKey,
+      note: note ?? this.note,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (monthKey.present) {
+      map['month_key'] = Variable<String>(monthKey.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MonthlyReflectionsCompanion(')
+          ..write('monthKey: $monthKey, ')
+          ..write('note: $note, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TransactionsTable transactions = $TransactionsTable(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
-  late final $InvestmentsTable investments = $InvestmentsTable(this);
   late final $RecurringRulesTable recurringRules = $RecurringRulesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
+  late final $UserProfilesTable userProfiles = $UserProfilesTable(this);
+  late final $LendPeopleTable lendPeople = $LendPeopleTable(this);
+  late final $LendEntriesTable lendEntries = $LendEntriesTable(this);
+  late final $MonthlyReflectionsTable monthlyReflections =
+      $MonthlyReflectionsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2909,9 +4182,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     transactions,
     categories,
-    investments,
     recurringRules,
     settings,
+    userProfiles,
+    lendPeople,
+    lendEntries,
+    monthlyReflections,
   ];
 }
 
@@ -2926,6 +4202,8 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required int date,
       required int createdAt,
       required int updatedAt,
+      Value<String?> recurringRuleId,
+      Value<bool> isRecurringInstance,
       Value<bool> isDeleted,
       Value<int> rowid,
     });
@@ -2940,6 +4218,8 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<int> date,
       Value<int> createdAt,
       Value<int> updatedAt,
+      Value<String?> recurringRuleId,
+      Value<bool> isRecurringInstance,
       Value<bool> isDeleted,
       Value<int> rowid,
     });
@@ -2995,6 +4275,16 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<int> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recurringRuleId => $composableBuilder(
+    column: $table.recurringRuleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isRecurringInstance => $composableBuilder(
+    column: $table.isRecurringInstance,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3058,6 +4348,16 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get recurringRuleId => $composableBuilder(
+    column: $table.recurringRuleId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isRecurringInstance => $composableBuilder(
+    column: $table.isRecurringInstance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isDeleted => $composableBuilder(
     column: $table.isDeleted,
     builder: (column) => ColumnOrderings(column),
@@ -3104,6 +4404,16 @@ class $$TransactionsTableAnnotationComposer
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
+  GeneratedColumn<String> get recurringRuleId => $composableBuilder(
+    column: $table.recurringRuleId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isRecurringInstance => $composableBuilder(
+    column: $table.isRecurringInstance,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isDeleted =>
       $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 }
@@ -3148,6 +4458,8 @@ class $$TransactionsTableTableManager
                 Value<int> date = const Value.absent(),
                 Value<int> createdAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
+                Value<String?> recurringRuleId = const Value.absent(),
+                Value<bool> isRecurringInstance = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
@@ -3160,6 +4472,8 @@ class $$TransactionsTableTableManager
                 date: date,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                recurringRuleId: recurringRuleId,
+                isRecurringInstance: isRecurringInstance,
                 isDeleted: isDeleted,
                 rowid: rowid,
               ),
@@ -3174,6 +4488,8 @@ class $$TransactionsTableTableManager
                 required int date,
                 required int createdAt,
                 required int updatedAt,
+                Value<String?> recurringRuleId = const Value.absent(),
+                Value<bool> isRecurringInstance = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
@@ -3186,6 +4502,8 @@ class $$TransactionsTableTableManager
                 date: date,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                recurringRuleId: recurringRuleId,
+                isRecurringInstance: isRecurringInstance,
                 isDeleted: isDeleted,
                 rowid: rowid,
               ),
@@ -3465,311 +4783,11 @@ typedef $$CategoriesTableProcessedTableManager =
       Category,
       PrefetchHooks Function()
     >;
-typedef $$InvestmentsTableCreateCompanionBuilder =
-    InvestmentsCompanion Function({
-      required String id,
-      required String name,
-      required String type,
-      required double amountInvested,
-      Value<double?> currentValue,
-      required int investedDate,
-      Value<String?> note,
-      required int createdAt,
-      required int updatedAt,
-      Value<bool> isDeleted,
-      Value<int> rowid,
-    });
-typedef $$InvestmentsTableUpdateCompanionBuilder =
-    InvestmentsCompanion Function({
-      Value<String> id,
-      Value<String> name,
-      Value<String> type,
-      Value<double> amountInvested,
-      Value<double?> currentValue,
-      Value<int> investedDate,
-      Value<String?> note,
-      Value<int> createdAt,
-      Value<int> updatedAt,
-      Value<bool> isDeleted,
-      Value<int> rowid,
-    });
-
-class $$InvestmentsTableFilterComposer
-    extends Composer<_$AppDatabase, $InvestmentsTable> {
-  $$InvestmentsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get type => $composableBuilder(
-    column: $table.type,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get amountInvested => $composableBuilder(
-    column: $table.amountInvested,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get currentValue => $composableBuilder(
-    column: $table.currentValue,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get investedDate => $composableBuilder(
-    column: $table.investedDate,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$InvestmentsTableOrderingComposer
-    extends Composer<_$AppDatabase, $InvestmentsTable> {
-  $$InvestmentsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get type => $composableBuilder(
-    column: $table.type,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get amountInvested => $composableBuilder(
-    column: $table.amountInvested,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get currentValue => $composableBuilder(
-    column: $table.currentValue,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get investedDate => $composableBuilder(
-    column: $table.investedDate,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get note => $composableBuilder(
-    column: $table.note,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$InvestmentsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $InvestmentsTable> {
-  $$InvestmentsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<String> get type =>
-      $composableBuilder(column: $table.type, builder: (column) => column);
-
-  GeneratedColumn<double> get amountInvested => $composableBuilder(
-    column: $table.amountInvested,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get currentValue => $composableBuilder(
-    column: $table.currentValue,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get investedDate => $composableBuilder(
-    column: $table.investedDate,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get note =>
-      $composableBuilder(column: $table.note, builder: (column) => column);
-
-  GeneratedColumn<int> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<int> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
-}
-
-class $$InvestmentsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $InvestmentsTable,
-          Investment,
-          $$InvestmentsTableFilterComposer,
-          $$InvestmentsTableOrderingComposer,
-          $$InvestmentsTableAnnotationComposer,
-          $$InvestmentsTableCreateCompanionBuilder,
-          $$InvestmentsTableUpdateCompanionBuilder,
-          (
-            Investment,
-            BaseReferences<_$AppDatabase, $InvestmentsTable, Investment>,
-          ),
-          Investment,
-          PrefetchHooks Function()
-        > {
-  $$InvestmentsTableTableManager(_$AppDatabase db, $InvestmentsTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$InvestmentsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$InvestmentsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$InvestmentsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<String> type = const Value.absent(),
-                Value<double> amountInvested = const Value.absent(),
-                Value<double?> currentValue = const Value.absent(),
-                Value<int> investedDate = const Value.absent(),
-                Value<String?> note = const Value.absent(),
-                Value<int> createdAt = const Value.absent(),
-                Value<int> updatedAt = const Value.absent(),
-                Value<bool> isDeleted = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => InvestmentsCompanion(
-                id: id,
-                name: name,
-                type: type,
-                amountInvested: amountInvested,
-                currentValue: currentValue,
-                investedDate: investedDate,
-                note: note,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-                isDeleted: isDeleted,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                required String name,
-                required String type,
-                required double amountInvested,
-                Value<double?> currentValue = const Value.absent(),
-                required int investedDate,
-                Value<String?> note = const Value.absent(),
-                required int createdAt,
-                required int updatedAt,
-                Value<bool> isDeleted = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => InvestmentsCompanion.insert(
-                id: id,
-                name: name,
-                type: type,
-                amountInvested: amountInvested,
-                currentValue: currentValue,
-                investedDate: investedDate,
-                note: note,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-                isDeleted: isDeleted,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$InvestmentsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $InvestmentsTable,
-      Investment,
-      $$InvestmentsTableFilterComposer,
-      $$InvestmentsTableOrderingComposer,
-      $$InvestmentsTableAnnotationComposer,
-      $$InvestmentsTableCreateCompanionBuilder,
-      $$InvestmentsTableUpdateCompanionBuilder,
-      (
-        Investment,
-        BaseReferences<_$AppDatabase, $InvestmentsTable, Investment>,
-      ),
-      Investment,
-      PrefetchHooks Function()
-    >;
 typedef $$RecurringRulesTableCreateCompanionBuilder =
     RecurringRulesCompanion Function({
       required String id,
       required String title,
+      Value<String> type,
       required double amount,
       required String categoryId,
       required String paymentMode,
@@ -3787,6 +4805,7 @@ typedef $$RecurringRulesTableUpdateCompanionBuilder =
     RecurringRulesCompanion Function({
       Value<String> id,
       Value<String> title,
+      Value<String> type,
       Value<double> amount,
       Value<String> categoryId,
       Value<String> paymentMode,
@@ -3817,6 +4836,11 @@ class $$RecurringRulesTableFilterComposer
 
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3895,6 +4919,11 @@ class $$RecurringRulesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get amount => $composableBuilder(
     column: $table.amount,
     builder: (column) => ColumnOrderings(column),
@@ -3965,6 +4994,9 @@ class $$RecurringRulesTableAnnotationComposer
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
 
   GeneratedColumn<double> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
@@ -4041,6 +5073,7 @@ class $$RecurringRulesTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> title = const Value.absent(),
+                Value<String> type = const Value.absent(),
                 Value<double> amount = const Value.absent(),
                 Value<String> categoryId = const Value.absent(),
                 Value<String> paymentMode = const Value.absent(),
@@ -4056,6 +5089,7 @@ class $$RecurringRulesTableTableManager
               }) => RecurringRulesCompanion(
                 id: id,
                 title: title,
+                type: type,
                 amount: amount,
                 categoryId: categoryId,
                 paymentMode: paymentMode,
@@ -4073,6 +5107,7 @@ class $$RecurringRulesTableTableManager
               ({
                 required String id,
                 required String title,
+                Value<String> type = const Value.absent(),
                 required double amount,
                 required String categoryId,
                 required String paymentMode,
@@ -4088,6 +5123,7 @@ class $$RecurringRulesTableTableManager
               }) => RecurringRulesCompanion.insert(
                 id: id,
                 title: title,
+                type: type,
                 amount: amount,
                 categoryId: categoryId,
                 paymentMode: paymentMode,
@@ -4337,6 +5373,926 @@ typedef $$SettingsTableProcessedTableManager =
       Setting,
       PrefetchHooks Function()
     >;
+typedef $$UserProfilesTableCreateCompanionBuilder =
+    UserProfilesCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String?> imageUrl,
+      Value<String?> email,
+      Value<String?> phone,
+      Value<bool> onboardingCompleted,
+      required int createdAt,
+      required int updatedAt,
+    });
+typedef $$UserProfilesTableUpdateCompanionBuilder =
+    UserProfilesCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String?> imageUrl,
+      Value<String?> email,
+      Value<String?> phone,
+      Value<bool> onboardingCompleted,
+      Value<int> createdAt,
+      Value<int> updatedAt,
+    });
+
+class $$UserProfilesTableFilterComposer
+    extends Composer<_$AppDatabase, $UserProfilesTable> {
+  $$UserProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imageUrl => $composableBuilder(
+    column: $table.imageUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get onboardingCompleted => $composableBuilder(
+    column: $table.onboardingCompleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$UserProfilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $UserProfilesTable> {
+  $$UserProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get imageUrl => $composableBuilder(
+    column: $table.imageUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get onboardingCompleted => $composableBuilder(
+    column: $table.onboardingCompleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$UserProfilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UserProfilesTable> {
+  $$UserProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get imageUrl =>
+      $composableBuilder(column: $table.imageUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<bool> get onboardingCompleted => $composableBuilder(
+    column: $table.onboardingCompleted,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$UserProfilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UserProfilesTable,
+          UserProfile,
+          $$UserProfilesTableFilterComposer,
+          $$UserProfilesTableOrderingComposer,
+          $$UserProfilesTableAnnotationComposer,
+          $$UserProfilesTableCreateCompanionBuilder,
+          $$UserProfilesTableUpdateCompanionBuilder,
+          (
+            UserProfile,
+            BaseReferences<_$AppDatabase, $UserProfilesTable, UserProfile>,
+          ),
+          UserProfile,
+          PrefetchHooks Function()
+        > {
+  $$UserProfilesTableTableManager(_$AppDatabase db, $UserProfilesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UserProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UserProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UserProfilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> imageUrl = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<bool> onboardingCompleted = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+              }) => UserProfilesCompanion(
+                id: id,
+                name: name,
+                imageUrl: imageUrl,
+                email: email,
+                phone: phone,
+                onboardingCompleted: onboardingCompleted,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> imageUrl = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<bool> onboardingCompleted = const Value.absent(),
+                required int createdAt,
+                required int updatedAt,
+              }) => UserProfilesCompanion.insert(
+                id: id,
+                name: name,
+                imageUrl: imageUrl,
+                email: email,
+                phone: phone,
+                onboardingCompleted: onboardingCompleted,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$UserProfilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UserProfilesTable,
+      UserProfile,
+      $$UserProfilesTableFilterComposer,
+      $$UserProfilesTableOrderingComposer,
+      $$UserProfilesTableAnnotationComposer,
+      $$UserProfilesTableCreateCompanionBuilder,
+      $$UserProfilesTableUpdateCompanionBuilder,
+      (
+        UserProfile,
+        BaseReferences<_$AppDatabase, $UserProfilesTable, UserProfile>,
+      ),
+      UserProfile,
+      PrefetchHooks Function()
+    >;
+typedef $$LendPeopleTableCreateCompanionBuilder =
+    LendPeopleCompanion Function({
+      required String id,
+      required String name,
+      required int createdAt,
+      required int updatedAt,
+      Value<bool> isDeleted,
+      Value<int> rowid,
+    });
+typedef $$LendPeopleTableUpdateCompanionBuilder =
+    LendPeopleCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<int> createdAt,
+      Value<int> updatedAt,
+      Value<bool> isDeleted,
+      Value<int> rowid,
+    });
+
+class $$LendPeopleTableFilterComposer
+    extends Composer<_$AppDatabase, $LendPeopleTable> {
+  $$LendPeopleTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LendPeopleTableOrderingComposer
+    extends Composer<_$AppDatabase, $LendPeopleTable> {
+  $$LendPeopleTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LendPeopleTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LendPeopleTable> {
+  $$LendPeopleTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+}
+
+class $$LendPeopleTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LendPeopleTable,
+          LendPeopleData,
+          $$LendPeopleTableFilterComposer,
+          $$LendPeopleTableOrderingComposer,
+          $$LendPeopleTableAnnotationComposer,
+          $$LendPeopleTableCreateCompanionBuilder,
+          $$LendPeopleTableUpdateCompanionBuilder,
+          (
+            LendPeopleData,
+            BaseReferences<_$AppDatabase, $LendPeopleTable, LendPeopleData>,
+          ),
+          LendPeopleData,
+          PrefetchHooks Function()
+        > {
+  $$LendPeopleTableTableManager(_$AppDatabase db, $LendPeopleTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LendPeopleTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LendPeopleTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LendPeopleTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LendPeopleCompanion(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isDeleted: isDeleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                required int createdAt,
+                required int updatedAt,
+                Value<bool> isDeleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LendPeopleCompanion.insert(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isDeleted: isDeleted,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LendPeopleTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LendPeopleTable,
+      LendPeopleData,
+      $$LendPeopleTableFilterComposer,
+      $$LendPeopleTableOrderingComposer,
+      $$LendPeopleTableAnnotationComposer,
+      $$LendPeopleTableCreateCompanionBuilder,
+      $$LendPeopleTableUpdateCompanionBuilder,
+      (
+        LendPeopleData,
+        BaseReferences<_$AppDatabase, $LendPeopleTable, LendPeopleData>,
+      ),
+      LendPeopleData,
+      PrefetchHooks Function()
+    >;
+typedef $$LendEntriesTableCreateCompanionBuilder =
+    LendEntriesCompanion Function({
+      required String id,
+      required String personId,
+      required String type,
+      required double amount,
+      required int date,
+      Value<String?> note,
+      Value<bool> isSettled,
+      required int createdAt,
+      required int updatedAt,
+      Value<bool> isDeleted,
+      Value<int> rowid,
+    });
+typedef $$LendEntriesTableUpdateCompanionBuilder =
+    LendEntriesCompanion Function({
+      Value<String> id,
+      Value<String> personId,
+      Value<String> type,
+      Value<double> amount,
+      Value<int> date,
+      Value<String?> note,
+      Value<bool> isSettled,
+      Value<int> createdAt,
+      Value<int> updatedAt,
+      Value<bool> isDeleted,
+      Value<int> rowid,
+    });
+
+class $$LendEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $LendEntriesTable> {
+  $$LendEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get personId => $composableBuilder(
+    column: $table.personId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isSettled => $composableBuilder(
+    column: $table.isSettled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LendEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LendEntriesTable> {
+  $$LendEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get personId => $composableBuilder(
+    column: $table.personId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isSettled => $composableBuilder(
+    column: $table.isSettled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LendEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LendEntriesTable> {
+  $$LendEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get personId =>
+      $composableBuilder(column: $table.personId, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<int> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<bool> get isSettled =>
+      $composableBuilder(column: $table.isSettled, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+}
+
+class $$LendEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LendEntriesTable,
+          LendEntry,
+          $$LendEntriesTableFilterComposer,
+          $$LendEntriesTableOrderingComposer,
+          $$LendEntriesTableAnnotationComposer,
+          $$LendEntriesTableCreateCompanionBuilder,
+          $$LendEntriesTableUpdateCompanionBuilder,
+          (
+            LendEntry,
+            BaseReferences<_$AppDatabase, $LendEntriesTable, LendEntry>,
+          ),
+          LendEntry,
+          PrefetchHooks Function()
+        > {
+  $$LendEntriesTableTableManager(_$AppDatabase db, $LendEntriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LendEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LendEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LendEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> personId = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+                Value<int> date = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<bool> isSettled = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LendEntriesCompanion(
+                id: id,
+                personId: personId,
+                type: type,
+                amount: amount,
+                date: date,
+                note: note,
+                isSettled: isSettled,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isDeleted: isDeleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String personId,
+                required String type,
+                required double amount,
+                required int date,
+                Value<String?> note = const Value.absent(),
+                Value<bool> isSettled = const Value.absent(),
+                required int createdAt,
+                required int updatedAt,
+                Value<bool> isDeleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LendEntriesCompanion.insert(
+                id: id,
+                personId: personId,
+                type: type,
+                amount: amount,
+                date: date,
+                note: note,
+                isSettled: isSettled,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                isDeleted: isDeleted,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LendEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LendEntriesTable,
+      LendEntry,
+      $$LendEntriesTableFilterComposer,
+      $$LendEntriesTableOrderingComposer,
+      $$LendEntriesTableAnnotationComposer,
+      $$LendEntriesTableCreateCompanionBuilder,
+      $$LendEntriesTableUpdateCompanionBuilder,
+      (LendEntry, BaseReferences<_$AppDatabase, $LendEntriesTable, LendEntry>),
+      LendEntry,
+      PrefetchHooks Function()
+    >;
+typedef $$MonthlyReflectionsTableCreateCompanionBuilder =
+    MonthlyReflectionsCompanion Function({
+      required String monthKey,
+      required String note,
+      required int updatedAt,
+      Value<int> rowid,
+    });
+typedef $$MonthlyReflectionsTableUpdateCompanionBuilder =
+    MonthlyReflectionsCompanion Function({
+      Value<String> monthKey,
+      Value<String> note,
+      Value<int> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$MonthlyReflectionsTableFilterComposer
+    extends Composer<_$AppDatabase, $MonthlyReflectionsTable> {
+  $$MonthlyReflectionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get monthKey => $composableBuilder(
+    column: $table.monthKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MonthlyReflectionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MonthlyReflectionsTable> {
+  $$MonthlyReflectionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get monthKey => $composableBuilder(
+    column: $table.monthKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MonthlyReflectionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MonthlyReflectionsTable> {
+  $$MonthlyReflectionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get monthKey =>
+      $composableBuilder(column: $table.monthKey, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$MonthlyReflectionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MonthlyReflectionsTable,
+          MonthlyReflection,
+          $$MonthlyReflectionsTableFilterComposer,
+          $$MonthlyReflectionsTableOrderingComposer,
+          $$MonthlyReflectionsTableAnnotationComposer,
+          $$MonthlyReflectionsTableCreateCompanionBuilder,
+          $$MonthlyReflectionsTableUpdateCompanionBuilder,
+          (
+            MonthlyReflection,
+            BaseReferences<
+              _$AppDatabase,
+              $MonthlyReflectionsTable,
+              MonthlyReflection
+            >,
+          ),
+          MonthlyReflection,
+          PrefetchHooks Function()
+        > {
+  $$MonthlyReflectionsTableTableManager(
+    _$AppDatabase db,
+    $MonthlyReflectionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MonthlyReflectionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MonthlyReflectionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MonthlyReflectionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> monthKey = const Value.absent(),
+                Value<String> note = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MonthlyReflectionsCompanion(
+                monthKey: monthKey,
+                note: note,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String monthKey,
+                required String note,
+                required int updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MonthlyReflectionsCompanion.insert(
+                monthKey: monthKey,
+                note: note,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MonthlyReflectionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MonthlyReflectionsTable,
+      MonthlyReflection,
+      $$MonthlyReflectionsTableFilterComposer,
+      $$MonthlyReflectionsTableOrderingComposer,
+      $$MonthlyReflectionsTableAnnotationComposer,
+      $$MonthlyReflectionsTableCreateCompanionBuilder,
+      $$MonthlyReflectionsTableUpdateCompanionBuilder,
+      (
+        MonthlyReflection,
+        BaseReferences<
+          _$AppDatabase,
+          $MonthlyReflectionsTable,
+          MonthlyReflection
+        >,
+      ),
+      MonthlyReflection,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4345,10 +6301,16 @@ class $AppDatabaseManager {
       $$TransactionsTableTableManager(_db, _db.transactions);
   $$CategoriesTableTableManager get categories =>
       $$CategoriesTableTableManager(_db, _db.categories);
-  $$InvestmentsTableTableManager get investments =>
-      $$InvestmentsTableTableManager(_db, _db.investments);
   $$RecurringRulesTableTableManager get recurringRules =>
       $$RecurringRulesTableTableManager(_db, _db.recurringRules);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
+  $$UserProfilesTableTableManager get userProfiles =>
+      $$UserProfilesTableTableManager(_db, _db.userProfiles);
+  $$LendPeopleTableTableManager get lendPeople =>
+      $$LendPeopleTableTableManager(_db, _db.lendPeople);
+  $$LendEntriesTableTableManager get lendEntries =>
+      $$LendEntriesTableTableManager(_db, _db.lendEntries);
+  $$MonthlyReflectionsTableTableManager get monthlyReflections =>
+      $$MonthlyReflectionsTableTableManager(_db, _db.monthlyReflections);
 }

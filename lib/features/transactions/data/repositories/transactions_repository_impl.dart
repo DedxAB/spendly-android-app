@@ -34,6 +34,16 @@ class TransactionsRepositoryImpl implements TransactionsRepository {
   }
 
   @override
+  Stream<List<TransactionEntity>> watchAll() {
+    return _ref
+        .read(appDatabaseProvider)
+        .watchAllActiveTransactions()
+        .map(
+          (rows) => rows.map((row) => row.toEntity()).toList(growable: false),
+        );
+  }
+
+  @override
   Stream<List<TransactionEntity>> watchByMonth(
     DateTime month, {
     String? categoryId,

@@ -1,7 +1,7 @@
-﻿name: spendly
+name: spendly
 description: "Spendly - offline-first personal finance app"
 publish_to: 'none'
-version: 1.0.0+1
+version: 0.0.1+1
 
 environment:
   sdk: ^3.9.2
@@ -23,6 +23,10 @@ dependencies:
   json_annotation: ^4.9.0
   fl_chart: ^0.71.0
   intl: ^0.20.2
+  google_sign_in: ^6.2.2
+  googleapis: ^14.0.0
+  googleapis_auth: ^1.6.0
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
@@ -47,4 +51,3 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icons/app_icon.png"
   remove_alpha_ios: true
-
