@@ -7,6 +7,7 @@ import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/glass_card.dart';
 import 'package:spendly/features/categories/data/repositories/categories_repository_impl.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
+import 'package:spendly/features/cloud_sync/presentation/providers/cloud_sync_provider.dart';
 import 'package:spendly/features/home/presentation/providers/home_provider.dart';
 import 'package:spendly/features/transactions/data/repositories/transactions_repository_impl.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
@@ -133,14 +134,27 @@ class HomePage extends ConsumerWidget {
     final todaySpent = ref.watch(todaySpentProvider).valueOrNull ?? 0;
     final recent = ref.watch(recentTransactionsProvider);
     final profile = ref.watch(userProfileProvider).valueOrNull;
+    final cloudSync = ref.watch(cloudSyncControllerProvider).valueOrNull;
     final name = (profile?.name.trim().isNotEmpty ?? false)
         ? profile!.name.trim()
         : 'User';
+    final profileImageUrl = (profile?.imageUrl?.trim().isNotEmpty ?? false)
+        ? profile!.imageUrl!.trim()
+        : null;
+    final isGoogleConnected = cloudSync?.isConnected ?? false;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Spendly'),
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.xs),
+            child: _ProfileAvatar(
+              name: name,
+              imageUrl: isGoogleConnected ? profileImageUrl : null,
+              connectedToGoogle: isGoogleConnected,
+            ),
+          ),
           IconButton(
             onPressed: () => context.push('/settings'),
             icon: const Icon(Icons.settings_outlined),
@@ -343,6 +357,66 @@ class HomePage extends ConsumerWidget {
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({
+    required this.name,
+    required this.imageUrl,
+    required this.connectedToGoogle,
+  });
+
+  final String name;
+  final String? imageUrl;
+  final bool connectedToGoogle;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasGooglePhoto = connectedToGoogle && imageUrl != null;
+    if (hasGooglePhoto) {
+      return CircleAvatar(
+        radius: 16,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+        backgroundImage: NetworkImage(imageUrl!),
+      );
+    }
+
+    return CircleAvatar(
+      radius: 16,
+      backgroundColor: _fallbackColor(name),
+      child: Text(
+        _initials(name),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Color _fallbackColor(String seed) {
+    final colors = <Color>[
+      const Color(0xFF1F8A70),
+      const Color(0xFF2D6A9F),
+      const Color(0xFFB26A00),
+      const Color(0xFF8C4A8B),
+      const Color(0xFF2E7D32),
+      const Color(0xFFAA3A3A),
+    ];
+    return colors[seed.hashCode.abs() % colors.length];
+  }
+
+  String _initials(String value) {
+    final parts = value
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .toList(growable: false);
+    if (parts.isEmpty) return 'U';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 }
 

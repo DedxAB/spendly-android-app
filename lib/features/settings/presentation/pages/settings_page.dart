@@ -328,7 +328,17 @@ class SettingsPage extends ConsumerWidget {
                                       );
                                     }
                                   } catch (_) {
-                                    // Connection already succeeded; ignore optional profile sync failures.
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Connected, but profile sync failed. You can retry by reconnecting.',
+                                          ),
+                                        ),
+                                      );
+                                    }
                                   }
                                 },
                           icon: const _GoogleLogo(),
@@ -410,14 +420,14 @@ class SettingsPage extends ConsumerWidget {
                                             ),
                                           );
                                         }
-                                      } catch (_) {
+                                      } catch (error) {
                                         if (context.mounted) {
                                           ScaffoldMessenger.of(
                                             context,
                                           ).showSnackBar(
-                                            const SnackBar(
+                                            SnackBar(
                                               content: Text(
-                                                'Backup failed. Please try again.',
+                                                'Backup failed: ${_formatError(error)}',
                                               ),
                                             ),
                                           );
@@ -459,14 +469,14 @@ class SettingsPage extends ConsumerWidget {
                                             ),
                                           );
                                         }
-                                      } catch (_) {
+                                      } catch (error) {
                                         if (context.mounted) {
                                           ScaffoldMessenger.of(
                                             context,
                                           ).showSnackBar(
-                                            const SnackBar(
+                                            SnackBar(
                                               content: Text(
-                                                'Restore failed. Please try again.',
+                                                'Restore failed: ${_formatError(error)}',
                                               ),
                                             ),
                                           );
@@ -573,7 +583,7 @@ class SettingsPage extends ConsumerWidget {
               leading: Icon(Icons.info_outline),
               title: Text('Spendly v1.0.0'),
               subtitle: Text(
-                'Offline-first personal finance app\nGitHub: DedxAB/spendly-android-app',
+                'Offline-first personal finance app\nGitHub: DedxAB/spendly-expense-tracker-app',
               ),
             ),
           ),
@@ -600,6 +610,14 @@ class SettingsPage extends ConsumerWidget {
               : googleProfile.email,
           phone: currentProfilePhone,
         );
+  }
+
+  String _formatError(Object error) {
+    final text = error.toString().trim();
+    if (text.startsWith('Exception:')) {
+      return text.substring('Exception:'.length).trim();
+    }
+    return text;
   }
 }
 
