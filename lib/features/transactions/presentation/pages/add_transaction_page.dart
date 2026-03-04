@@ -14,9 +14,10 @@ import 'package:spendly/features/transactions/presentation/providers/transaction
 import 'package:uuid/uuid.dart';
 
 class AddTransactionPage extends ConsumerStatefulWidget {
-  const AddTransactionPage({super.key, this.existing});
+  const AddTransactionPage({super.key, this.existing, this.initialType});
 
   final TransactionEntity? existing;
+  final TransactionType? initialType;
 
   @override
   ConsumerState<AddTransactionPage> createState() => _AddTransactionPageState();
@@ -46,7 +47,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       _amountController.text = existing.amount.toStringAsFixed(2);
       _noteController.text = existing.note ?? '';
     } else {
-      _type = TransactionType.expense;
+      _type = widget.initialType ?? TransactionType.expense;
       _selectedRepeat = null;
     }
   }
@@ -154,51 +155,48 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: SegmentedButton<TransactionType>(
-                  showSelectedIcon: false,
-                  segments: const [
-                    ButtonSegment(
-                      value: TransactionType.income,
-                      label: Text('Income'),
-                    ),
-                    ButtonSegment(
-                      value: TransactionType.expense,
-                      label: Text('Expense'),
-                    ),
-                  ],
-                  selected: {_type},
-                  onSelectionChanged: (value) => setState(() {
-                    _type = value.first;
-                    _selectedCategoryId = null;
-                  }),
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+              child: SegmentedButton<TransactionType>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(
+                    value: TransactionType.income,
+                    label: Text('Income'),
+                  ),
+                  ButtonSegment(
+                    value: TransactionType.expense,
+                    label: Text('Expense'),
+                  ),
+                ],
+                selected: {_type},
+                onSelectionChanged: (value) => setState(() {
+                  _type = value.first;
+                  _selectedCategoryId = null;
+                }),
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: TextFormField(
-                  controller: _amountController,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: 'Amount',
-                    prefixText: '${AppConstants.currencySymbol} ',
-                  ),
-                  validator: (value) {
-                    final parsed = double.tryParse(value ?? '');
-                    if (parsed == null || parsed <= 0)
-                      return 'Enter a valid amount';
-                    return null;
-                  },
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+              child: TextFormField(
+                controller: _amountController,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineMedium,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
                 ),
+                decoration: const InputDecoration(
+                  labelText: 'Amount',
+                  prefixText: '${AppConstants.currencySymbol} ',
+                ),
+                validator: (value) {
+                  final parsed = double.tryParse(value ?? '');
+                  if (parsed == null || parsed <= 0) {
+                    return 'Enter a valid amount';
+                  }
+                  return null;
+                },
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -227,23 +225,20 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                     ),
                     categories.when(
                       data: (items) {
-                        if (items.isEmpty)
+                        if (items.isEmpty) {
                           return const Text(
                             'No categories available for this type.',
                           );
+                        }
                         return Wrap(
                           spacing: AppSpacing.xs,
                           runSpacing: AppSpacing.xs,
                           children: items
                               .map(
-                                (item) => FilterChip(
-                                  avatar: const Icon(
-                                    Icons.grid_view_rounded,
-                                    size: 16,
-                                  ),
-                                  label: Text(item.name),
+                                (item) => _categoryChip(
+                                  label: item.name,
                                   selected: _selectedCategoryId == item.id,
-                                  onSelected: (_) => setState(
+                                  onSelected: () => setState(
                                     () => _selectedCategoryId = item.id,
                                   ),
                                 ),
@@ -323,10 +318,13 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            FilledButton.icon(
-              onPressed: _save,
-              icon: const Icon(Icons.check_rounded),
-              label: const Text('Save Transaction'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
+              child: FilledButton.icon(
+                onPressed: _save,
+                icon: const Icon(Icons.check_rounded),
+                label: const Text('Save Transaction'),
+              ),
             ),
           ],
         ),
@@ -335,10 +333,78 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
   }
 
   Widget _modeChip(String label, PaymentMode mode) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selected = _paymentMode == mode;
+    final selectedBg = AppColors.emerald.withValues(alpha: 0.24);
+    final selectedBorder = AppColors.emerald.withValues(alpha: 0.75);
+    final unselectedBg = isDark
+        ? AppColors.darkSurfaceAlt.withValues(alpha: 0.92)
+        : AppColors.lightSurfaceAlt.withValues(alpha: 0.95);
+    final unselectedBorder = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : Colors.black.withValues(alpha: 0.08);
+
     return ChoiceChip(
       label: Text(label),
-      selected: _paymentMode == mode,
+      selected: selected,
+      showCheckmark: false,
+      backgroundColor: unselectedBg,
+      selectedColor: selectedBg,
+      side: BorderSide(
+        color: selected ? selectedBorder : unselectedBorder,
+        width: selected ? 1.2 : 1,
+      ),
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.w700,
+        color: selected
+            ? (isDark ? const Color(0xFFE9F9EC) : const Color(0xFF123122))
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.86),
+      ),
       onSelected: (_) => setState(() => _paymentMode = mode),
+    );
+  }
+
+  Widget _categoryChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onSelected,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedBg = AppColors.emerald.withValues(alpha: 0.24);
+    final selectedBorder = AppColors.emerald.withValues(alpha: 0.75);
+    final unselectedBg = isDark
+        ? AppColors.darkSurfaceAlt.withValues(alpha: 0.92)
+        : AppColors.lightSurfaceAlt.withValues(alpha: 0.95);
+    final unselectedBorder = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : Colors.black.withValues(alpha: 0.08);
+
+    return FilterChip(
+      avatar: Icon(
+        Icons.grid_view_rounded,
+        size: 16,
+        color: selected
+            ? (isDark ? const Color(0xFFE9F9EC) : const Color(0xFF123122))
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70),
+      ),
+      label: Text(label),
+      selected: selected,
+      backgroundColor: unselectedBg,
+      selectedColor: selectedBg,
+      checkmarkColor: isDark
+          ? const Color(0xFFE9F9EC)
+          : const Color(0xFF123122),
+      side: BorderSide(
+        color: selected ? selectedBorder : unselectedBorder,
+        width: selected ? 1.2 : 1,
+      ),
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.w700,
+        color: selected
+            ? (isDark ? const Color(0xFFE9F9EC) : const Color(0xFF123122))
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.86),
+      ),
+      onSelected: (_) => onSelected(),
     );
   }
 

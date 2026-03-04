@@ -252,22 +252,83 @@ class _TimeFilterSection extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.xs,
+            Row(
               children: [
-                ChoiceChip(
-                  label: const Text('Monthly'),
-                  selected: viewMode == InsightsViewMode.monthly,
-                  onSelected: (_) => onModeChanged(InsightsViewMode.monthly),
+                Expanded(
+                  child: _modeToggle(
+                    context: context,
+                    label: 'Monthly',
+                    selected: viewMode == InsightsViewMode.monthly,
+                    onTap: () => onModeChanged(InsightsViewMode.monthly),
+                  ),
                 ),
-                ChoiceChip(
-                  label: const Text('Yearly'),
-                  selected: viewMode == InsightsViewMode.yearly,
-                  onSelected: (_) => onModeChanged(InsightsViewMode.yearly),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: _modeToggle(
+                    context: context,
+                    label: 'Yearly',
+                    selected: viewMode == InsightsViewMode.yearly,
+                    onTap: () => onModeChanged(InsightsViewMode.yearly),
+                  ),
                 ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _modeToggle({
+    required BuildContext context,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedBg = AppColors.emerald.withValues(alpha: 0.24);
+    final unselectedBg = isDark
+        ? AppColors.darkSurfaceAlt.withValues(alpha: 0.92)
+        : AppColors.lightSurfaceAlt.withValues(alpha: 0.95);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 170),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: selected ? selectedBg : unselectedBg,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(
+          color: selected
+              ? AppColors.emerald.withValues(alpha: 0.76)
+              : (isDark
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : Colors.black.withValues(alpha: 0.08)),
+          width: selected ? 1.2 : 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: selected
+                      ? (isDark
+                            ? const Color(0xFFE9F9EC)
+                            : const Color(0xFF123122))
+                      : Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.86),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

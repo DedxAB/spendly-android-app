@@ -3,6 +3,8 @@ import 'package:spendly/features/transactions/domain/entities/transaction_entity
 abstract class TransactionsRepository {
   Stream<List<TransactionEntity>> watchRecent({int limit = 5});
 
+  Stream<List<TransactionEntity>> watchAll();
+
   Stream<List<TransactionEntity>> watchByMonth(
     DateTime month, {
     String? categoryId,

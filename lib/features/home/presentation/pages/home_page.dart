@@ -7,6 +7,7 @@ import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/glass_card.dart';
 import 'package:spendly/features/categories/data/repositories/categories_repository_impl.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
+import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
 import 'package:spendly/features/cloud_sync/presentation/providers/cloud_sync_provider.dart';
 import 'package:spendly/features/home/presentation/providers/home_provider.dart';
 import 'package:spendly/features/transactions/data/repositories/transactions_repository_impl.dart';
@@ -75,10 +76,11 @@ class HomePage extends ConsumerWidget {
                 runSpacing: 8,
                 children: categories
                     .map(
-                      (c) => ChoiceChip(
-                        label: Text(c.name),
+                      (c) => _quickAddCategoryChip(
+                        context: sheetContext,
+                        label: c.name,
                         selected: selectedCategory.id == c.id,
-                        onSelected: (_) => setState(() => selectedCategory = c),
+                        onSelected: () => setState(() => selectedCategory = c),
                       ),
                     )
                     .toList(growable: false),
@@ -133,6 +135,8 @@ class HomePage extends ConsumerWidget {
     final summary = ref.watch(dashboardSummaryProvider);
     final todaySpent = ref.watch(todaySpentProvider).valueOrNull ?? 0;
     final recent = ref.watch(recentTransactionsProvider);
+    final categories = ref.watch(allCategoriesProvider).valueOrNull ?? const [];
+    final categoryLabelById = {for (final c in categories) c.id: c.name};
     final profile = ref.watch(userProfileProvider).valueOrNull;
     final cloudSync = ref.watch(cloudSyncControllerProvider).valueOrNull;
     final name = (profile?.name.trim().isNotEmpty ?? false)
@@ -311,7 +315,8 @@ class HomePage extends ConsumerWidget {
                               title: Text(
                                 e.note?.isNotEmpty == true
                                     ? e.note!
-                                    : e.categoryId,
+                                    : (categoryLabelById[e.categoryId] ??
+                                          e.categoryId),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -357,6 +362,42 @@ class HomePage extends ConsumerWidget {
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
+  }
+
+  Widget _quickAddCategoryChip({
+    required BuildContext context,
+    required String label,
+    required bool selected,
+    required VoidCallback onSelected,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedBg = AppColors.emerald.withValues(alpha: 0.24);
+    final selectedBorder = AppColors.emerald.withValues(alpha: 0.75);
+    final unselectedBg = isDark
+        ? AppColors.darkSurfaceAlt.withValues(alpha: 0.92)
+        : AppColors.lightSurfaceAlt.withValues(alpha: 0.95);
+    final unselectedBorder = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : Colors.black.withValues(alpha: 0.08);
+
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      showCheckmark: false,
+      backgroundColor: unselectedBg,
+      selectedColor: selectedBg,
+      side: BorderSide(
+        color: selected ? selectedBorder : unselectedBorder,
+        width: selected ? 1.2 : 1,
+      ),
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.w700,
+        color: selected
+            ? (isDark ? const Color(0xFFE9F9EC) : const Color(0xFF123122))
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.86),
+      ),
+      onSelected: (_) => onSelected(),
+    );
   }
 }
 
@@ -516,13 +557,24 @@ class _HeroBalanceCard extends StatelessWidget {
                       fontSize: 16,
                     ),
                   ),
-                  const Text(
-                    'SPENDLY',
-                    style: TextStyle(
-                      color: Color(0xFF163321),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20,
-                      letterSpacing: 0.4,
+                  Transform(
+                    alignment: Alignment.centerRight,
+                    transform: Matrix4.skewX(-0.16),
+                    child: const Text(
+                      'SPENDLY',
+                      style: TextStyle(
+                        color: Color(0xFF102417),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 21,
+                        letterSpacing: 1.2,
+                        shadows: [
+                          Shadow(
+                            color: Color(0x33000000),
+                            blurRadius: 6,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
