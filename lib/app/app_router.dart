@@ -109,50 +109,12 @@ class _SplashPageState extends ConsumerState<SplashPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.emerald.withValues(alpha: 0.20),
-              Theme.of(context).scaffoldBackgroundColor,
-            ],
-          ),
-        ),
-        child: Center(
-          child: FadeTransition(
-            opacity: CurvedAnimation(
-              parent: _controller,
-              curve: Curves.easeOut,
-            ),
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.96, end: 1).animate(
-                CurvedAnimation(
-                  parent: _controller,
-                  curve: Curves.easeOutCubic,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Image.asset(
-                      'assets/images/spendly_splash.png',
-                      width: 220,
-                      height: 220,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    'Spendly',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ],
-              ),
-            ),
+      body: FadeTransition(
+        opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+        child: SizedBox.expand(
+          child: Image.asset(
+            'assets/images/spendly_splash.png',
+            fit: BoxFit.cover,
           ),
         ),
       ),
