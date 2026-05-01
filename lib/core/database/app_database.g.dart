@@ -2086,6 +2086,31 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _dailyReminderEnabledMeta =
+      const VerificationMeta('dailyReminderEnabled');
+  @override
+  late final GeneratedColumn<bool> dailyReminderEnabled = GeneratedColumn<bool>(
+    'daily_reminder_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("daily_reminder_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _lastBudgetAlertAtMeta = const VerificationMeta(
+    'lastBudgetAlertAt',
+  );
+  @override
+  late final GeneratedColumn<int> lastBudgetAlertAt = GeneratedColumn<int>(
+    'last_budget_alert_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -2104,6 +2129,8 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
     currency,
     themeMode,
     transactionHintsSeen,
+    dailyReminderEnabled,
+    lastBudgetAlertAt,
     updatedAt,
   ];
   @override
@@ -2151,6 +2178,24 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
         ),
       );
     }
+    if (data.containsKey('daily_reminder_enabled')) {
+      context.handle(
+        _dailyReminderEnabledMeta,
+        dailyReminderEnabled.isAcceptableOrUnknown(
+          data['daily_reminder_enabled']!,
+          _dailyReminderEnabledMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_budget_alert_at')) {
+      context.handle(
+        _lastBudgetAlertAtMeta,
+        lastBudgetAlertAt.isAcceptableOrUnknown(
+          data['last_budget_alert_at']!,
+          _lastBudgetAlertAtMeta,
+        ),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -2188,6 +2233,14 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
         DriftSqlType.bool,
         data['${effectivePrefix}transaction_hints_seen'],
       )!,
+      dailyReminderEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}daily_reminder_enabled'],
+      )!,
+      lastBudgetAlertAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_budget_alert_at'],
+      ),
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
@@ -2207,6 +2260,8 @@ class Setting extends DataClass implements Insertable<Setting> {
   final String currency;
   final String themeMode;
   final bool transactionHintsSeen;
+  final bool dailyReminderEnabled;
+  final int? lastBudgetAlertAt;
   final int updatedAt;
   const Setting({
     required this.id,
@@ -2214,6 +2269,8 @@ class Setting extends DataClass implements Insertable<Setting> {
     required this.currency,
     required this.themeMode,
     required this.transactionHintsSeen,
+    required this.dailyReminderEnabled,
+    this.lastBudgetAlertAt,
     required this.updatedAt,
   });
   @override
@@ -2224,6 +2281,10 @@ class Setting extends DataClass implements Insertable<Setting> {
     map['currency'] = Variable<String>(currency);
     map['theme_mode'] = Variable<String>(themeMode);
     map['transaction_hints_seen'] = Variable<bool>(transactionHintsSeen);
+    map['daily_reminder_enabled'] = Variable<bool>(dailyReminderEnabled);
+    if (!nullToAbsent || lastBudgetAlertAt != null) {
+      map['last_budget_alert_at'] = Variable<int>(lastBudgetAlertAt);
+    }
     map['updated_at'] = Variable<int>(updatedAt);
     return map;
   }
@@ -2235,6 +2296,10 @@ class Setting extends DataClass implements Insertable<Setting> {
       currency: Value(currency),
       themeMode: Value(themeMode),
       transactionHintsSeen: Value(transactionHintsSeen),
+      dailyReminderEnabled: Value(dailyReminderEnabled),
+      lastBudgetAlertAt: lastBudgetAlertAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastBudgetAlertAt),
       updatedAt: Value(updatedAt),
     );
   }
@@ -2252,6 +2317,10 @@ class Setting extends DataClass implements Insertable<Setting> {
       transactionHintsSeen: serializer.fromJson<bool>(
         json['transactionHintsSeen'],
       ),
+      dailyReminderEnabled: serializer.fromJson<bool>(
+        json['dailyReminderEnabled'],
+      ),
+      lastBudgetAlertAt: serializer.fromJson<int?>(json['lastBudgetAlertAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
     );
   }
@@ -2264,6 +2333,8 @@ class Setting extends DataClass implements Insertable<Setting> {
       'currency': serializer.toJson<String>(currency),
       'themeMode': serializer.toJson<String>(themeMode),
       'transactionHintsSeen': serializer.toJson<bool>(transactionHintsSeen),
+      'dailyReminderEnabled': serializer.toJson<bool>(dailyReminderEnabled),
+      'lastBudgetAlertAt': serializer.toJson<int?>(lastBudgetAlertAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
     };
   }
@@ -2274,6 +2345,8 @@ class Setting extends DataClass implements Insertable<Setting> {
     String? currency,
     String? themeMode,
     bool? transactionHintsSeen,
+    bool? dailyReminderEnabled,
+    Value<int?> lastBudgetAlertAt = const Value.absent(),
     int? updatedAt,
   }) => Setting(
     id: id ?? this.id,
@@ -2281,6 +2354,10 @@ class Setting extends DataClass implements Insertable<Setting> {
     currency: currency ?? this.currency,
     themeMode: themeMode ?? this.themeMode,
     transactionHintsSeen: transactionHintsSeen ?? this.transactionHintsSeen,
+    dailyReminderEnabled: dailyReminderEnabled ?? this.dailyReminderEnabled,
+    lastBudgetAlertAt: lastBudgetAlertAt.present
+        ? lastBudgetAlertAt.value
+        : this.lastBudgetAlertAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   Setting copyWithCompanion(SettingsCompanion data) {
@@ -2294,6 +2371,12 @@ class Setting extends DataClass implements Insertable<Setting> {
       transactionHintsSeen: data.transactionHintsSeen.present
           ? data.transactionHintsSeen.value
           : this.transactionHintsSeen,
+      dailyReminderEnabled: data.dailyReminderEnabled.present
+          ? data.dailyReminderEnabled.value
+          : this.dailyReminderEnabled,
+      lastBudgetAlertAt: data.lastBudgetAlertAt.present
+          ? data.lastBudgetAlertAt.value
+          : this.lastBudgetAlertAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -2306,6 +2389,8 @@ class Setting extends DataClass implements Insertable<Setting> {
           ..write('currency: $currency, ')
           ..write('themeMode: $themeMode, ')
           ..write('transactionHintsSeen: $transactionHintsSeen, ')
+          ..write('dailyReminderEnabled: $dailyReminderEnabled, ')
+          ..write('lastBudgetAlertAt: $lastBudgetAlertAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -2318,6 +2403,8 @@ class Setting extends DataClass implements Insertable<Setting> {
     currency,
     themeMode,
     transactionHintsSeen,
+    dailyReminderEnabled,
+    lastBudgetAlertAt,
     updatedAt,
   );
   @override
@@ -2329,6 +2416,8 @@ class Setting extends DataClass implements Insertable<Setting> {
           other.currency == this.currency &&
           other.themeMode == this.themeMode &&
           other.transactionHintsSeen == this.transactionHintsSeen &&
+          other.dailyReminderEnabled == this.dailyReminderEnabled &&
+          other.lastBudgetAlertAt == this.lastBudgetAlertAt &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -2338,6 +2427,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   final Value<String> currency;
   final Value<String> themeMode;
   final Value<bool> transactionHintsSeen;
+  final Value<bool> dailyReminderEnabled;
+  final Value<int?> lastBudgetAlertAt;
   final Value<int> updatedAt;
   const SettingsCompanion({
     this.id = const Value.absent(),
@@ -2345,6 +2436,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     this.currency = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.transactionHintsSeen = const Value.absent(),
+    this.dailyReminderEnabled = const Value.absent(),
+    this.lastBudgetAlertAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
   SettingsCompanion.insert({
@@ -2353,6 +2446,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     this.currency = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.transactionHintsSeen = const Value.absent(),
+    this.dailyReminderEnabled = const Value.absent(),
+    this.lastBudgetAlertAt = const Value.absent(),
     required int updatedAt,
   }) : updatedAt = Value(updatedAt);
   static Insertable<Setting> custom({
@@ -2361,6 +2456,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     Expression<String>? currency,
     Expression<String>? themeMode,
     Expression<bool>? transactionHintsSeen,
+    Expression<bool>? dailyReminderEnabled,
+    Expression<int>? lastBudgetAlertAt,
     Expression<int>? updatedAt,
   }) {
     return RawValuesInsertable({
@@ -2370,6 +2467,9 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
       if (themeMode != null) 'theme_mode': themeMode,
       if (transactionHintsSeen != null)
         'transaction_hints_seen': transactionHintsSeen,
+      if (dailyReminderEnabled != null)
+        'daily_reminder_enabled': dailyReminderEnabled,
+      if (lastBudgetAlertAt != null) 'last_budget_alert_at': lastBudgetAlertAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
@@ -2380,6 +2480,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     Value<String>? currency,
     Value<String>? themeMode,
     Value<bool>? transactionHintsSeen,
+    Value<bool>? dailyReminderEnabled,
+    Value<int?>? lastBudgetAlertAt,
     Value<int>? updatedAt,
   }) {
     return SettingsCompanion(
@@ -2388,6 +2490,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
       currency: currency ?? this.currency,
       themeMode: themeMode ?? this.themeMode,
       transactionHintsSeen: transactionHintsSeen ?? this.transactionHintsSeen,
+      dailyReminderEnabled: dailyReminderEnabled ?? this.dailyReminderEnabled,
+      lastBudgetAlertAt: lastBudgetAlertAt ?? this.lastBudgetAlertAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -2412,6 +2516,14 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
         transactionHintsSeen.value,
       );
     }
+    if (dailyReminderEnabled.present) {
+      map['daily_reminder_enabled'] = Variable<bool>(
+        dailyReminderEnabled.value,
+      );
+    }
+    if (lastBudgetAlertAt.present) {
+      map['last_budget_alert_at'] = Variable<int>(lastBudgetAlertAt.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
     }
@@ -2426,6 +2538,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
           ..write('currency: $currency, ')
           ..write('themeMode: $themeMode, ')
           ..write('transactionHintsSeen: $transactionHintsSeen, ')
+          ..write('dailyReminderEnabled: $dailyReminderEnabled, ')
+          ..write('lastBudgetAlertAt: $lastBudgetAlertAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -3371,6 +3485,29 @@ class $LendEntriesTable extends LendEntries
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _settledAmountMeta = const VerificationMeta(
+    'settledAmount',
+  );
+  @override
+  late final GeneratedColumn<double> settledAmount = GeneratedColumn<double>(
+    'settled_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _settledAtMeta = const VerificationMeta(
+    'settledAt',
+  );
+  @override
+  late final GeneratedColumn<int> settledAt = GeneratedColumn<int>(
+    'settled_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3417,6 +3554,8 @@ class $LendEntriesTable extends LendEntries
     date,
     note,
     isSettled,
+    settledAmount,
+    settledAt,
     createdAt,
     updatedAt,
     isDeleted,
@@ -3482,6 +3621,21 @@ class $LendEntriesTable extends LendEntries
         isSettled.isAcceptableOrUnknown(data['is_settled']!, _isSettledMeta),
       );
     }
+    if (data.containsKey('settled_amount')) {
+      context.handle(
+        _settledAmountMeta,
+        settledAmount.isAcceptableOrUnknown(
+          data['settled_amount']!,
+          _settledAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('settled_at')) {
+      context.handle(
+        _settledAtMeta,
+        settledAt.isAcceptableOrUnknown(data['settled_at']!, _settledAtMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3541,6 +3695,14 @@ class $LendEntriesTable extends LendEntries
         DriftSqlType.bool,
         data['${effectivePrefix}is_settled'],
       )!,
+      settledAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}settled_amount'],
+      )!,
+      settledAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}settled_at'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}created_at'],
@@ -3570,6 +3732,8 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
   final int date;
   final String? note;
   final bool isSettled;
+  final double settledAmount;
+  final int? settledAt;
   final int createdAt;
   final int updatedAt;
   final bool isDeleted;
@@ -3581,6 +3745,8 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
     required this.date,
     this.note,
     required this.isSettled,
+    required this.settledAmount,
+    this.settledAt,
     required this.createdAt,
     required this.updatedAt,
     required this.isDeleted,
@@ -3597,6 +3763,10 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
       map['note'] = Variable<String>(note);
     }
     map['is_settled'] = Variable<bool>(isSettled);
+    map['settled_amount'] = Variable<double>(settledAmount);
+    if (!nullToAbsent || settledAt != null) {
+      map['settled_at'] = Variable<int>(settledAt);
+    }
     map['created_at'] = Variable<int>(createdAt);
     map['updated_at'] = Variable<int>(updatedAt);
     map['is_deleted'] = Variable<bool>(isDeleted);
@@ -3612,6 +3782,10 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
       date: Value(date),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       isSettled: Value(isSettled),
+      settledAmount: Value(settledAmount),
+      settledAt: settledAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(settledAt),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       isDeleted: Value(isDeleted),
@@ -3631,6 +3805,8 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
       date: serializer.fromJson<int>(json['date']),
       note: serializer.fromJson<String?>(json['note']),
       isSettled: serializer.fromJson<bool>(json['isSettled']),
+      settledAmount: serializer.fromJson<double>(json['settledAmount']),
+      settledAt: serializer.fromJson<int?>(json['settledAt']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
@@ -3647,6 +3823,8 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
       'date': serializer.toJson<int>(date),
       'note': serializer.toJson<String?>(note),
       'isSettled': serializer.toJson<bool>(isSettled),
+      'settledAmount': serializer.toJson<double>(settledAmount),
+      'settledAt': serializer.toJson<int?>(settledAt),
       'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
       'isDeleted': serializer.toJson<bool>(isDeleted),
@@ -3661,6 +3839,8 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
     int? date,
     Value<String?> note = const Value.absent(),
     bool? isSettled,
+    double? settledAmount,
+    Value<int?> settledAt = const Value.absent(),
     int? createdAt,
     int? updatedAt,
     bool? isDeleted,
@@ -3672,6 +3852,8 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
     date: date ?? this.date,
     note: note.present ? note.value : this.note,
     isSettled: isSettled ?? this.isSettled,
+    settledAmount: settledAmount ?? this.settledAmount,
+    settledAt: settledAt.present ? settledAt.value : this.settledAt,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     isDeleted: isDeleted ?? this.isDeleted,
@@ -3685,6 +3867,10 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
       date: data.date.present ? data.date.value : this.date,
       note: data.note.present ? data.note.value : this.note,
       isSettled: data.isSettled.present ? data.isSettled.value : this.isSettled,
+      settledAmount: data.settledAmount.present
+          ? data.settledAmount.value
+          : this.settledAmount,
+      settledAt: data.settledAt.present ? data.settledAt.value : this.settledAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
@@ -3701,6 +3887,8 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
           ..write('date: $date, ')
           ..write('note: $note, ')
           ..write('isSettled: $isSettled, ')
+          ..write('settledAmount: $settledAmount, ')
+          ..write('settledAt: $settledAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isDeleted: $isDeleted')
@@ -3717,6 +3905,8 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
     date,
     note,
     isSettled,
+    settledAmount,
+    settledAt,
     createdAt,
     updatedAt,
     isDeleted,
@@ -3732,6 +3922,8 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
           other.date == this.date &&
           other.note == this.note &&
           other.isSettled == this.isSettled &&
+          other.settledAmount == this.settledAmount &&
+          other.settledAt == this.settledAt &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.isDeleted == this.isDeleted);
@@ -3745,6 +3937,8 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
   final Value<int> date;
   final Value<String?> note;
   final Value<bool> isSettled;
+  final Value<double> settledAmount;
+  final Value<int?> settledAt;
   final Value<int> createdAt;
   final Value<int> updatedAt;
   final Value<bool> isDeleted;
@@ -3757,6 +3951,8 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     this.date = const Value.absent(),
     this.note = const Value.absent(),
     this.isSettled = const Value.absent(),
+    this.settledAmount = const Value.absent(),
+    this.settledAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isDeleted = const Value.absent(),
@@ -3770,6 +3966,8 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     required int date,
     this.note = const Value.absent(),
     this.isSettled = const Value.absent(),
+    this.settledAmount = const Value.absent(),
+    this.settledAt = const Value.absent(),
     required int createdAt,
     required int updatedAt,
     this.isDeleted = const Value.absent(),
@@ -3789,6 +3987,8 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     Expression<int>? date,
     Expression<String>? note,
     Expression<bool>? isSettled,
+    Expression<double>? settledAmount,
+    Expression<int>? settledAt,
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
     Expression<bool>? isDeleted,
@@ -3802,6 +4002,8 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
       if (date != null) 'date': date,
       if (note != null) 'note': note,
       if (isSettled != null) 'is_settled': isSettled,
+      if (settledAmount != null) 'settled_amount': settledAmount,
+      if (settledAt != null) 'settled_at': settledAt,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isDeleted != null) 'is_deleted': isDeleted,
@@ -3817,6 +4019,8 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     Value<int>? date,
     Value<String?>? note,
     Value<bool>? isSettled,
+    Value<double>? settledAmount,
+    Value<int?>? settledAt,
     Value<int>? createdAt,
     Value<int>? updatedAt,
     Value<bool>? isDeleted,
@@ -3830,6 +4034,8 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
       date: date ?? this.date,
       note: note ?? this.note,
       isSettled: isSettled ?? this.isSettled,
+      settledAmount: settledAmount ?? this.settledAmount,
+      settledAt: settledAt ?? this.settledAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isDeleted: isDeleted ?? this.isDeleted,
@@ -3861,6 +4067,12 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     if (isSettled.present) {
       map['is_settled'] = Variable<bool>(isSettled.value);
     }
+    if (settledAmount.present) {
+      map['settled_amount'] = Variable<double>(settledAmount.value);
+    }
+    if (settledAt.present) {
+      map['settled_at'] = Variable<int>(settledAt.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<int>(createdAt.value);
     }
@@ -3886,8 +4098,466 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
           ..write('date: $date, ')
           ..write('note: $note, ')
           ..write('isSettled: $isSettled, ')
+          ..write('settledAmount: $settledAmount, ')
+          ..write('settledAt: $settledAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LendSettlementEventsTable extends LendSettlementEvents
+    with TableInfo<$LendSettlementEventsTable, LendSettlementEvent> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LendSettlementEventsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  @override
+  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
+    'entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _personIdMeta = const VerificationMeta(
+    'personId',
+  );
+  @override
+  late final GeneratedColumn<String> personId = GeneratedColumn<String>(
+    'person_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<int> date = GeneratedColumn<int>(
+    'date',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    entryId,
+    personId,
+    amount,
+    date,
+    createdAt,
+    isDeleted,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'lend_settlement_events';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LendSettlementEvent> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    if (data.containsKey('person_id')) {
+      context.handle(
+        _personIdMeta,
+        personId.isAcceptableOrUnknown(data['person_id']!, _personIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_personIdMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+        _dateMeta,
+        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('is_deleted')) {
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LendSettlementEvent map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LendSettlementEvent(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_id'],
+      )!,
+      personId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}person_id'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount'],
+      )!,
+      date: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}date'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
+    );
+  }
+
+  @override
+  $LendSettlementEventsTable createAlias(String alias) {
+    return $LendSettlementEventsTable(attachedDatabase, alias);
+  }
+}
+
+class LendSettlementEvent extends DataClass
+    implements Insertable<LendSettlementEvent> {
+  final String id;
+  final String entryId;
+  final String personId;
+  final double amount;
+  final int date;
+  final int createdAt;
+  final bool isDeleted;
+  const LendSettlementEvent({
+    required this.id,
+    required this.entryId,
+    required this.personId,
+    required this.amount,
+    required this.date,
+    required this.createdAt,
+    required this.isDeleted,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['entry_id'] = Variable<String>(entryId);
+    map['person_id'] = Variable<String>(personId);
+    map['amount'] = Variable<double>(amount);
+    map['date'] = Variable<int>(date);
+    map['created_at'] = Variable<int>(createdAt);
+    map['is_deleted'] = Variable<bool>(isDeleted);
+    return map;
+  }
+
+  LendSettlementEventsCompanion toCompanion(bool nullToAbsent) {
+    return LendSettlementEventsCompanion(
+      id: Value(id),
+      entryId: Value(entryId),
+      personId: Value(personId),
+      amount: Value(amount),
+      date: Value(date),
+      createdAt: Value(createdAt),
+      isDeleted: Value(isDeleted),
+    );
+  }
+
+  factory LendSettlementEvent.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LendSettlementEvent(
+      id: serializer.fromJson<String>(json['id']),
+      entryId: serializer.fromJson<String>(json['entryId']),
+      personId: serializer.fromJson<String>(json['personId']),
+      amount: serializer.fromJson<double>(json['amount']),
+      date: serializer.fromJson<int>(json['date']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'entryId': serializer.toJson<String>(entryId),
+      'personId': serializer.toJson<String>(personId),
+      'amount': serializer.toJson<double>(amount),
+      'date': serializer.toJson<int>(date),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
+    };
+  }
+
+  LendSettlementEvent copyWith({
+    String? id,
+    String? entryId,
+    String? personId,
+    double? amount,
+    int? date,
+    int? createdAt,
+    bool? isDeleted,
+  }) => LendSettlementEvent(
+    id: id ?? this.id,
+    entryId: entryId ?? this.entryId,
+    personId: personId ?? this.personId,
+    amount: amount ?? this.amount,
+    date: date ?? this.date,
+    createdAt: createdAt ?? this.createdAt,
+    isDeleted: isDeleted ?? this.isDeleted,
+  );
+  LendSettlementEvent copyWithCompanion(LendSettlementEventsCompanion data) {
+    return LendSettlementEvent(
+      id: data.id.present ? data.id.value : this.id,
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      personId: data.personId.present ? data.personId.value : this.personId,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      date: data.date.present ? data.date.value : this.date,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LendSettlementEvent(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('personId: $personId, ')
+          ..write('amount: $amount, ')
+          ..write('date: $date, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('isDeleted: $isDeleted')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, entryId, personId, amount, date, createdAt, isDeleted);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LendSettlementEvent &&
+          other.id == this.id &&
+          other.entryId == this.entryId &&
+          other.personId == this.personId &&
+          other.amount == this.amount &&
+          other.date == this.date &&
+          other.createdAt == this.createdAt &&
+          other.isDeleted == this.isDeleted);
+}
+
+class LendSettlementEventsCompanion
+    extends UpdateCompanion<LendSettlementEvent> {
+  final Value<String> id;
+  final Value<String> entryId;
+  final Value<String> personId;
+  final Value<double> amount;
+  final Value<int> date;
+  final Value<int> createdAt;
+  final Value<bool> isDeleted;
+  final Value<int> rowid;
+  const LendSettlementEventsCompanion({
+    this.id = const Value.absent(),
+    this.entryId = const Value.absent(),
+    this.personId = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.date = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LendSettlementEventsCompanion.insert({
+    required String id,
+    required String entryId,
+    required String personId,
+    required double amount,
+    required int date,
+    required int createdAt,
+    this.isDeleted = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       entryId = Value(entryId),
+       personId = Value(personId),
+       amount = Value(amount),
+       date = Value(date),
+       createdAt = Value(createdAt);
+  static Insertable<LendSettlementEvent> custom({
+    Expression<String>? id,
+    Expression<String>? entryId,
+    Expression<String>? personId,
+    Expression<double>? amount,
+    Expression<int>? date,
+    Expression<int>? createdAt,
+    Expression<bool>? isDeleted,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (entryId != null) 'entry_id': entryId,
+      if (personId != null) 'person_id': personId,
+      if (amount != null) 'amount': amount,
+      if (date != null) 'date': date,
+      if (createdAt != null) 'created_at': createdAt,
+      if (isDeleted != null) 'is_deleted': isDeleted,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LendSettlementEventsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? entryId,
+    Value<String>? personId,
+    Value<double>? amount,
+    Value<int>? date,
+    Value<int>? createdAt,
+    Value<bool>? isDeleted,
+    Value<int>? rowid,
+  }) {
+    return LendSettlementEventsCompanion(
+      id: id ?? this.id,
+      entryId: entryId ?? this.entryId,
+      personId: personId ?? this.personId,
+      amount: amount ?? this.amount,
+      date: date ?? this.date,
+      createdAt: createdAt ?? this.createdAt,
+      isDeleted: isDeleted ?? this.isDeleted,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (entryId.present) {
+      map['entry_id'] = Variable<String>(entryId.value);
+    }
+    if (personId.present) {
+      map['person_id'] = Variable<String>(personId.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<int>(date.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LendSettlementEventsCompanion(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('personId: $personId, ')
+          ..write('amount: $amount, ')
+          ..write('date: $date, ')
+          ..write('createdAt: $createdAt, ')
           ..write('isDeleted: $isDeleted, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -4173,6 +4843,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $UserProfilesTable userProfiles = $UserProfilesTable(this);
   late final $LendPeopleTable lendPeople = $LendPeopleTable(this);
   late final $LendEntriesTable lendEntries = $LendEntriesTable(this);
+  late final $LendSettlementEventsTable lendSettlementEvents =
+      $LendSettlementEventsTable(this);
   late final $MonthlyReflectionsTable monthlyReflections =
       $MonthlyReflectionsTable(this);
   @override
@@ -4187,6 +4859,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     userProfiles,
     lendPeople,
     lendEntries,
+    lendSettlementEvents,
     monthlyReflections,
   ];
 }
@@ -5169,6 +5842,8 @@ typedef $$SettingsTableCreateCompanionBuilder =
       Value<String> currency,
       Value<String> themeMode,
       Value<bool> transactionHintsSeen,
+      Value<bool> dailyReminderEnabled,
+      Value<int?> lastBudgetAlertAt,
       required int updatedAt,
     });
 typedef $$SettingsTableUpdateCompanionBuilder =
@@ -5178,6 +5853,8 @@ typedef $$SettingsTableUpdateCompanionBuilder =
       Value<String> currency,
       Value<String> themeMode,
       Value<bool> transactionHintsSeen,
+      Value<bool> dailyReminderEnabled,
+      Value<int?> lastBudgetAlertAt,
       Value<int> updatedAt,
     });
 
@@ -5212,6 +5889,16 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<bool> get transactionHintsSeen => $composableBuilder(
     column: $table.transactionHintsSeen,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get dailyReminderEnabled => $composableBuilder(
+    column: $table.dailyReminderEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastBudgetAlertAt => $composableBuilder(
+    column: $table.lastBudgetAlertAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5255,6 +5942,16 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get dailyReminderEnabled => $composableBuilder(
+    column: $table.dailyReminderEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastBudgetAlertAt => $composableBuilder(
+    column: $table.lastBudgetAlertAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -5286,6 +5983,16 @@ class $$SettingsTableAnnotationComposer
 
   GeneratedColumn<bool> get transactionHintsSeen => $composableBuilder(
     column: $table.transactionHintsSeen,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get dailyReminderEnabled => $composableBuilder(
+    column: $table.dailyReminderEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lastBudgetAlertAt => $composableBuilder(
+    column: $table.lastBudgetAlertAt,
     builder: (column) => column,
   );
 
@@ -5326,6 +6033,8 @@ class $$SettingsTableTableManager
                 Value<String> currency = const Value.absent(),
                 Value<String> themeMode = const Value.absent(),
                 Value<bool> transactionHintsSeen = const Value.absent(),
+                Value<bool> dailyReminderEnabled = const Value.absent(),
+                Value<int?> lastBudgetAlertAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
               }) => SettingsCompanion(
                 id: id,
@@ -5333,6 +6042,8 @@ class $$SettingsTableTableManager
                 currency: currency,
                 themeMode: themeMode,
                 transactionHintsSeen: transactionHintsSeen,
+                dailyReminderEnabled: dailyReminderEnabled,
+                lastBudgetAlertAt: lastBudgetAlertAt,
                 updatedAt: updatedAt,
               ),
           createCompanionCallback:
@@ -5342,6 +6053,8 @@ class $$SettingsTableTableManager
                 Value<String> currency = const Value.absent(),
                 Value<String> themeMode = const Value.absent(),
                 Value<bool> transactionHintsSeen = const Value.absent(),
+                Value<bool> dailyReminderEnabled = const Value.absent(),
+                Value<int?> lastBudgetAlertAt = const Value.absent(),
                 required int updatedAt,
               }) => SettingsCompanion.insert(
                 id: id,
@@ -5349,6 +6062,8 @@ class $$SettingsTableTableManager
                 currency: currency,
                 themeMode: themeMode,
                 transactionHintsSeen: transactionHintsSeen,
+                dailyReminderEnabled: dailyReminderEnabled,
+                lastBudgetAlertAt: lastBudgetAlertAt,
                 updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -5835,6 +6550,8 @@ typedef $$LendEntriesTableCreateCompanionBuilder =
       required int date,
       Value<String?> note,
       Value<bool> isSettled,
+      Value<double> settledAmount,
+      Value<int?> settledAt,
       required int createdAt,
       required int updatedAt,
       Value<bool> isDeleted,
@@ -5849,6 +6566,8 @@ typedef $$LendEntriesTableUpdateCompanionBuilder =
       Value<int> date,
       Value<String?> note,
       Value<bool> isSettled,
+      Value<double> settledAmount,
+      Value<int?> settledAt,
       Value<int> createdAt,
       Value<int> updatedAt,
       Value<bool> isDeleted,
@@ -5896,6 +6615,16 @@ class $$LendEntriesTableFilterComposer
 
   ColumnFilters<bool> get isSettled => $composableBuilder(
     column: $table.isSettled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get settledAmount => $composableBuilder(
+    column: $table.settledAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get settledAt => $composableBuilder(
+    column: $table.settledAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5959,6 +6688,16 @@ class $$LendEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get settledAmount => $composableBuilder(
+    column: $table.settledAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get settledAt => $composableBuilder(
+    column: $table.settledAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -6004,6 +6743,14 @@ class $$LendEntriesTableAnnotationComposer
 
   GeneratedColumn<bool> get isSettled =>
       $composableBuilder(column: $table.isSettled, builder: (column) => column);
+
+  GeneratedColumn<double> get settledAmount => $composableBuilder(
+    column: $table.settledAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get settledAt =>
+      $composableBuilder(column: $table.settledAt, builder: (column) => column);
 
   GeneratedColumn<int> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -6053,6 +6800,8 @@ class $$LendEntriesTableTableManager
                 Value<int> date = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> isSettled = const Value.absent(),
+                Value<double> settledAmount = const Value.absent(),
+                Value<int?> settledAt = const Value.absent(),
                 Value<int> createdAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
@@ -6065,6 +6814,8 @@ class $$LendEntriesTableTableManager
                 date: date,
                 note: note,
                 isSettled: isSettled,
+                settledAmount: settledAmount,
+                settledAt: settledAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 isDeleted: isDeleted,
@@ -6079,6 +6830,8 @@ class $$LendEntriesTableTableManager
                 required int date,
                 Value<String?> note = const Value.absent(),
                 Value<bool> isSettled = const Value.absent(),
+                Value<double> settledAmount = const Value.absent(),
+                Value<int?> settledAt = const Value.absent(),
                 required int createdAt,
                 required int updatedAt,
                 Value<bool> isDeleted = const Value.absent(),
@@ -6091,6 +6844,8 @@ class $$LendEntriesTableTableManager
                 date: date,
                 note: note,
                 isSettled: isSettled,
+                settledAmount: settledAmount,
+                settledAt: settledAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 isDeleted: isDeleted,
@@ -6116,6 +6871,260 @@ typedef $$LendEntriesTableProcessedTableManager =
       $$LendEntriesTableUpdateCompanionBuilder,
       (LendEntry, BaseReferences<_$AppDatabase, $LendEntriesTable, LendEntry>),
       LendEntry,
+      PrefetchHooks Function()
+    >;
+typedef $$LendSettlementEventsTableCreateCompanionBuilder =
+    LendSettlementEventsCompanion Function({
+      required String id,
+      required String entryId,
+      required String personId,
+      required double amount,
+      required int date,
+      required int createdAt,
+      Value<bool> isDeleted,
+      Value<int> rowid,
+    });
+typedef $$LendSettlementEventsTableUpdateCompanionBuilder =
+    LendSettlementEventsCompanion Function({
+      Value<String> id,
+      Value<String> entryId,
+      Value<String> personId,
+      Value<double> amount,
+      Value<int> date,
+      Value<int> createdAt,
+      Value<bool> isDeleted,
+      Value<int> rowid,
+    });
+
+class $$LendSettlementEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $LendSettlementEventsTable> {
+  $$LendSettlementEventsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get personId => $composableBuilder(
+    column: $table.personId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LendSettlementEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LendSettlementEventsTable> {
+  $$LendSettlementEventsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get personId => $composableBuilder(
+    column: $table.personId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isDeleted => $composableBuilder(
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LendSettlementEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LendSettlementEventsTable> {
+  $$LendSettlementEventsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get entryId =>
+      $composableBuilder(column: $table.entryId, builder: (column) => column);
+
+  GeneratedColumn<String> get personId =>
+      $composableBuilder(column: $table.personId, builder: (column) => column);
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<int> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDeleted =>
+      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
+}
+
+class $$LendSettlementEventsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LendSettlementEventsTable,
+          LendSettlementEvent,
+          $$LendSettlementEventsTableFilterComposer,
+          $$LendSettlementEventsTableOrderingComposer,
+          $$LendSettlementEventsTableAnnotationComposer,
+          $$LendSettlementEventsTableCreateCompanionBuilder,
+          $$LendSettlementEventsTableUpdateCompanionBuilder,
+          (
+            LendSettlementEvent,
+            BaseReferences<
+              _$AppDatabase,
+              $LendSettlementEventsTable,
+              LendSettlementEvent
+            >,
+          ),
+          LendSettlementEvent,
+          PrefetchHooks Function()
+        > {
+  $$LendSettlementEventsTableTableManager(
+    _$AppDatabase db,
+    $LendSettlementEventsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LendSettlementEventsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LendSettlementEventsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$LendSettlementEventsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> entryId = const Value.absent(),
+                Value<String> personId = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+                Value<int> date = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LendSettlementEventsCompanion(
+                id: id,
+                entryId: entryId,
+                personId: personId,
+                amount: amount,
+                date: date,
+                createdAt: createdAt,
+                isDeleted: isDeleted,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String entryId,
+                required String personId,
+                required double amount,
+                required int date,
+                required int createdAt,
+                Value<bool> isDeleted = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LendSettlementEventsCompanion.insert(
+                id: id,
+                entryId: entryId,
+                personId: personId,
+                amount: amount,
+                date: date,
+                createdAt: createdAt,
+                isDeleted: isDeleted,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LendSettlementEventsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LendSettlementEventsTable,
+      LendSettlementEvent,
+      $$LendSettlementEventsTableFilterComposer,
+      $$LendSettlementEventsTableOrderingComposer,
+      $$LendSettlementEventsTableAnnotationComposer,
+      $$LendSettlementEventsTableCreateCompanionBuilder,
+      $$LendSettlementEventsTableUpdateCompanionBuilder,
+      (
+        LendSettlementEvent,
+        BaseReferences<
+          _$AppDatabase,
+          $LendSettlementEventsTable,
+          LendSettlementEvent
+        >,
+      ),
+      LendSettlementEvent,
       PrefetchHooks Function()
     >;
 typedef $$MonthlyReflectionsTableCreateCompanionBuilder =
@@ -6311,6 +7320,8 @@ class $AppDatabaseManager {
       $$LendPeopleTableTableManager(_db, _db.lendPeople);
   $$LendEntriesTableTableManager get lendEntries =>
       $$LendEntriesTableTableManager(_db, _db.lendEntries);
+  $$LendSettlementEventsTableTableManager get lendSettlementEvents =>
+      $$LendSettlementEventsTableTableManager(_db, _db.lendSettlementEvents);
   $$MonthlyReflectionsTableTableManager get monthlyReflections =>
       $$MonthlyReflectionsTableTableManager(_db, _db.monthlyReflections);
 }

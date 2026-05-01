@@ -9,6 +9,8 @@ class LendEntryEntity {
     required this.date,
     this.note,
     this.isSettled = false,
+    this.settledAmount = 0,
+    this.settledAt,
     required this.createdAt,
     required this.updatedAt,
     this.isDeleted = false,
@@ -21,6 +23,8 @@ class LendEntryEntity {
   final DateTime date;
   final String? note;
   final bool isSettled;
+  final double settledAmount;
+  final DateTime? settledAt;
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isDeleted;
@@ -33,6 +37,8 @@ class LendEntryEntity {
     DateTime? date,
     String? note,
     bool? isSettled,
+    double? settledAmount,
+    DateTime? settledAt,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isDeleted,
@@ -45,6 +51,8 @@ class LendEntryEntity {
       date: date ?? this.date,
       note: note ?? this.note,
       isSettled: isSettled ?? this.isSettled,
+      settledAmount: settledAmount ?? this.settledAmount,
+      settledAt: settledAt ?? this.settledAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isDeleted: isDeleted ?? this.isDeleted,
@@ -60,6 +68,8 @@ class LendEntryEntity {
       'date': date.toIso8601String(),
       'note': note,
       'isSettled': isSettled,
+      'settledAmount': settledAmount,
+      'settledAt': settledAt?.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'isDeleted': isDeleted,
@@ -75,6 +85,10 @@ class LendEntryEntity {
       date: DateTime.parse(json['date'] as String),
       note: json['note'] as String?,
       isSettled: json['isSettled'] as bool? ?? false,
+      settledAmount: (json['settledAmount'] as num?)?.toDouble() ?? 0,
+      settledAt: json['settledAt'] == null
+          ? null
+          : DateTime.parse(json['settledAt'] as String),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       isDeleted: json['isDeleted'] as bool? ?? false,

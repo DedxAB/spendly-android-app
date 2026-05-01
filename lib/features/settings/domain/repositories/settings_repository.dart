@@ -5,9 +5,12 @@ abstract class SettingsRepository {
 
   Future<void> setBudget(double budget);
 
-  Future<void> setThemeMode(String themeMode);
+  Future<void> setNotificationPreferences({
+    required bool budgetAlertsEnabled,
+    required bool dailyReminderEnabled,
+  });
 
-  Future<void> markTransactionHintsSeen();
+  Future<void> markBudgetAlertNotified(DateTime at);
 
   Future<String> exportJson();
 

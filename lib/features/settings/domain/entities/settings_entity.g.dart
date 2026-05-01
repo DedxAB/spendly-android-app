@@ -11,10 +11,11 @@ _$SettingsEntityImpl _$$SettingsEntityImplFromJson(Map<String, dynamic> json) =>
       id: (json['id'] as num?)?.toInt() ?? 1,
       monthlyBudget: (json['monthlyBudget'] as num?)?.toDouble() ?? 0,
       currency: json['currency'] as String? ?? 'INR',
-      themeMode:
-          $enumDecodeNullable(_$AppThemeModeEnumMap, json['themeMode']) ??
-          AppThemeMode.system,
-      transactionHintsSeen: json['transactionHintsSeen'] as bool? ?? false,
+      budgetAlertsEnabled: json['budgetAlertsEnabled'] as bool? ?? false,
+      dailyReminderEnabled: json['dailyReminderEnabled'] as bool? ?? false,
+      lastBudgetAlertAt: json['lastBudgetAlertAt'] == null
+          ? null
+          : DateTime.parse(json['lastBudgetAlertAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
 
@@ -24,13 +25,8 @@ Map<String, dynamic> _$$SettingsEntityImplToJson(
   'id': instance.id,
   'monthlyBudget': instance.monthlyBudget,
   'currency': instance.currency,
-  'themeMode': _$AppThemeModeEnumMap[instance.themeMode]!,
-  'transactionHintsSeen': instance.transactionHintsSeen,
+  'budgetAlertsEnabled': instance.budgetAlertsEnabled,
+  'dailyReminderEnabled': instance.dailyReminderEnabled,
+  'lastBudgetAlertAt': instance.lastBudgetAlertAt?.toIso8601String(),
   'updatedAt': instance.updatedAt.toIso8601String(),
-};
-
-const _$AppThemeModeEnumMap = {
-  AppThemeMode.system: 'system',
-  AppThemeMode.light: 'light',
-  AppThemeMode.dark: 'dark',
 };

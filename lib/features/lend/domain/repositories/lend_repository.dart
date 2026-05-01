@@ -1,6 +1,7 @@
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/features/lend/domain/entities/lend_entry_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_person_entity.dart';
+import 'package:spendly/features/lend/domain/entities/lend_settlement_event_entity.dart';
 
 abstract class LendRepository {
   Stream<List<LendPersonEntity>> watchPeople();
@@ -8,6 +9,9 @@ abstract class LendRepository {
   Stream<List<LendEntryEntity>> watchAllEntries();
 
   Stream<List<LendEntryEntity>> watchEntriesByPerson(String personId);
+  Stream<List<LendSettlementEventEntity>> watchSettlementEventsByPerson(
+    String personId,
+  );
 
   Future<void> addPerson(String name);
 
@@ -19,5 +23,11 @@ abstract class LendRepository {
     String? note,
   });
 
-  Future<void> setEntrySettled(String entryId, bool settled);
+  Future<void> applySettlement({
+    required String entryId,
+    required double amount,
+    required DateTime settledAt,
+  });
+
+  Future<void> clearSettlement(String entryId);
 }

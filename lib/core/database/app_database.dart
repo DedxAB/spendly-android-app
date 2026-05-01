@@ -35,14 +35,20 @@ Future<File> _resolveDatabaseFile() async {
     UserProfiles,
     LendPeople,
     LendEntries,
+    LendSettlementEvents,
     MonthlyReflections,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
+  Future<bool> _hasColumn(String tableName, String columnName) async {
+    final rows = await customSelect('PRAGMA table_info($tableName);').get();
+    return rows.any((row) => row.read<String>('name') == columnName);
+  }
+
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -81,6 +87,39 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(transactions, transactions.isRecurringInstance);
         await m.addColumn(recurringRules, recurringRules.type);
       }
+      if (from < 11) {
+        await m.addColumn(lendEntries, lendEntries.settledAt);
+      }
+      if (from < 12) {
+        await m.addColumn(lendEntries, lendEntries.settledAmount);
+      }
+      if (from < 13) {
+        await m.createTable(lendSettlementEvents);
+      }
+      if (from < 14) {
+        final hasDailyReminder = await _hasColumn(
+          'settings',
+          'daily_reminder_enabled',
+        );
+        if (!hasDailyReminder) {
+          await m.addColumn(settings, settings.dailyReminderEnabled);
+        }
+
+        final hasLastBudgetAlert = await _hasColumn(
+          'settings',
+          'last_budget_alert_at',
+        );
+        if (!hasLastBudgetAlert) {
+          await m.addColumn(settings, settings.lastBudgetAlertAt);
+        }
+      }
+    },
+    beforeOpen: (details) async {
+      if (details.versionNow >= 12) {
+        await customStatement(
+          'UPDATE lend_entries SET settled_amount = 0 WHERE settled_amount IS NULL;',
+        );
+      }
     },
   );
 
@@ -92,6 +131,8 @@ class AppDatabase extends _$AppDatabase {
         currency: const Value('INR'),
         themeMode: const Value('system'),
         transactionHintsSeen: const Value(false),
+        dailyReminderEnabled: const Value(false),
+        lastBudgetAlertAt: const Value(null),
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       ),
     );
@@ -172,10 +213,12 @@ class AppDatabase extends _$AppDatabase {
       ..where((tbl) => tbl.date.isBiggerOrEqualValue(start))
       ..where((tbl) => tbl.date.isSmallerThanValue(end));
 
-    if (type != null && type.isNotEmpty)
+    if (type != null && type.isNotEmpty) {
       query.where((tbl) => tbl.type.equals(type));
-    if (categoryId != null && categoryId.isNotEmpty)
+    }
+    if (categoryId != null && categoryId.isNotEmpty) {
       query.where((tbl) => tbl.categoryId.equals(categoryId));
+    }
 
     query.orderBy([(tbl) => OrderingTerm.desc(tbl.date)]);
     return query.watch();
@@ -251,8 +294,9 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<Category>> watchCategories({String? type}) {
     final query = select(categories)
       ..where((tbl) => tbl.isDeleted.equals(false));
-    if (type != null && type.isNotEmpty)
+    if (type != null && type.isNotEmpty) {
       query.where((tbl) => tbl.type.equals(type));
+    }
     query.orderBy([(tbl) => OrderingTerm.asc(tbl.name)]);
     return query.watch();
   }
@@ -388,6 +432,11 @@ class AppDatabase extends _$AppDatabase {
     )..where((tbl) => tbl.personId.equals(personId))).write(
       LendEntriesCompanion(isDeleted: const Value(true), updatedAt: Value(now)),
     );
+    await (update(
+      lendSettlementEvents,
+    )..where((tbl) => tbl.personId.equals(personId))).write(
+      const LendSettlementEventsCompanion(isDeleted: Value(true)),
+    );
   }
 
   Stream<List<LendEntry>> watchLendEntries() {
@@ -405,6 +454,19 @@ class AppDatabase extends _$AppDatabase {
     return query.watch();
   }
 
+  Stream<List<LendSettlementEvent>> watchLendSettlementEventsByPerson(
+    String personId,
+  ) {
+    final query = select(lendSettlementEvents)
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..where((tbl) => tbl.personId.equals(personId))
+      ..orderBy([
+        (tbl) => OrderingTerm.desc(tbl.date),
+        (tbl) => OrderingTerm.desc(tbl.createdAt),
+      ]);
+    return query.watch();
+  }
+
   Future<List<LendEntry>> getLendEntries() {
     final query = select(lendEntries)
       ..where((tbl) => tbl.isDeleted.equals(false))
@@ -416,10 +478,71 @@ class AppDatabase extends _$AppDatabase {
     await into(lendEntries).insertOnConflictUpdate(companion);
   }
 
-  Future<void> setLendEntrySettled(String entryId, bool isSettled) async {
+  Future<void> upsertLendSettlementEvent(
+    LendSettlementEventsCompanion companion,
+  ) async {
+    await into(lendSettlementEvents).insertOnConflictUpdate(companion);
+  }
+
+  Future<LendEntry?> getLendEntryById(String entryId) {
+    final query = select(lendEntries)..where((tbl) => tbl.id.equals(entryId));
+    return query.getSingleOrNull();
+  }
+
+  Future<List<LendSettlementEvent>> getLendSettlementEventsByEntry(
+    String entryId,
+  ) {
+    final query = select(lendSettlementEvents)
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..where((tbl) => tbl.entryId.equals(entryId))
+      ..orderBy([
+        (tbl) => OrderingTerm.desc(tbl.date),
+        (tbl) => OrderingTerm.desc(tbl.createdAt),
+      ]);
+    return query.get();
+  }
+
+  Future<List<LendSettlementEvent>> getLendSettlementEvents() {
+    final query = select(lendSettlementEvents)
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..orderBy([
+        (tbl) => OrderingTerm.desc(tbl.date),
+        (tbl) => OrderingTerm.desc(tbl.createdAt),
+      ]);
+    return query.get();
+  }
+
+  Future<LendSettlementEvent?> getLastLendSettlementEvent(String entryId) {
+    final query = (select(lendSettlementEvents)
+      ..where((tbl) => tbl.isDeleted.equals(false))
+      ..where((tbl) => tbl.entryId.equals(entryId))
+      ..orderBy([
+        (tbl) => OrderingTerm.desc(tbl.date),
+        (tbl) => OrderingTerm.desc(tbl.createdAt),
+      ])
+      ..limit(1));
+    return query.getSingleOrNull();
+  }
+
+  Future<void> softDeleteLendSettlementEvent(String eventId) async {
+    await (update(
+      lendSettlementEvents,
+    )..where((tbl) => tbl.id.equals(eventId))).write(
+      const LendSettlementEventsCompanion(isDeleted: Value(true)),
+    );
+  }
+
+  Future<void> setLendEntrySettled(
+    String entryId,
+    bool isSettled, {
+    double? settledAmount,
+    int? settledAtEpoch,
+  }) async {
     await (update(lendEntries)..where((tbl) => tbl.id.equals(entryId))).write(
       LendEntriesCompanion(
         isSettled: Value(isSettled),
+        settledAmount: Value(settledAmount ?? 0),
+        settledAt: Value(isSettled ? settledAtEpoch : null),
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
     );
@@ -447,6 +570,7 @@ class AppDatabase extends _$AppDatabase {
     required List<RecurringRulesCompanion> recurringRuleRows,
     required List<LendPeopleCompanion> lendPeopleRows,
     required List<LendEntriesCompanion> lendEntryRows,
+    required List<LendSettlementEventsCompanion> lendSettlementEventRows,
     required List<MonthlyReflectionsCompanion> monthlyReflectionRows,
     required SettingsCompanion settingsRow,
     required UserProfilesCompanion userProfileRow,
@@ -456,24 +580,36 @@ class AppDatabase extends _$AppDatabase {
       await delete(categories).go();
       await delete(recurringRules).go();
       await delete(lendEntries).go();
+      await delete(lendSettlementEvents).go();
       await delete(lendPeople).go();
       await delete(monthlyReflections).go();
       await delete(settings).go();
       await delete(userProfiles).go();
-      if (categoryRows.isNotEmpty)
+      if (categoryRows.isNotEmpty) {
         await batch((b) => b.insertAll(categories, categoryRows));
-      if (transactionRows.isNotEmpty)
+      }
+      if (transactionRows.isNotEmpty) {
         await batch((b) => b.insertAll(transactions, transactionRows));
-      if (recurringRuleRows.isNotEmpty)
+      }
+      if (recurringRuleRows.isNotEmpty) {
         await batch((b) => b.insertAll(recurringRules, recurringRuleRows));
-      if (lendPeopleRows.isNotEmpty)
+      }
+      if (lendPeopleRows.isNotEmpty) {
         await batch((b) => b.insertAll(lendPeople, lendPeopleRows));
-      if (lendEntryRows.isNotEmpty)
+      }
+      if (lendEntryRows.isNotEmpty) {
         await batch((b) => b.insertAll(lendEntries, lendEntryRows));
-      if (monthlyReflectionRows.isNotEmpty)
+      }
+      if (lendSettlementEventRows.isNotEmpty) {
+        await batch(
+          (b) => b.insertAll(lendSettlementEvents, lendSettlementEventRows),
+        );
+      }
+      if (monthlyReflectionRows.isNotEmpty) {
         await batch(
           (b) => b.insertAll(monthlyReflections, monthlyReflectionRows),
         );
+      }
       await into(settings).insertOnConflictUpdate(settingsRow);
       await into(userProfiles).insertOnConflictUpdate(userProfileRow);
     });
@@ -485,6 +621,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(categories).go();
       await delete(recurringRules).go();
       await delete(lendEntries).go();
+      await delete(lendSettlementEvents).go();
       await delete(lendPeople).go();
       await delete(monthlyReflections).go();
       await delete(settings).go();

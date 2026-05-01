@@ -72,6 +72,11 @@ class Settings extends Table {
   BoolColumn get transactionHintsSeen => boolean()
       .named('transaction_hints_seen')
       .withDefault(const Constant(false))();
+  BoolColumn get dailyReminderEnabled => boolean()
+      .named('daily_reminder_enabled')
+      .withDefault(const Constant(false))();
+  IntColumn get lastBudgetAlertAt =>
+      integer().named('last_budget_alert_at').nullable()();
   IntColumn get updatedAt => integer().named('updated_at')();
 
   @override
@@ -115,8 +120,25 @@ class LendEntries extends Table {
   TextColumn get note => text().nullable()();
   BoolColumn get isSettled =>
       boolean().named('is_settled').withDefault(const Constant(false))();
+  RealColumn get settledAmount =>
+      real().named('settled_amount').withDefault(const Constant(0))();
+  IntColumn get settledAt => integer().named('settled_at').nullable()();
   IntColumn get createdAt => integer().named('created_at')();
   IntColumn get updatedAt => integer().named('updated_at')();
+  BoolColumn get isDeleted =>
+      boolean().named('is_deleted').withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+class LendSettlementEvents extends Table {
+  TextColumn get id => text()();
+  TextColumn get entryId => text().named('entry_id')();
+  TextColumn get personId => text().named('person_id')();
+  RealColumn get amount => real()();
+  IntColumn get date => integer()();
+  IntColumn get createdAt => integer().named('created_at')();
   BoolColumn get isDeleted =>
       boolean().named('is_deleted').withDefault(const Constant(false))();
 

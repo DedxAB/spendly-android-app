@@ -1,0 +1,72 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:spendly/core/theme/app_design_tokens.dart';
+
+class NoirHeader extends StatelessWidget implements PreferredSizeWidget {
+  const NoirHeader({
+    super.key,
+    this.showLeading = false,
+    this.leadingIcon = Icons.calendar_month_outlined,
+    this.onLeadingTap,
+    this.onProfileTap,
+    this.showProfileAction = true,
+  });
+
+  final bool showLeading;
+  final IconData leadingIcon;
+  final VoidCallback? onLeadingTap;
+  final VoidCallback? onProfileTap;
+  final bool showProfileAction;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(72);
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      toolbarHeight: 72,
+      centerTitle: true,
+      title: const Text(
+        'SPENDLY',
+        style: TextStyle(
+          fontFamily: 'Georgia',
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
+        ),
+      ),
+      leading: showLeading
+          ? IconButton(
+              icon: Icon(leadingIcon, size: 22),
+              onPressed: onLeadingTap,
+            )
+          : const SizedBox.shrink(),
+      leadingWidth: showLeading ? 56 : 0,
+      actions: showProfileAction
+          ? [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: InkWell(
+                  onTap: onProfileTap ?? () => context.push('/settings'),
+                  borderRadius: BorderRadius.zero,
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      border: Border.all(color: AppColors.borderDark),
+                    ),
+                    child: const Icon(Icons.person, size: 18),
+                  ),
+                ),
+              ),
+            ]
+          : const [],
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(1),
+        child: Divider(height: 1, thickness: 1, color: AppColors.borderDark),
+      ),
+    );
+  }
+}
+

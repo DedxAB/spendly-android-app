@@ -90,8 +90,3 @@ class CloudSyncController extends AsyncNotifier<CloudSyncState> {
     }
   }
 }
-
-final cloudSyncBootstrapProvider = FutureProvider<void>((ref) async {
-  await ref.read(cloudSyncRepositoryProvider).runDailyBackupIfNeeded();
-  ref.invalidate(cloudSyncControllerProvider);
-});

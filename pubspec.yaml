@@ -27,6 +27,8 @@ dependencies:
   googleapis: ^14.0.0
   googleapis_auth: ^1.6.0
   http: ^1.2.2
+  flutter_local_notifications: ^17.2.3
+  timezone: ^0.9.4
 
 dev_dependencies:
   flutter_test:
@@ -49,5 +51,6 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icons/app_icon.png"
-  remove_alpha_ios: true
+  image_path_android: "ic_launcher.png"
+  adaptive_icon_foreground: "ic_launcher_foreground.png"
+  adaptive_icon_background: "#000000"

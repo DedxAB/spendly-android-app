@@ -3,6 +3,7 @@ import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/features/lend/data/repositories/lend_repository_impl.dart';
 import 'package:spendly/features/lend/domain/entities/lend_entry_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_person_entity.dart';
+import 'package:spendly/features/lend/domain/entities/lend_settlement_event_entity.dart';
 
 final lendPeopleProvider = StreamProvider<List<LendPersonEntity>>((ref) {
   return ref.watch(lendRepositoryProvider).watchPeople();
@@ -15,6 +16,16 @@ final lendEntriesProvider = StreamProvider<List<LendEntryEntity>>((ref) {
 final lendEntriesByPersonProvider =
     StreamProvider.family<List<LendEntryEntity>, String>((ref, personId) {
       return ref.watch(lendRepositoryProvider).watchEntriesByPerson(personId);
+    });
+
+final lendSettlementEventsByPersonProvider =
+    StreamProvider.family<List<LendSettlementEventEntity>, String>((
+      ref,
+      personId,
+    ) {
+      return ref
+          .watch(lendRepositoryProvider)
+          .watchSettlementEventsByPerson(personId);
     });
 
 class LendPersonBalance {
@@ -62,12 +73,15 @@ final lendOverviewProvider = Provider<AsyncValue<LendOverview>>((ref) {
       people
           .map((person) {
             final personEntries = entries.where((e) => e.personId == person.id);
-            final active = personEntries.where(
-              (e) => !e.isSettled && !e.isDeleted,
-            );
+            final active = personEntries.where((e) {
+              if (e.isDeleted) return false;
+              final remaining = (e.amount - e.settledAmount).clamp(0, e.amount);
+              return remaining > 0;
+            });
             final net = active.fold<double>(0, (sum, e) {
-              if (e.type == LendEntryType.lent) return sum + e.amount;
-              return sum - e.amount;
+              final remaining = (e.amount - e.settledAmount).clamp(0, e.amount);
+              if (e.type == LendEntryType.lent) return sum + remaining;
+              return sum - remaining;
             });
 
             return LendPersonBalance(

@@ -9,6 +9,31 @@ import 'package:uuid/uuid.dart';
 class CategoriesPage extends ConsumerWidget {
   const CategoriesPage({super.key});
 
+  static IconData _iconForCategory(String name, TransactionType type) {
+    final n = name.toLowerCase();
+    if (n.contains('food') || n.contains('dining') || n.contains('restaurant')) {
+      return Icons.restaurant;
+    }
+    if (n.contains('grocery')) return Icons.local_grocery_store;
+    if (n.contains('travel') || n.contains('flight')) return Icons.flight;
+    if (n.contains('transport') || n.contains('taxi') || n.contains('uber')) {
+      return Icons.directions_car;
+    }
+    if (n.contains('shopping') || n.contains('shop')) return Icons.shopping_bag;
+    if (n.contains('rent') || n.contains('home')) return Icons.home;
+    if (n.contains('bill') || n.contains('utility') || n.contains('electric')) {
+      return Icons.receipt_long;
+    }
+    if (n.contains('health') || n.contains('medical')) return Icons.local_hospital;
+    if (n.contains('education') || n.contains('study')) return Icons.school;
+    if (n.contains('entertainment') || n.contains('movie')) return Icons.movie;
+    if (n.contains('gift')) return Icons.card_giftcard;
+    if (n.contains('salary') || n.contains('income')) return Icons.payments;
+    if (n.contains('freelance') || n.contains('business')) return Icons.work;
+    if (n.contains('investment')) return Icons.trending_up;
+    return type == TransactionType.income ? Icons.south_west : Icons.north_east;
+  }
+
   Future<void> _showCategoryDialog(BuildContext context, WidgetRef ref) async {
     final nameController = TextEditingController();
     TransactionType type = TransactionType.expense;
@@ -76,40 +101,157 @@ class CategoriesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categories = ref.watch(allCategoriesProvider);
+    final bg = Colors.black;
+    final surface = const Color(0xFF0F0F0F);
+    final border = const Color(0xFF2E2E2E);
+    final primary = Colors.white;
+    final secondary = const Color(0xFFB0B0B0);
+    const destructive = Color(0xFFE35D5D);
+    const destructiveBorder = Color(0xFF5A2323);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Categories')),
+      backgroundColor: bg,
+      appBar: AppBar(
+        title: const Text('Categories'),
+        backgroundColor: bg,
+        foregroundColor: primary,
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCategoryDialog(context, ref),
+        backgroundColor: primary,
+        foregroundColor: Colors.black,
         child: const Icon(Icons.add),
       ),
       body: categories.when(
         data: (items) {
-          if (items.isEmpty)
-            return const Center(child: Text('No categories available'));
+          if (items.isEmpty) {
+            return Center(
+              child: Text(
+                'No categories available',
+                style: TextStyle(color: secondary),
+              ),
+            );
+          }
+          final expenses = items
+              .where((e) => e.type == TransactionType.expense)
+              .toList()
+            ..sort((a, b) => a.name.compareTo(b.name));
+          final incomes = items
+              .where((e) => e.type == TransactionType.income)
+              .toList()
+            ..sort((a, b) => a.name.compareTo(b.name));
+
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: items.length,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+            itemCount: expenses.length + incomes.length + 2,
             itemBuilder: (context, index) {
-              final category = items[index];
-              return Card(
+              final expenseHeaderIndex = 0;
+              final expenseStart = 1;
+              final incomeHeaderIndex = expenseStart + expenses.length;
+              final incomeStart = incomeHeaderIndex + 1;
+
+              if (index == expenseHeaderIndex) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    'EXPENSE',
+                    style: TextStyle(
+                      color: secondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.3,
+                    ),
+                  ),
+                );
+              }
+              if (index == incomeHeaderIndex) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 10),
+                  child: Text(
+                    'INCOME',
+                    style: TextStyle(
+                      color: secondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.3,
+                    ),
+                  ),
+                );
+              }
+
+              final category = index < incomeHeaderIndex
+                  ? expenses[index - expenseStart]
+                  : incomes[index - incomeStart];
+              final icon = _iconForCategory(category.name, category.type);
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: surface,
+                  border: Border.all(color: border),
+                ),
                 child: ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.category)),
-                  title: Text(category.name),
-                  subtitle: Text(category.type.name),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => ref
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  leading: Container(
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: border),
+                    ),
+                    child: Icon(icon, color: primary, size: 20),
+                  ),
+                  title: Text(
+                    category.name,
+                    style: TextStyle(
+                      color: primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    category.type.name.toUpperCase(),
+                    style: TextStyle(
+                      color: secondary,
+                      fontSize: 11,
+                      letterSpacing: 0.9,
+                    ),
+                  ),
+                  trailing: InkWell(
+                    onTap: () => ref
                         .read(categoriesRepositoryProvider)
                         .softDelete(category.id),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: destructiveBorder),
+                        color: const Color(0x221B0000),
+                      ),
+                      child: const Icon(
+                        Icons.delete_sweep_outlined,
+                        color: destructive,
+                        size: 18,
+                      ),
+                    ),
                   ),
                 ),
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Failed to load: $error')),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+        error: (error, _) => Center(
+          child: Text(
+            'Failed to load: $error',
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
       ),
     );
   }
