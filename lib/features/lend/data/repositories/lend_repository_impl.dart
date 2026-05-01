@@ -6,6 +6,7 @@ import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/database/mappers.dart';
 import 'package:spendly/features/lend/domain/entities/lend_entry_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_person_entity.dart';
+import 'package:spendly/features/lend/domain/entities/lend_settlement_event_entity.dart';
 import 'package:spendly/features/lend/domain/repositories/lend_repository.dart';
 import 'package:uuid/uuid.dart';
 
@@ -34,6 +35,15 @@ class LendRepositoryImpl implements LendRepository {
   Stream<List<LendEntryEntity>> watchEntriesByPerson(String personId) {
     return _db
         .watchLendEntriesByPerson(personId)
+        .map((rows) => rows.map((e) => e.toEntity()).toList(growable: false));
+  }
+
+  @override
+  Stream<List<LendSettlementEventEntity>> watchSettlementEventsByPerson(
+    String personId,
+  ) {
+    return _db
+        .watchLendSettlementEventsByPerson(personId)
         .map((rows) => rows.map((e) => e.toEntity()).toList(growable: false));
   }
 
@@ -73,6 +83,7 @@ class LendRepositoryImpl implements LendRepository {
         date: date.millisecondsSinceEpoch,
         note: Value(normalizedNote),
         isSettled: const Value(false),
+        settledAmount: const Value(0),
         createdAt: now.millisecondsSinceEpoch,
         updatedAt: now.millisecondsSinceEpoch,
         isDeleted: const Value(false),
@@ -81,8 +92,59 @@ class LendRepositoryImpl implements LendRepository {
   }
 
   @override
-  Future<void> setEntrySettled(String entryId, bool settled) async {
-    await _db.setLendEntrySettled(entryId, settled);
+  Future<void> applySettlement({
+    required String entryId,
+    required double amount,
+    required DateTime settledAt,
+  }) async {
+    if (amount <= 0) return;
+    final current = await _db.getLendEntryById(entryId);
+    if (current == null || current.isDeleted) return;
+    final cappedAmount = amount.clamp(0, current.amount).toDouble();
+    final now = DateTime.now();
+    await _db.upsertLendSettlementEvent(
+      LendSettlementEventsCompanion.insert(
+        id: const Uuid().v4(),
+        entryId: entryId,
+        personId: current.personId,
+        amount: cappedAmount,
+        date: settledAt.millisecondsSinceEpoch,
+        createdAt: now.millisecondsSinceEpoch,
+        isDeleted: const Value(false),
+      ),
+    );
+    final events = await _db.getLendSettlementEventsByEntry(entryId);
+    final nextSettled = events
+        .fold<double>(0, (sum, event) => sum + event.amount)
+        .clamp(0, current.amount)
+        .toDouble();
+    final isFullySettled = nextSettled >= current.amount;
+    await _db.setLendEntrySettled(
+      entryId,
+      isFullySettled,
+      settledAmount: nextSettled,
+      settledAtEpoch: settledAt.millisecondsSinceEpoch,
+    );
+  }
+
+  @override
+  Future<void> clearSettlement(String entryId) async {
+    final current = await _db.getLendEntryById(entryId);
+    if (current == null || current.isDeleted) return;
+    final lastEvent = await _db.getLastLendSettlementEvent(entryId);
+    if (lastEvent == null) return;
+    await _db.softDeleteLendSettlementEvent(lastEvent.id);
+    final events = await _db.getLendSettlementEventsByEntry(entryId);
+    final nextSettled = events
+        .fold<double>(0, (sum, event) => sum + event.amount)
+        .clamp(0, current.amount)
+        .toDouble();
+    await _db.setLendEntrySettled(
+      entryId,
+      nextSettled >= current.amount,
+      settledAmount: nextSettled,
+      settledAtEpoch: events.isEmpty ? null : events.first.date,
+    );
   }
 }
 

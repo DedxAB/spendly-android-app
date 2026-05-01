@@ -5,6 +5,7 @@ import 'package:spendly/features/categories/domain/entities/category_entity.dart
 import 'package:spendly/features/insights/domain/entities/monthly_reflection_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_entry_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_person_entity.dart';
+import 'package:spendly/features/lend/domain/entities/lend_settlement_event_entity.dart';
 import 'package:spendly/features/recurring/domain/entities/recurring_rule_entity.dart';
 import 'package:spendly/features/settings/domain/entities/settings_entity.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
@@ -50,8 +51,11 @@ extension SettingMapper on Setting {
       id: id,
       monthlyBudget: monthlyBudget,
       currency: currency,
-      themeMode: AppThemeModeX.fromValue(themeMode),
-      transactionHintsSeen: transactionHintsSeen,
+      budgetAlertsEnabled: transactionHintsSeen,
+      dailyReminderEnabled: dailyReminderEnabled,
+      lastBudgetAlertAt: lastBudgetAlertAt == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(lastBudgetAlertAt!),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(updatedAt),
     );
   }
@@ -115,8 +119,26 @@ extension LendEntryMapper on LendEntry {
       date: DateTime.fromMillisecondsSinceEpoch(date),
       note: note,
       isSettled: isSettled,
+      settledAmount: settledAmount,
+      settledAt: settledAt == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(settledAt!),
       createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(updatedAt),
+      isDeleted: isDeleted,
+    );
+  }
+}
+
+extension LendSettlementEventMapper on LendSettlementEvent {
+  LendSettlementEventEntity toEntity() {
+    return LendSettlementEventEntity(
+      id: id,
+      entryId: entryId,
+      personId: personId,
+      amount: amount,
+      date: DateTime.fromMillisecondsSinceEpoch(date),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
       isDeleted: isDeleted,
     );
   }
@@ -167,8 +189,10 @@ SettingsCompanion settingsToCompanion(SettingsEntity entity) {
     id: Value(entity.id),
     monthlyBudget: Value(entity.monthlyBudget),
     currency: Value(entity.currency),
-    themeMode: Value(entity.themeMode.value),
-    transactionHintsSeen: Value(entity.transactionHintsSeen),
+    themeMode: const Value('dark'),
+    transactionHintsSeen: Value(entity.budgetAlertsEnabled),
+    dailyReminderEnabled: Value(entity.dailyReminderEnabled),
+    lastBudgetAlertAt: Value(entity.lastBudgetAlertAt?.millisecondsSinceEpoch),
     updatedAt: entity.updatedAt.millisecondsSinceEpoch,
   );
 }
@@ -224,8 +248,24 @@ LendEntriesCompanion lendEntryToCompanion(LendEntryEntity entity) {
     date: entity.date.millisecondsSinceEpoch,
     note: Value(entity.note),
     isSettled: Value(entity.isSettled),
+    settledAmount: Value(entity.settledAmount),
+    settledAt: Value(entity.settledAt?.millisecondsSinceEpoch),
     createdAt: entity.createdAt.millisecondsSinceEpoch,
     updatedAt: entity.updatedAt.millisecondsSinceEpoch,
+    isDeleted: Value(entity.isDeleted),
+  );
+}
+
+LendSettlementEventsCompanion lendSettlementEventToCompanion(
+  LendSettlementEventEntity entity,
+) {
+  return LendSettlementEventsCompanion.insert(
+    id: entity.id,
+    entryId: entity.entryId,
+    personId: entity.personId,
+    amount: entity.amount,
+    date: entity.date.millisecondsSinceEpoch,
+    createdAt: entity.createdAt.millisecondsSinceEpoch,
     isDeleted: Value(entity.isDeleted),
   );
 }

@@ -30,6 +30,17 @@ extension TransactionTypeX on TransactionType {
 }
 
 extension PaymentModeX on PaymentMode {
+  String get label {
+    switch (this) {
+      case PaymentMode.cash:
+        return 'Cash';
+      case PaymentMode.upi:
+        return 'UPI';
+      case PaymentMode.card:
+        return 'Card';
+    }
+  }
+
   String get value {
     switch (this) {
       case PaymentMode.cash:

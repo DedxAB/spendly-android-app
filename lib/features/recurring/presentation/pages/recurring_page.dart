@@ -119,13 +119,16 @@ class RecurringPage extends ConsumerWidget {
                   SegmentedButton<PaymentMode>(
                     segments: const [
                       ButtonSegment(
-                        value: PaymentMode.cash,
-                        label: Text('Cash'),
+                        value: PaymentMode.upi,
+                        label: Text('UPI'),
                       ),
-                      ButtonSegment(value: PaymentMode.upi, label: Text('UPI')),
                       ButtonSegment(
                         value: PaymentMode.card,
                         label: Text('Card'),
+                      ),
+                      ButtonSegment(
+                        value: PaymentMode.cash,
+                        label: Text('Cash'),
                       ),
                     ],
                     selected: {selectedPaymentMode},

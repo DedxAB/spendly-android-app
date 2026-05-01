@@ -4,13 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/features/categories/presentation/pages/categories_page.dart';
 import 'package:spendly/features/cloud_sync/data/repositories/cloud_sync_repository_impl.dart';
 import 'package:spendly/features/home/presentation/pages/home_page.dart';
 import 'package:spendly/features/insights/presentation/pages/insights_page.dart';
 import 'package:spendly/features/lend/presentation/pages/lend_page.dart';
 import 'package:spendly/features/lend/presentation/pages/lend_person_detail_page.dart';
+import 'package:spendly/features/recurring/presentation/pages/recurring_page.dart';
+import 'package:spendly/features/settings/presentation/pages/budget_page.dart';
+import 'package:spendly/features/settings/presentation/pages/notifications_page.dart';
 import 'package:spendly/features/settings/presentation/pages/settings_page.dart';
 import 'package:spendly/features/transactions/presentation/pages/add_transaction_page.dart';
+import 'package:spendly/features/transactions/presentation/pages/calendar_page.dart';
 import 'package:spendly/features/transactions/presentation/pages/transactions_page.dart';
 import 'package:spendly/features/user/presentation/pages/profile_onboarding_page.dart';
 import 'package:spendly/features/user/presentation/providers/user_profile_provider.dart';
@@ -33,10 +38,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const TransactionsPage(),
           ),
           GoRoute(
+            path: '/budget',
+            builder: (context, state) => const BudgetPage(),
+          ),
+          GoRoute(
             path: '/insights',
             builder: (context, state) => const InsightsPage(),
           ),
-          GoRoute(path: '/lend', builder: (context, state) => const LendPage()),
         ],
       ),
       GoRoute(
@@ -52,13 +60,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/calendar',
+        builder: (context, state) => const CalendarPage(),
+      ),
+      GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsPage(),
       ),
       GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsPage(),
+      ),
+      GoRoute(
+        path: '/categories',
+        builder: (context, state) => const CategoriesPage(),
+      ),
+      GoRoute(
+        path: '/recurring',
+        builder: (context, state) => const RecurringPage(),
+      ),
+      GoRoute(path: '/lend', builder: (context, state) => const LendPage()),
+      GoRoute(
         path: '/lend/:personId',
-        builder: (context, state) =>
-            LendPersonDetailPage(personId: state.pathParameters['personId']!),
+        builder: (context, state) {
+          final personId = state.pathParameters['personId'] ?? '';
+          return LendPersonDetailPage(personId: personId);
+        },
       ),
     ],
   );
@@ -80,16 +107,15 @@ class _SplashPageState extends ConsumerState<SplashPage>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 700),
     )..forward();
 
     _bootstrap();
   }
 
   Future<void> _bootstrap() async {
-    await Future<void>.delayed(const Duration(milliseconds: 1300));
+    await Future<void>.delayed(const Duration(milliseconds: 900));
     if (!mounted) return;
-    // Fire-and-forget so cloud sync checks never block splash navigation.
     ref.read(cloudSyncRepositoryProvider).runDailyBackupIfNeeded();
     final profile = await ref.read(userProfileProvider.future);
     if (!mounted) return;
@@ -111,10 +137,10 @@ class _SplashPageState extends ConsumerState<SplashPage>
     return Scaffold(
       body: FadeTransition(
         opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-        child: SizedBox.expand(
-          child: Image.asset(
-            'assets/images/spendly_splash.png',
-            fit: BoxFit.cover,
+        child: const Center(
+          child: Text(
+            'Spendly',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
         ),
       ),
@@ -129,8 +155,8 @@ class AppShell extends StatelessWidget {
 
   int _indexForLocation(String location) {
     if (location.startsWith('/transactions')) return 1;
-    if (location.startsWith('/lend')) return 3;
-    if (location.startsWith('/insights')) return 4;
+    if (location.startsWith('/insights')) return 2;
+    if (location.startsWith('/budget')) return 3;
     return 0;
   }
 
@@ -138,57 +164,43 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     final selectedIndex = _indexForLocation(location);
-    const items = [
+    final items = [
       _ShellNavItem(
         icon: CupertinoIcons.home,
         selectedIcon: CupertinoIcons.house_fill,
+        label: 'HOME',
       ),
       _ShellNavItem(
-        icon: CupertinoIcons.square_list,
-        selectedIcon: CupertinoIcons.square_list_fill,
+        icon: CupertinoIcons.arrow_counterclockwise,
+        selectedIcon: CupertinoIcons.arrow_counterclockwise_circle_fill,
+        label: 'HISTORY',
       ),
       _ShellNavItem(
-        icon: CupertinoIcons.add,
-        selectedIcon: CupertinoIcons.add,
-        isCenterAction: true,
+        icon: CupertinoIcons.chart_bar_alt_fill,
+        selectedIcon: CupertinoIcons.chart_bar_alt_fill,
+        label: 'ANALYTICS',
       ),
       _ShellNavItem(
-        icon: CupertinoIcons.person_2,
-        selectedIcon: CupertinoIcons.person_2_fill,
-      ),
-      _ShellNavItem(
-        icon: CupertinoIcons.chart_pie,
-        selectedIcon: CupertinoIcons.chart_pie_fill,
+        icon: CupertinoIcons.creditcard,
+        selectedIcon: CupertinoIcons.creditcard_fill,
+        label: 'BUDGET',
       ),
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      body: Stack(
-        children: [
-          const _GlobalBackground(),
-          Theme(
-            data: Theme.of(context).copyWith(
-              scaffoldBackgroundColor: Colors.transparent,
-              canvasColor: Colors.transparent,
-            ),
-            child: child,
-          ),
-        ],
-      ),
+      body: child,
       bottomNavigationBar: SafeArea(
         top: false,
         child: Container(
-          height: 74,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          height: 62,
+          padding: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkSurface
-                : AppColors.lightSurface.withValues(alpha: 0.96),
+            color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
             border: Border(
               top: BorderSide(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : AppColors.emerald.withValues(alpha: 0.12),
+                color: isDark ? AppColors.borderDark : AppColors.borderLight,
               ),
             ),
           ),
@@ -209,15 +221,11 @@ class AppShell extends StatelessWidget {
                         return;
                       }
                       if (i == 2) {
-                        context.push('/transactions/new');
+                        context.go('/insights');
                         return;
                       }
                       if (i == 3) {
-                        context.go('/lend');
-                        return;
-                      }
-                      if (i == 4) {
-                        context.go('/insights');
+                        context.go('/budget');
                       }
                     },
                   ),
@@ -230,88 +238,16 @@ class AppShell extends StatelessWidget {
   }
 }
 
-class _GlobalBackground extends StatelessWidget {
-  const _GlobalBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final gradientColors = isDark
-        ? [const Color(0xFF1C3B34), AppColors.darkBackground]
-        : [const Color(0xFFEAF6EC), const Color(0xFFDCEEE0)];
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: gradientColors,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: -120,
-            right: -70,
-            child: _GlowOrb(
-              size: 260,
-              color: AppColors.emerald.withValues(alpha: isDark ? 0.24 : 0.14),
-            ),
-          ),
-          Positioned(
-            bottom: 120,
-            left: -80,
-            child: _GlowOrb(
-              size: 220,
-              color: AppColors.emerald.withValues(alpha: isDark ? 0.16 : 0.12),
-            ),
-          ),
-          Positioned(
-            top: 190,
-            left: 20,
-            right: 20,
-            child: Container(
-              height: 1,
-              color: AppColors.emerald.withValues(alpha: isDark ? 0.10 : 0.08),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
-        ),
-      ),
-    );
-  }
-}
-
 class _ShellNavItem {
-  const _ShellNavItem({
+  _ShellNavItem({
     required this.icon,
     required this.selectedIcon,
-    this.isCenterAction = false,
+    required this.label,
   });
 
   final IconData icon;
   final IconData selectedIcon;
-  final bool isCenterAction;
+  final String label;
 }
 
 class _ShellNavTile extends StatelessWidget {
@@ -327,85 +263,56 @@ class _ShellNavTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onSurface = Theme.of(context).colorScheme.onSurface;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = selected
-        ? AppColors.emerald
-        : onSurface.withValues(alpha: 0.42);
-
-    if (item.isCenterAction) {
-      return Center(
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: onTap,
-            child: Ink(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: AppColors.emerald,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.emerald.withValues(
-                      alpha: isDark ? 0.24 : 0.18,
-                    ),
-                    blurRadius: isDark ? 12 : 10,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                CupertinoIcons.add,
-                color: Color(0xFF1A1433),
-                size: 22,
-              ),
+    return InkWell(
+      borderRadius: BorderRadius.zero,
+      onTap: onTap,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Positioned(
+            top: 0,
+            left: 12,
+            right: 12,
+            child: Container(
+              height: 2,
+              color: selected ? Colors.white : Colors.transparent,
             ),
           ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          overlayColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.pressed)) {
-              return isDark
-                  ? Colors.white.withValues(alpha: 0.14)
-                  : Colors.black.withValues(alpha: 0.06);
-            }
-            return null;
-          }),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Center(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                selected ? item.selectedIcon : item.icon,
+                size: 19,
+                color: selected
+                    ? (isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary)
+                    : (isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                item.label,
+                style: TextStyle(
+                  fontFamily: 'Georgia',
+                  fontSize: 10,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  letterSpacing: 1.0,
                   color: selected
-                      ? AppColors.emerald.withValues(alpha: 0.14)
-                      : Colors.transparent,
-                ),
-                child: Icon(
-                  selected ? item.selectedIcon : item.icon,
-                  size: 23,
-                  color: iconColor,
+                      ? Colors.white
+                      : (isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary),
                 ),
               ),
-            ),
+            ],
           ),
-        ),
+        ],
       ),
     );
   }
 }
+

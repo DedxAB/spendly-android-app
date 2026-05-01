@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:spendly/core/constants/app_constants.dart';
-import 'package:spendly/core/theme/app_design_tokens.dart';
-import 'package:spendly/core/widgets/glass_card.dart';
-import 'package:spendly/features/cloud_sync/domain/entities/google_profile_entity.dart';
+import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/cloud_sync/presentation/providers/cloud_sync_provider.dart';
 import 'package:spendly/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:spendly/features/settings/presentation/providers/settings_provider.dart';
@@ -15,31 +13,489 @@ import 'package:spendly/features/user/presentation/providers/user_profile_provid
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
-  String _formatDateTime(DateTime value) {
-    return DateFormat('dd MMM yyyy, hh:mm a').format(value);
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    const bg = Color(0xFF0D0D0D);
+    const divider = Color(0xFF2A2A2A);
+    const primary = Colors.white;
+    const secondary = Color(0xFFBBBBBB);
+    const muted = Color(0xFF8F8F8F);
+
+    final profile = ref.watch(userProfileProvider).valueOrNull;
+    final settings = ref.watch(settingsStreamProvider).valueOrNull;
+    final budgetAlerts = settings?.budgetAlertsEnabled ?? true;
+    final dailyReminder = settings?.dailyReminderEnabled ?? false;
+    final cloudSync = ref.watch(cloudSyncControllerProvider).valueOrNull;
+
+    final name = (profile?.name.trim().isNotEmpty ?? false)
+        ? profile!.name.trim()
+        : 'User';
+    final imageUrl = (profile?.imageUrl?.trim().isNotEmpty ?? false)
+        ? profile!.imageUrl!.trim()
+        : null;
+
+    return Scaffold(
+      backgroundColor: bg,
+      appBar: NoirHeader(
+        showLeading: true,
+        leadingIcon: Icons.arrow_back,
+        onLeadingTap: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          } else {
+            context.go('/home');
+          }
+        },
+        showProfileAction: false,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(26, 26, 26, 26),
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _ProfilePhoto(
+                imageUrl: imageUrl,
+                backgroundColor: const Color(0xFF323A44),
+                iconColor: const Color(0xFFD9DEE3),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        color: primary,
+                        fontFamily: 'Georgia',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Spendly profile',
+                      style: TextStyle(
+                        color: secondary,
+                        fontSize: 14,
+                        fontFamily: 'Georgia',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 30),
+          const _SectionLabel('PREFERENCES', color: secondary),
+          const Divider(color: divider, height: 26),
+          _ProfileRow(
+            icon: Icons.person,
+            title: 'Account',
+            onTap: () => _editAccount(context, ref),
+            textColor: primary,
+            iconColor: muted,
+            dividerColor: divider,
+          ),
+          _ProfileRow(
+            icon: Icons.shield,
+            title: 'Security',
+            onTap: () => _openSecurity(context, ref),
+            textColor: primary,
+            iconColor: muted,
+            dividerColor: divider,
+          ),
+          _ProfileRow(
+            icon: Icons.notifications,
+            title: 'Notifications',
+            onTap: () => context.push('/notifications'),
+            textColor: primary,
+            iconColor: muted,
+            dividerColor: divider,
+          ),
+          _ProfileRow(
+            icon: Icons.category_outlined,
+            title: 'Categories',
+            onTap: () => context.push('/categories'),
+            textColor: primary,
+            iconColor: muted,
+            dividerColor: divider,
+          ),
+          _ProfileRow(
+            icon: Icons.handshake_outlined,
+            title: 'Lend & Borrow',
+            subtitle: 'Track people and settlements',
+            onTap: () => context.go('/lend'),
+            textColor: primary,
+            subtitleColor: muted,
+            iconColor: muted,
+            dividerColor: divider,
+          ),
+          _ProfileRow(
+            icon: Icons.repeat,
+            title: 'Recurring',
+            subtitle: 'Automate repeating expenses',
+            onTap: () => context.push('/recurring'),
+            textColor: primary,
+            subtitleColor: muted,
+            iconColor: muted,
+            dividerColor: divider,
+          ),
+          const SizedBox(height: 24),
+          const _SectionLabel('DATA & SYSTEM', color: secondary),
+          const Divider(color: divider, height: 26),
+          _ProfileRow(
+            icon: Icons.file_download_outlined,
+            title: 'Export Data',
+            subtitle: 'CSV, JSON formats available',
+            onTap: () => _openExport(context, ref),
+            textColor: primary,
+            subtitleColor: muted,
+            iconColor: muted,
+            dividerColor: divider,
+          ),
+          _ProfileRow(
+            icon: Icons.file_upload_outlined,
+            title: 'Import Data',
+            subtitle: 'Import from JSON backup',
+            onTap: () => _openImport(context, ref),
+            textColor: primary,
+            subtitleColor: muted,
+            iconColor: muted,
+            dividerColor: divider,
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: divider),
+              color: const Color(0xFF121212),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Cloud Sync',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  cloudSync?.isConnected == true
+                      ? 'Connected: ${cloudSync?.connectedEmail ?? '-'}'
+                      : 'Not connected',
+                  style: const TextStyle(color: muted, fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  cloudSync?.lastBackupAt == null
+                      ? 'Last backup: never'
+                      : 'Last backup: ${DateFormat('dd MMM, hh:mm a').format(cloudSync!.lastBackupAt!)}',
+                  style: const TextStyle(color: muted, fontSize: 12),
+                ),
+                const SizedBox(height: 10),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Automatic daily backup',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  value: cloudSync?.automaticDailyBackup ?? false,
+                  onChanged: cloudSync?.isConnected == true
+                      ? (value) async {
+                          await ref
+                              .read(cloudSyncControllerProvider.notifier)
+                              .setAutomaticDailyBackup(value);
+                        }
+                      : null,
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton(
+                      onPressed: cloudSync?.isProcessing == true
+                          ? null
+                          : () async {
+                              if (cloudSync?.isConnected == true) {
+                                await ref
+                                    .read(cloudSyncControllerProvider.notifier)
+                                    .disconnectAccount();
+                              } else {
+                                await ref
+                                    .read(cloudSyncControllerProvider.notifier)
+                                    .connectAccount();
+                              }
+                            },
+                      child: Text(
+                        cloudSync?.isConnected == true ? 'Disconnect' : 'Connect',
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: cloudSync?.isConnected == true
+                          ? () async {
+                              await ref
+                                  .read(cloudSyncControllerProvider.notifier)
+                                  .backupNow();
+                            }
+                          : null,
+                      child: const Text('Backup now'),
+                    ),
+                    OutlinedButton(
+                      onPressed: cloudSync?.isConnected == true
+                          ? () async {
+                              await ref
+                                  .read(cloudSyncControllerProvider.notifier)
+                                  .restoreFromDrive();
+                            }
+                          : null,
+                      child: const Text('Restore'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'Budget alerts',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            subtitle: const Text(
+              'Show in-app budget warning notifications',
+              style: TextStyle(fontSize: 12),
+            ),
+            value: budgetAlerts,
+            onChanged: (value) async {
+              await ref
+                  .read(settingsRepositoryProvider)
+                  .setNotificationPreferences(
+                    budgetAlertsEnabled: value,
+                    dailyReminderEnabled: dailyReminder,
+                  );
+            },
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'Daily reminder',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            subtitle: const Text(
+              'Receive a push reminder every day',
+              style: TextStyle(fontSize: 12),
+            ),
+            value: dailyReminder,
+            onChanged: (value) async {
+              await ref
+                  .read(settingsRepositoryProvider)
+                  .setNotificationPreferences(
+                    budgetAlertsEnabled: budgetAlerts,
+                    dailyReminderEnabled: value,
+                  );
+            },
+          ),
+          const SizedBox(height: 26),
+          SizedBox(
+            height: 56,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: bg,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
+              onPressed: () async {
+                final p = profile;
+                await ref
+                    .read(userProfileRepositoryProvider)
+                    .updateProfile(
+                      name: p?.name ?? 'User',
+                      imageUrl: p?.imageUrl,
+                      email: p?.email,
+                      phone: p?.phone,
+                      onboardingCompleted: false,
+                    );
+                if (context.mounted) {
+                  context.go('/splash');
+                }
+              },
+              child: const Text(
+                'LOGOUT',
+                style: TextStyle(
+                  fontSize: 18,
+                  letterSpacing: 2,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 26),
+          const Center(
+            child: Text(
+              'Version 2.4.0',
+              style: TextStyle(color: muted, fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Future<void> _showExportDialog(BuildContext context, String payload) async {
+  Future<void> _editAccount(BuildContext context, WidgetRef ref) async {
+    final profile = ref.read(userProfileProvider).valueOrNull;
+    final name = TextEditingController(text: profile?.name ?? '');
+    final image = TextEditingController(text: profile?.imageUrl ?? '');
+    final email = TextEditingController(text: profile?.email ?? '');
+    final phone = TextEditingController(text: profile?.phone ?? '');
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF0F0F0F),
+          border: Border(top: BorderSide(color: Color(0xFF2A2A2A))),
+        ),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          8,
+          16,
+          MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 64,
+                height: 4,
+                color: const Color(0xFF6A6A6A),
+              ),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Account',
+              style: TextStyle(
+                fontFamily: 'Georgia',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: name,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: image,
+              decoration: const InputDecoration(labelText: 'Profile photo URL'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: email,
+              decoration: const InputDecoration(labelText: 'Email'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: phone,
+              decoration: const InputDecoration(labelText: 'Phone'),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
+                    ),
+                    onPressed: () async {
+                      await ref
+                          .read(userProfileRepositoryProvider)
+                          .updateProfile(
+                            name: name.text.trim(),
+                            imageUrl: image.text.trim(),
+                            email: email.text.trim(),
+                            phone: phone.text.trim(),
+                          );
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    child: const Text('Save'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openSecurity(BuildContext context, WidgetRef ref) async {
+    final cloud = ref.read(cloudSyncControllerProvider).valueOrNull;
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Backup Data'),
+        title: const Text('Security'),
+        content: Text(
+          cloud?.isConnected == true
+              ? 'Google backup connected: ${cloud?.connectedEmail ?? ''}'
+              : 'No backup account connected.',
+        ),
+        actions: [
+          if (cloud?.isConnected != true)
+            FilledButton(
+              onPressed: () => ref
+                  .read(cloudSyncControllerProvider.notifier)
+                  .connectAccount(),
+              child: const Text('Connect Google'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openExport(BuildContext context, WidgetRef ref) async {
+    final payload = await ref.read(settingsRepositoryProvider).exportJson();
+    if (!context.mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Export JSON'),
         content: SizedBox(
-          width: 420,
+          width: 480,
           child: SingleChildScrollView(child: SelectableText(payload)),
         ),
         actions: [
-          TextButton.icon(
-            onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: payload));
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Backup data copied')),
-                );
-              }
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: payload));
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('JSON copied to clipboard')),
+              );
             },
-            icon: const Icon(Icons.copy_outlined),
-            label: const Text('Copy'),
+            child: const Text('Copy'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -50,16 +506,21 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _showImportDialog(BuildContext context, WidgetRef ref) async {
+  Future<void> _openImport(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Restore Data'),
-        content: TextField(
-          controller: controller,
-          maxLines: 12,
-          decoration: const InputDecoration(hintText: 'Paste backup data'),
+        title: const Text('Import JSON'),
+        content: SizedBox(
+          width: 520,
+          child: TextField(
+            controller: controller,
+            maxLines: 14,
+            decoration: const InputDecoration(
+              hintText: 'Paste your exported JSON here',
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -68,27 +529,14 @@ class SettingsPage extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () async {
-              try {
-                await ref
-                    .read(settingsRepositoryProvider)
-                    .importJson(controller.text.trim());
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Import successful')),
-                  );
-                }
-              } catch (_) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Invalid import payload. Please try again.',
-                      ),
-                    ),
-                  );
-                }
-              }
+              final raw = controller.text.trim();
+              if (raw.isEmpty) return;
+              await ref.read(settingsRepositoryProvider).importJson(raw);
+              if (!context.mounted) return;
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Import completed')),
+              );
             },
             child: const Text('Import'),
           ),
@@ -96,567 +544,124 @@ class SettingsPage extends ConsumerWidget {
       ),
     );
   }
-
-  Future<bool> _showRestoreConfirmDialog(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Restore from Drive'),
-        content: const Text('This will replace your current local data.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Restore'),
-          ),
-        ],
-      ),
-    );
-    return confirmed ?? false;
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsStreamProvider).valueOrNull;
-    final profile = ref.watch(userProfileProvider).valueOrNull;
-    final cloudSyncAsync = ref.watch(cloudSyncControllerProvider);
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        children: [
-          _SectionTitle('Profile'),
-          GlassCard(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Column(
-                children: [
-                  TextFormField(
-                    initialValue: profile?.name ?? 'User',
-                    decoration: InputDecoration(
-                      hintText: 'Your name',
-                      isDense: true,
-                      filled: true,
-                      fillColor: colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.35,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                    onFieldSubmitted: (value) async {
-                      await ref
-                          .read(userProfileRepositoryProvider)
-                          .updateProfile(
-                            name: value,
-                            imageUrl: profile?.imageUrl,
-                            email: profile?.email,
-                            phone: profile?.phone,
-                          );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextFormField(
-                    initialValue: profile?.imageUrl,
-                    decoration: InputDecoration(
-                      hintText: 'Profile image URL (optional)',
-                      isDense: true,
-                      filled: true,
-                      fillColor: colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.35,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                    onFieldSubmitted: (value) async {
-                      await ref
-                          .read(userProfileRepositoryProvider)
-                          .updateProfile(
-                            name: profile?.name ?? 'User',
-                            imageUrl: value,
-                            email: profile?.email,
-                            phone: profile?.phone,
-                          );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _SectionTitle('Monthly Budget'),
-          GlassCard(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: TextFormField(
-                initialValue: (settings?.monthlyBudget ?? 0).toStringAsFixed(2),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  prefixText: '${AppConstants.currencySymbol} ',
-                  hintText: 'Set your monthly budget',
-                  isDense: true,
-                  filled: true,
-                  fillColor: colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.35,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                ),
-                onFieldSubmitted: (value) async {
-                  final amount = double.tryParse(value);
-                  if (amount != null) {
-                    await ref
-                        .read(settingsRepositoryProvider)
-                        .setBudget(amount);
-                  }
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _SectionTitle('Cloud Sync'),
-          GlassCard(
-            child: cloudSyncAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.all(AppSpacing.md),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (_, _) => Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Could not load Cloud Sync right now.'),
-                    const SizedBox(height: AppSpacing.sm),
-                    FilledButton(
-                      onPressed: () => ref
-                          .read(cloudSyncControllerProvider.notifier)
-                          .refresh(),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-              data: (cloudSync) {
-                if (!cloudSync.isConnected) {
-                  return Padding(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Your data will be stored in your own Google Drive.',
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        FilledButton.icon(
-                          onPressed: cloudSync.isProcessing
-                              ? null
-                              : () async {
-                                  try {
-                                    await ref
-                                        .read(
-                                          cloudSyncControllerProvider.notifier,
-                                        )
-                                        .connectAccount();
-                                    if (!context.mounted) {
-                                      return;
-                                    }
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Google account connected',
-                                        ),
-                                      ),
-                                    );
-                                  } catch (_) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Could not connect account. Please try again.',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                    return;
-                                  }
-
-                                  try {
-                                    final googleProfile = await ref
-                                        .read(
-                                          cloudSyncControllerProvider.notifier,
-                                        )
-                                        .fetchGoogleProfile();
-                                    if (!context.mounted ||
-                                        googleProfile == null) {
-                                      return;
-                                    }
-
-                                    await _applyGoogleProfile(
-                                      ref: ref,
-                                      currentProfileName:
-                                          profile?.name ?? 'User',
-                                      currentProfileEmail: profile?.email,
-                                      currentProfilePhone: profile?.phone,
-                                      googleProfile: googleProfile,
-                                    );
-
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Profile synced from Google',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  } catch (_) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Connected, but profile sync failed. You can retry by reconnecting.',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                          icon: const _GoogleLogo(),
-                          label: const Text('Connect Google Account'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.cloud_done_outlined),
-                      title: Text(
-                        'Connected as: ${cloudSync.connectedEmail ?? 'Google account'}',
-                      ),
-                      trailing: TextButton(
-                        onPressed: cloudSync.isProcessing
-                            ? null
-                            : () async {
-                                try {
-                                  await ref
-                                      .read(
-                                        cloudSyncControllerProvider.notifier,
-                                      )
-                                      .disconnectAccount();
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Google account disconnected',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                } catch (_) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Could not disconnect account. Please try again.',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                        child: const Text('Disconnect'),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                        vertical: AppSpacing.xs,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: FilledButton(
-                              onPressed: cloudSync.isProcessing
-                                  ? null
-                                  : () async {
-                                      try {
-                                        await ref
-                                            .read(
-                                              cloudSyncControllerProvider
-                                                  .notifier,
-                                            )
-                                            .backupNow();
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Backup successful',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      } catch (error) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Backup failed: ${_formatError(error)}',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                              child: const Text('Backup Now'),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: cloudSync.isProcessing
-                                  ? null
-                                  : () async {
-                                      final confirmed =
-                                          await _showRestoreConfirmDialog(
-                                            context,
-                                          );
-                                      if (!confirmed) {
-                                        return;
-                                      }
-
-                                      try {
-                                        await ref
-                                            .read(
-                                              cloudSyncControllerProvider
-                                                  .notifier,
-                                            )
-                                            .restoreFromDrive();
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Restore successful',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      } catch (error) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Restore failed: ${_formatError(error)}',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                              child: const Text('Restore from Drive'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SwitchListTile(
-                      value: cloudSync.automaticDailyBackup,
-                      onChanged: cloudSync.isProcessing
-                          ? null
-                          : (enabled) async {
-                              try {
-                                await ref
-                                    .read(cloudSyncControllerProvider.notifier)
-                                    .setAutomaticDailyBackup(enabled);
-                              } catch (_) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Could not update backup setting. Please try again.',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                      title: const Text('Automatic Daily Backup'),
-                    ),
-                    if (cloudSync.lastBackupAt != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.sm,
-                          0,
-                          AppSpacing.sm,
-                          AppSpacing.sm,
-                        ),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Last backup: ${_formatDateTime(cloudSync.lastBackupAt!)}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _SectionTitle('Data'),
-          GlassCard(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.file_upload_outlined),
-                  title: const Text('Backup Data'),
-                  subtitle: const Text('Copy all app data as JSON'),
-                  onTap: () async {
-                    final payload = await ref
-                        .read(settingsRepositoryProvider)
-                        .exportJson();
-                    if (context.mounted) {
-                      await _showExportDialog(context, payload);
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.file_download_outlined),
-                  title: const Text('Restore Data'),
-                  subtitle: const Text('Restore data from backup JSON'),
-                  onTap: () => _showImportDialog(context, ref),
-                ),
-                ListTile(
-                  leading: const Icon(
-                    Icons.delete_outline,
-                    color: AppColors.expense,
-                  ),
-                  title: const Text('Clear all data'),
-                  subtitle: const Text('This cannot be undone'),
-                  onTap: () async {
-                    await ref.read(settingsRepositoryProvider).clearAllData();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('All data cleared')),
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _SectionTitle('About'),
-          const GlassCard(
-            child: ListTile(
-              leading: Icon(Icons.info_outline),
-              title: Text('Spendly v1.0.0'),
-              subtitle: Text(
-                'Offline-first personal finance app\nGitHub: DedxAB/spendly-expense-tracker-app',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _applyGoogleProfile({
-    required WidgetRef ref,
-    required String currentProfileName,
-    required String? currentProfileEmail,
-    required String? currentProfilePhone,
-    required GoogleProfileEntity googleProfile,
-  }) async {
-    final name = (googleProfile.displayName ?? '').trim();
-    await ref
-        .read(userProfileRepositoryProvider)
-        .updateProfile(
-          name: name.isEmpty ? currentProfileName : name,
-          imageUrl: googleProfile.photoUrl,
-          email: googleProfile.email.isEmpty
-              ? currentProfileEmail
-              : googleProfile.email,
-          phone: currentProfilePhone,
-        );
-  }
-
-  String _formatError(Object error) {
-    final text = error.toString().trim();
-    if (text.startsWith('Exception:')) {
-      return text.substring('Exception:'.length).trim();
-    }
-    return text;
-  }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.title);
+class _ProfilePhoto extends StatelessWidget {
+  const _ProfilePhoto({
+    required this.imageUrl,
+    required this.backgroundColor,
+    required this.iconColor,
+  });
 
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
-    );
-  }
-}
-
-class _GoogleLogo extends StatelessWidget {
-  const _GoogleLogo();
+  final String? imageUrl;
+  final Color backgroundColor;
+  final Color iconColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 18,
-      height: 18,
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
+      width: 92,
+      height: 92,
+      color: backgroundColor,
+      child: imageUrl != null
+          ? Image.network(
+              imageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  Icon(Icons.account_box, size: 52, color: iconColor),
+            )
+          : Icon(Icons.account_box, size: 52, color: iconColor),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text, {required this.color});
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: color,
+        fontFamily: 'Georgia',
+        fontSize: 14,
+        letterSpacing: 1.4,
+        fontWeight: FontWeight.w700,
       ),
-      child: const Text(
-        'G',
-        style: TextStyle(
-          color: Color(0xFF4285F4),
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          height: 1,
+    );
+  }
+}
+
+class _ProfileRow extends StatelessWidget {
+  const _ProfileRow({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    required this.textColor,
+    required this.iconColor,
+    required this.dividerColor,
+    this.subtitle,
+    this.subtitleColor,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+  final Color textColor;
+  final Color iconColor;
+  final Color dividerColor;
+  final Color? subtitleColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: dividerColor)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: textColor,
+                      fontFamily: 'Georgia',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (subtitle != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        subtitle!,
+                        style: TextStyle(
+                          color: subtitleColor ?? iconColor,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: iconColor, size: 22),
+          ],
         ),
       ),
     );
   }
 }
+

@@ -24,8 +24,9 @@ mixin _$SettingsEntity {
   int get id => throw _privateConstructorUsedError;
   double get monthlyBudget => throw _privateConstructorUsedError;
   String get currency => throw _privateConstructorUsedError;
-  AppThemeMode get themeMode => throw _privateConstructorUsedError;
-  bool get transactionHintsSeen => throw _privateConstructorUsedError;
+  bool get budgetAlertsEnabled => throw _privateConstructorUsedError;
+  bool get dailyReminderEnabled => throw _privateConstructorUsedError;
+  DateTime? get lastBudgetAlertAt => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this SettingsEntity to a JSON map.
@@ -49,8 +50,9 @@ abstract class $SettingsEntityCopyWith<$Res> {
     int id,
     double monthlyBudget,
     String currency,
-    AppThemeMode themeMode,
-    bool transactionHintsSeen,
+    bool budgetAlertsEnabled,
+    bool dailyReminderEnabled,
+    DateTime? lastBudgetAlertAt,
     DateTime updatedAt,
   });
 }
@@ -73,8 +75,9 @@ class _$SettingsEntityCopyWithImpl<$Res, $Val extends SettingsEntity>
     Object? id = null,
     Object? monthlyBudget = null,
     Object? currency = null,
-    Object? themeMode = null,
-    Object? transactionHintsSeen = null,
+    Object? budgetAlertsEnabled = null,
+    Object? dailyReminderEnabled = null,
+    Object? lastBudgetAlertAt = freezed,
     Object? updatedAt = null,
   }) {
     return _then(
@@ -91,14 +94,18 @@ class _$SettingsEntityCopyWithImpl<$Res, $Val extends SettingsEntity>
                 ? _value.currency
                 : currency // ignore: cast_nullable_to_non_nullable
                       as String,
-            themeMode: null == themeMode
-                ? _value.themeMode
-                : themeMode // ignore: cast_nullable_to_non_nullable
-                      as AppThemeMode,
-            transactionHintsSeen: null == transactionHintsSeen
-                ? _value.transactionHintsSeen
-                : transactionHintsSeen // ignore: cast_nullable_to_non_nullable
+            budgetAlertsEnabled: null == budgetAlertsEnabled
+                ? _value.budgetAlertsEnabled
+                : budgetAlertsEnabled // ignore: cast_nullable_to_non_nullable
                       as bool,
+            dailyReminderEnabled: null == dailyReminderEnabled
+                ? _value.dailyReminderEnabled
+                : dailyReminderEnabled // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            lastBudgetAlertAt: freezed == lastBudgetAlertAt
+                ? _value.lastBudgetAlertAt
+                : lastBudgetAlertAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
             updatedAt: null == updatedAt
                 ? _value.updatedAt
                 : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -122,8 +129,9 @@ abstract class _$$SettingsEntityImplCopyWith<$Res>
     int id,
     double monthlyBudget,
     String currency,
-    AppThemeMode themeMode,
-    bool transactionHintsSeen,
+    bool budgetAlertsEnabled,
+    bool dailyReminderEnabled,
+    DateTime? lastBudgetAlertAt,
     DateTime updatedAt,
   });
 }
@@ -145,8 +153,9 @@ class __$$SettingsEntityImplCopyWithImpl<$Res>
     Object? id = null,
     Object? monthlyBudget = null,
     Object? currency = null,
-    Object? themeMode = null,
-    Object? transactionHintsSeen = null,
+    Object? budgetAlertsEnabled = null,
+    Object? dailyReminderEnabled = null,
+    Object? lastBudgetAlertAt = freezed,
     Object? updatedAt = null,
   }) {
     return _then(
@@ -163,14 +172,18 @@ class __$$SettingsEntityImplCopyWithImpl<$Res>
             ? _value.currency
             : currency // ignore: cast_nullable_to_non_nullable
                   as String,
-        themeMode: null == themeMode
-            ? _value.themeMode
-            : themeMode // ignore: cast_nullable_to_non_nullable
-                  as AppThemeMode,
-        transactionHintsSeen: null == transactionHintsSeen
-            ? _value.transactionHintsSeen
-            : transactionHintsSeen // ignore: cast_nullable_to_non_nullable
+        budgetAlertsEnabled: null == budgetAlertsEnabled
+            ? _value.budgetAlertsEnabled
+            : budgetAlertsEnabled // ignore: cast_nullable_to_non_nullable
                   as bool,
+        dailyReminderEnabled: null == dailyReminderEnabled
+            ? _value.dailyReminderEnabled
+            : dailyReminderEnabled // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        lastBudgetAlertAt: freezed == lastBudgetAlertAt
+            ? _value.lastBudgetAlertAt
+            : lastBudgetAlertAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
         updatedAt: null == updatedAt
             ? _value.updatedAt
             : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -187,8 +200,9 @@ class _$SettingsEntityImpl implements _SettingsEntity {
     this.id = 1,
     this.monthlyBudget = 0,
     this.currency = 'INR',
-    this.themeMode = AppThemeMode.system,
-    this.transactionHintsSeen = false,
+    this.budgetAlertsEnabled = false,
+    this.dailyReminderEnabled = false,
+    this.lastBudgetAlertAt,
     required this.updatedAt,
   });
 
@@ -206,16 +220,18 @@ class _$SettingsEntityImpl implements _SettingsEntity {
   final String currency;
   @override
   @JsonKey()
-  final AppThemeMode themeMode;
+  final bool budgetAlertsEnabled;
   @override
   @JsonKey()
-  final bool transactionHintsSeen;
+  final bool dailyReminderEnabled;
+  @override
+  final DateTime? lastBudgetAlertAt;
   @override
   final DateTime updatedAt;
 
   @override
   String toString() {
-    return 'SettingsEntity(id: $id, monthlyBudget: $monthlyBudget, currency: $currency, themeMode: $themeMode, transactionHintsSeen: $transactionHintsSeen, updatedAt: $updatedAt)';
+    return 'SettingsEntity(id: $id, monthlyBudget: $monthlyBudget, currency: $currency, budgetAlertsEnabled: $budgetAlertsEnabled, dailyReminderEnabled: $dailyReminderEnabled, lastBudgetAlertAt: $lastBudgetAlertAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -228,10 +244,12 @@ class _$SettingsEntityImpl implements _SettingsEntity {
                 other.monthlyBudget == monthlyBudget) &&
             (identical(other.currency, currency) ||
                 other.currency == currency) &&
-            (identical(other.themeMode, themeMode) ||
-                other.themeMode == themeMode) &&
-            (identical(other.transactionHintsSeen, transactionHintsSeen) ||
-                other.transactionHintsSeen == transactionHintsSeen) &&
+            (identical(other.budgetAlertsEnabled, budgetAlertsEnabled) ||
+                other.budgetAlertsEnabled == budgetAlertsEnabled) &&
+            (identical(other.dailyReminderEnabled, dailyReminderEnabled) ||
+                other.dailyReminderEnabled == dailyReminderEnabled) &&
+            (identical(other.lastBudgetAlertAt, lastBudgetAlertAt) ||
+                other.lastBudgetAlertAt == lastBudgetAlertAt) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt));
   }
@@ -243,8 +261,9 @@ class _$SettingsEntityImpl implements _SettingsEntity {
     id,
     monthlyBudget,
     currency,
-    themeMode,
-    transactionHintsSeen,
+    budgetAlertsEnabled,
+    dailyReminderEnabled,
+    lastBudgetAlertAt,
     updatedAt,
   );
 
@@ -270,8 +289,9 @@ abstract class _SettingsEntity implements SettingsEntity {
     final int id,
     final double monthlyBudget,
     final String currency,
-    final AppThemeMode themeMode,
-    final bool transactionHintsSeen,
+    final bool budgetAlertsEnabled,
+    final bool dailyReminderEnabled,
+    final DateTime? lastBudgetAlertAt,
     required final DateTime updatedAt,
   }) = _$SettingsEntityImpl;
 
@@ -285,9 +305,11 @@ abstract class _SettingsEntity implements SettingsEntity {
   @override
   String get currency;
   @override
-  AppThemeMode get themeMode;
+  bool get budgetAlertsEnabled;
   @override
-  bool get transactionHintsSeen;
+  bool get dailyReminderEnabled;
+  @override
+  DateTime? get lastBudgetAlertAt;
   @override
   DateTime get updatedAt;
 

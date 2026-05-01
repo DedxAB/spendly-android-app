@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/constants/app_constants.dart';
-import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/database/app_database.dart';
 import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/database/mappers.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_entry_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_person_entity.dart';
+import 'package:spendly/features/lend/domain/entities/lend_settlement_event_entity.dart';
 import 'package:spendly/features/insights/domain/entities/monthly_reflection_entity.dart';
 import 'package:spendly/features/recurring/domain/entities/recurring_rule_entity.dart';
 import 'package:spendly/features/settings/domain/entities/settings_entity.dart';
@@ -100,6 +100,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Map<String, dynamic> _normalizeLendEntryJson(Map<String, dynamic> json) {
     final normalized = Map<String, dynamic>.from(json);
     _normalizeDateField(normalized, 'date');
+    _normalizeDateField(normalized, 'settledAt');
     _normalizeDateField(normalized, 'createdAt');
     _normalizeDateField(normalized, 'updatedAt');
     return normalized;
@@ -110,6 +111,15 @@ class SettingsRepositoryImpl implements SettingsRepository {
   ) {
     final normalized = Map<String, dynamic>.from(json);
     _normalizeDateField(normalized, 'updatedAt');
+    return normalized;
+  }
+
+  Map<String, dynamic> _normalizeLendSettlementEventJson(
+    Map<String, dynamic> json,
+  ) {
+    final normalized = Map<String, dynamic>.from(json);
+    _normalizeDateField(normalized, 'date');
+    _normalizeDateField(normalized, 'createdAt');
     return normalized;
   }
 
@@ -128,6 +138,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     final recurringRules = await db.getRecurringRules();
     final lendPeople = await db.getLendPeople();
     final lendEntries = await db.getLendEntries();
+    final lendSettlementEvents = await db.getLendSettlementEvents();
     final reflections = await db.getMonthlyReflections();
 
     final payload = {
@@ -149,6 +160,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
             .map((e) => e.toEntity().toJson())
             .toList(growable: false),
         'lendEntries': lendEntries
+            .map((e) => e.toEntity().toJson())
+            .toList(growable: false),
+        'lendSettlementEvents': lendSettlementEvents
             .map((e) => e.toEntity().toJson())
             .toList(growable: false),
         'monthlyReflections': reflections
@@ -180,6 +194,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
     final recurringJson = _asObjectMapList(data['recurringRules']);
     final lendPeopleJson = _asObjectMapList(data['lendPeople']);
     final lendEntriesJson = _asObjectMapList(data['lendEntries']);
+    final lendSettlementEventsJson = _asObjectMapList(
+      data['lendSettlementEvents'],
+    );
     final monthlyReflectionsJson = _asObjectMapList(data['monthlyReflections']);
 
     final settings = settingsJson != null
@@ -230,6 +247,15 @@ class SettingsRepositoryImpl implements SettingsRepository {
           ),
         )
         .toList(growable: false);
+    final lendSettlementEventRows = lendSettlementEventsJson
+        .map(
+          (json) => lendSettlementEventToCompanion(
+            LendSettlementEventEntity.fromJson(
+              _normalizeLendSettlementEventJson(json),
+            ),
+          ),
+        )
+        .toList(growable: false);
     final monthlyReflectionRows = monthlyReflectionsJson
         .map(
           (json) => monthlyReflectionToCompanion(
@@ -248,6 +274,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
           recurringRuleRows: recurringRows,
           lendPeopleRows: lendPeopleRows,
           lendEntryRows: lendEntryRows,
+          lendSettlementEventRows: lendSettlementEventRows,
           monthlyReflectionRows: monthlyReflectionRows,
           settingsRow: settingsToCompanion(settings),
           userProfileRow: userProfileToCompanion(userProfile),
@@ -263,15 +290,20 @@ class SettingsRepositoryImpl implements SettingsRepository {
         id: const Value(1),
         monthlyBudget: Value(budget),
         currency: Value(current?.currency ?? 'INR'),
-        themeMode: Value(current?.themeMode ?? AppThemeMode.system.value),
+        themeMode: const Value('dark'),
         transactionHintsSeen: Value(current?.transactionHintsSeen ?? false),
+        dailyReminderEnabled: Value(current?.dailyReminderEnabled ?? false),
+        lastBudgetAlertAt: Value(current?.lastBudgetAlertAt),
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       ),
     );
   }
 
   @override
-  Future<void> setThemeMode(String themeMode) async {
+  Future<void> setNotificationPreferences({
+    required bool budgetAlertsEnabled,
+    required bool dailyReminderEnabled,
+  }) async {
     final db = _ref.read(appDatabaseProvider);
     final current = await db.getSettingsRow();
     await db.upsertSettings(
@@ -279,15 +311,17 @@ class SettingsRepositoryImpl implements SettingsRepository {
         id: const Value(1),
         monthlyBudget: Value(current?.monthlyBudget ?? 0),
         currency: Value(current?.currency ?? 'INR'),
-        themeMode: Value(themeMode),
-        transactionHintsSeen: Value(current?.transactionHintsSeen ?? false),
+        themeMode: const Value('dark'),
+        transactionHintsSeen: Value(budgetAlertsEnabled),
+        dailyReminderEnabled: Value(dailyReminderEnabled),
+        lastBudgetAlertAt: Value(current?.lastBudgetAlertAt),
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       ),
     );
   }
 
   @override
-  Future<void> markTransactionHintsSeen() async {
+  Future<void> markBudgetAlertNotified(DateTime at) async {
     final db = _ref.read(appDatabaseProvider);
     final current = await db.getSettingsRow();
     await db.upsertSettings(
@@ -295,8 +329,10 @@ class SettingsRepositoryImpl implements SettingsRepository {
         id: const Value(1),
         monthlyBudget: Value(current?.monthlyBudget ?? 0),
         currency: Value(current?.currency ?? 'INR'),
-        themeMode: Value(current?.themeMode ?? AppThemeMode.system.value),
-        transactionHintsSeen: const Value(true),
+        themeMode: const Value('dark'),
+        transactionHintsSeen: Value(current?.transactionHintsSeen ?? false),
+        dailyReminderEnabled: Value(current?.dailyReminderEnabled ?? false),
+        lastBudgetAlertAt: Value(at.millisecondsSinceEpoch),
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       ),
     );
@@ -306,10 +342,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Stream<SettingsEntity> watchSettings() {
     return _ref.read(appDatabaseProvider).watchSettingsRow().map((row) {
       if (row == null) {
-        return SettingsEntity(
-          updatedAt: DateTime.now(),
-          themeMode: AppThemeMode.system,
-        );
+        return SettingsEntity(updatedAt: DateTime.now());
       }
       return row.toEntity();
     });
