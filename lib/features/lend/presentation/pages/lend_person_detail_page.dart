@@ -16,6 +16,37 @@ class LendPersonDetailPage extends ConsumerWidget {
   final String personId;
   static final DateFormat _settledDateFmt = DateFormat('dd MMM');
 
+  Future<void> _confirmDeletePerson(
+    BuildContext context,
+    WidgetRef ref, {
+    required String personName,
+  }) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete person?'),
+        content: Text(
+          'Delete $personName and all related lend/borrow entries?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (shouldDelete != true) return;
+    await ref.read(lendRepositoryProvider).deletePerson(personId);
+    if (context.mounted) {
+      context.go('/lend');
+    }
+  }
+
   Widget _buildSettlementHistoryRow(List<dynamic> entryEvents) {
     if (entryEvents.isEmpty) return const SizedBox.shrink();
     return Padding(
@@ -23,24 +54,26 @@ class LendPersonDetailPage extends ConsumerWidget {
       child: Wrap(
         spacing: 6,
         runSpacing: 6,
-        children: entryEvents.map((event) {
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF303030)),
-              color: const Color(0xFF121212),
-              borderRadius: BorderRadius.zero,
-            ),
-            child: Text(
-              '${_settledDateFmt.format(event.date)} ${Formatters.currency(event.amount)}',
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFFE0E0E0),
-              ),
-            ),
-          );
-        }).toList(growable: false),
+        children: entryEvents
+            .map((event) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFF303030)),
+                  color: const Color(0xFF121212),
+                  borderRadius: BorderRadius.zero,
+                ),
+                child: Text(
+                  '${_settledDateFmt.format(event.date)} ${Formatters.currency(event.amount)}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFE0E0E0),
+                  ),
+                ),
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }
@@ -207,7 +240,9 @@ class LendPersonDetailPage extends ConsumerWidget {
               onPressed: () async {
                 final amount = double.tryParse(amountController.text.trim());
                 if (amount == null || amount <= 0) return;
-                await ref.read(lendRepositoryProvider).applySettlement(
+                await ref
+                    .read(lendRepositoryProvider)
+                    .applySettlement(
                       entryId: entryId,
                       amount: amount,
                       settledAt: selectedDate,
@@ -332,7 +367,9 @@ class LendPersonDetailPage extends ConsumerWidget {
                         context: context,
                         initialDate: selectedDate,
                         firstDate: DateTime(2000),
-                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                        lastDate: DateTime.now().add(
+                          const Duration(days: 3650),
+                        ),
                         builder: (context, child) {
                           final base = Theme.of(context);
                           return Theme(
@@ -359,33 +396,42 @@ class LendPersonDetailPage extends ConsumerWidget {
                                 headerForegroundColor: Colors.white,
                                 dayBackgroundColor:
                                     WidgetStateProperty.resolveWith((states) {
-                                      if (states.contains(WidgetState.selected)) {
+                                      if (states.contains(
+                                        WidgetState.selected,
+                                      )) {
                                         return Colors.white;
                                       }
                                       return Colors.transparent;
                                     }),
                                 dayForegroundColor:
                                     WidgetStateProperty.resolveWith((states) {
-                                      if (states.contains(WidgetState.selected)) {
+                                      if (states.contains(
+                                        WidgetState.selected,
+                                      )) {
                                         return Colors.black;
                                       }
                                       return Colors.white;
                                     }),
-                                dayOverlayColor:
-                                    const WidgetStatePropertyAll(Colors.transparent),
-                                dayStyle:
-                                    const TextStyle(fontWeight: FontWeight.w600),
-                                todayForegroundColor:
-                                    const WidgetStatePropertyAll(Colors.white),
-                                todayBorder:
-                                    const BorderSide(color: Color(0xFF4A4A4A)),
-                                todayBackgroundColor: const WidgetStatePropertyAll(
+                                dayOverlayColor: const WidgetStatePropertyAll(
                                   Colors.transparent,
                                 ),
+                                dayStyle: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                todayForegroundColor:
+                                    const WidgetStatePropertyAll(Colors.white),
+                                todayBorder: const BorderSide(
+                                  color: Color(0xFF4A4A4A),
+                                ),
+                                todayBackgroundColor:
+                                    const WidgetStatePropertyAll(
+                                      Colors.transparent,
+                                    ),
                                 yearForegroundColor:
                                     const WidgetStatePropertyAll(Colors.white),
-                                rangeSelectionBackgroundColor:
-                                    const Color(0xFF1E1E1E),
+                                rangeSelectionBackgroundColor: const Color(
+                                  0xFF1E1E1E,
+                                ),
                                 dividerColor: const Color(0xFF2A2A2A),
                                 dayShape: const WidgetStatePropertyAll(
                                   RoundedRectangleBorder(
@@ -463,7 +509,8 @@ class LendPersonDetailPage extends ConsumerWidget {
         ref.watch(lendSettlementEventsByPersonProvider(personId)).valueOrNull ??
         const [];
 
-    final activeEntries = entriesAsync.valueOrNull
+    final activeEntries =
+        entriesAsync.valueOrNull
             ?.where((e) => !e.isDeleted && (e.amount - e.settledAmount) > 0)
             .toList(growable: false) ??
         const [];
@@ -492,13 +539,29 @@ class LendPersonDetailPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          Text(
-            person?.name ?? 'Person',
-            style: const TextStyle(
-              fontFamily: 'Georgia',
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  person?.name ?? 'Person',
+                  style: const TextStyle(
+                    fontFamily: 'Georgia',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (person != null)
+                IconButton(
+                  tooltip: 'Delete person',
+                  onPressed: () => _confirmDeletePerson(
+                    context,
+                    ref,
+                    personName: person.name,
+                  ),
+                  icon: const Icon(Icons.delete_outline),
+                ),
+            ],
           ),
           const SizedBox(height: 10),
           GlassCard(
@@ -547,10 +610,14 @@ class LendPersonDetailPage extends ConsumerWidget {
                 );
               }
               final active = entries
-                  .where((e) => !e.isDeleted && (e.amount - e.settledAmount) > 0)
+                  .where(
+                    (e) => !e.isDeleted && (e.amount - e.settledAmount) > 0,
+                  )
                   .toList(growable: false);
               final settled = entries
-                  .where((e) => !e.isDeleted && (e.amount - e.settledAmount) <= 0)
+                  .where(
+                    (e) => !e.isDeleted && (e.amount - e.settledAmount) <= 0,
+                  )
                   .toList(growable: false);
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,86 +634,84 @@ class LendPersonDetailPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                   ],
-                  ...active
-                      .map((entry) {
-                        final isLent = entry.type == LendEntryType.lent;
-                        final color = isLent
-                            ? AppColors.income
-                            : AppColors.expense;
-                        final remaining = (entry.amount - entry.settledAmount)
-                            .clamp(0, entry.amount)
-                            .toDouble();
-                        final isPartial = entry.settledAmount > 0 && remaining > 0;
-                        final entryEvents = settlementEvents
-                            .where((event) => event.entryId == entry.id && !event.isDeleted)
-                            .toList(growable: false);
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          child: GlassCard(
-                            padding: EdgeInsets.zero,
-                            child: ListTile(
-                              title: Text(
-                                '${isLent ? 'Lent' : 'Borrowed'} ${Formatters.currency(entry.amount)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
+                  ...active.map((entry) {
+                    final isLent = entry.type == LendEntryType.lent;
+                    final color = isLent ? AppColors.income : AppColors.expense;
+                    final remaining = (entry.amount - entry.settledAmount)
+                        .clamp(0, entry.amount)
+                        .toDouble();
+                    final isPartial = entry.settledAmount > 0 && remaining > 0;
+                    final entryEvents = settlementEvents
+                        .where(
+                          (event) =>
+                              event.entryId == entry.id && !event.isDeleted,
+                        )
+                        .toList(growable: false);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: GlassCard(
+                        padding: EdgeInsets.zero,
+                        child: ListTile(
+                          title: Text(
+                            '${isLent ? 'Lent' : 'Borrowed'} ${Formatters.currency(entry.amount)}',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${Formatters.date(entry.date)} - Remaining ${Formatters.currency(remaining)}',
                               ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${Formatters.date(entry.date)} - Remaining ${Formatters.currency(remaining)}',
+                              if (entry.note != null && entry.note!.isNotEmpty)
+                                Text(
+                                  entry.note!,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              if (entryEvents.isNotEmpty)
+                                Text(
+                                  'Settlements (${entryEvents.length})',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFBDBDBD),
                                   ),
-                                  if (entry.note != null && entry.note!.isNotEmpty)
-                                    Text(
-                                      entry.note!,
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  if (entryEvents.isNotEmpty)
-                                    Text(
-                                      'Settlements (${entryEvents.length})',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFFBDBDBD),
-                                      ),
-                                    ),
-                                  _buildSettlementHistoryRow(entryEvents),
-                                ],
-                              ),
-                              trailing: SizedBox(
-                                width: 84,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    InkWell(
-                                      borderRadius: BorderRadius.zero,
-                                      onTap: () async {
-                                        await _showSettleDialog(
-                                          context,
-                                          ref,
-                                          entryId: entry.id,
-                                          remainingAmount: remaining,
-                                        );
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(4),
-                                        child: Icon(
-                                          isPartial
-                                              ? Icons.toll_outlined
-                                              : Icons.add_circle_outline,
-                                          size: 18,
-                                          color: color,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
                                 ),
-                              ),
+                              _buildSettlementHistoryRow(entryEvents),
+                            ],
+                          ),
+                          trailing: SizedBox(
+                            width: 84,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                InkWell(
+                                  borderRadius: BorderRadius.zero,
+                                  onTap: () async {
+                                    await _showSettleDialog(
+                                      context,
+                                      ref,
+                                      entryId: entry.id,
+                                      remainingAmount: remaining,
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4),
+                                    child: Icon(
+                                      isPartial
+                                          ? Icons.toll_outlined
+                                          : Icons.add_circle_outline,
+                                      size: 18,
+                                      color: color,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        );
-                      }),
+                        ),
+                      ),
+                    );
+                  }),
                   if (settled.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     const Text(
@@ -660,97 +725,92 @@ class LendPersonDetailPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                   ],
-                  ...settled
-                      .map((entry) {
-                      final isLent = entry.type == LendEntryType.lent;
-                      final color = isLent
-                          ? AppColors.income
-                          : AppColors.expense;
-                      final entryEvents = settlementEvents
-                          .where((event) => event.entryId == entry.id && !event.isDeleted)
-                          .toList(growable: false);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        child: GlassCard(
-                          padding: EdgeInsets.zero,
-                          child: ListTile(
-                            title: Text(
-                              '${isLent ? 'Lent' : 'Borrowed'} ${Formatters.currency(entry.amount)}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                  ...settled.map((entry) {
+                    final isLent = entry.type == LendEntryType.lent;
+                    final color = isLent ? AppColors.income : AppColors.expense;
+                    final entryEvents = settlementEvents
+                        .where(
+                          (event) =>
+                              event.entryId == entry.id && !event.isDeleted,
+                        )
+                        .toList(growable: false);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: GlassCard(
+                        padding: EdgeInsets.zero,
+                        child: ListTile(
+                          title: Text(
+                            '${isLent ? 'Lent' : 'Borrowed'} ${Formatters.currency(entry.amount)}',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(Formatters.date(entry.date)),
+                              if (entry.note != null && entry.note!.isNotEmpty)
+                                Text(
+                                  entry.note!,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              if (entryEvents.isNotEmpty)
+                                Text(
+                                  'Settlements (${entryEvents.length})',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFBDBDBD),
+                                  ),
+                                ),
+                              _buildSettlementHistoryRow(entryEvents),
+                            ],
+                          ),
+                          trailing: SizedBox(
+                            width: 120,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                Text(Formatters.date(entry.date)),
-                                if (entry.note != null && entry.note!.isNotEmpty)
-                                  Text(
-                                    entry.note!,
-                                    style: const TextStyle(fontSize: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 4,
                                   ),
-                                if (entryEvents.isNotEmpty)
-                                  Text(
-                                    'Settlements (${entryEvents.length})',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFFBDBDBD),
-                                    ),
-                                  ),
-                                _buildSettlementHistoryRow(entryEvents),
-                              ],
-                            ),
-                            trailing: SizedBox(
-                              width: 120,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: entry.isSettled
-                                          ? Colors.white.withValues(alpha: 0.18)
-                                          : color.withValues(alpha: 0.16),
-                                      borderRadius: BorderRadius.zero,
-                                    ),
-                                    child: Text(
-                                      entry.settledAt == null
-                                          ? 'Settled'
-                                          : 'Settled ${_settledDateFmt.format(entry.settledAt!)}',
-                                      style: TextStyle(
-                                        color: entry.isSettled ? null : color,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  InkWell(
+                                  decoration: BoxDecoration(
+                                    color: entry.isSettled
+                                        ? Colors.white.withValues(alpha: 0.18)
+                                        : color.withValues(alpha: 0.16),
                                     borderRadius: BorderRadius.zero,
-                                    onTap: () async {
-                                      await ref
-                                          .read(lendRepositoryProvider)
-                                          .clearSettlement(entry.id);
-                                    },
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(4),
-                                      child: Icon(
-                                        Icons.undo,
-                                        size: 16,
-                                      ),
+                                  ),
+                                  child: Text(
+                                    entry.settledAt == null
+                                        ? 'Settled'
+                                        : 'Settled ${_settledDateFmt.format(entry.settledAt!)}',
+                                    style: TextStyle(
+                                      color: entry.isSettled ? null : color,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 10,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(width: 6),
+                                InkWell(
+                                  borderRadius: BorderRadius.zero,
+                                  onTap: () async {
+                                    await ref
+                                        .read(lendRepositoryProvider)
+                                        .clearSettlement(entry.id);
+                                  },
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(4),
+                                    child: Icon(Icons.undo, size: 16),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      );
-                    }),
+                      ),
+                    );
+                  }),
                 ],
               );
             },
@@ -769,4 +829,3 @@ class LendPersonDetailPage extends ConsumerWidget {
     );
   }
 }
-

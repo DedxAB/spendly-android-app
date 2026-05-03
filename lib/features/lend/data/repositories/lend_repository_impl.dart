@@ -146,6 +146,11 @@ class LendRepositoryImpl implements LendRepository {
       settledAtEpoch: events.isEmpty ? null : events.first.date,
     );
   }
+
+  @override
+  Future<void> deletePerson(String personId) async {
+    await _db.softDeleteLendPerson(personId);
+  }
 }
 
 final lendRepositoryProvider = Provider<LendRepository>((ref) {
