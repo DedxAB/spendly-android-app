@@ -5,8 +5,8 @@ class AppColors {
   static const onPrimary = Color(0xFFF5F5F5);
   static const emerald = primary;
 
-  static const income = Color(0xFF2E2E2E);
-  static const expense = Color(0xFF555555);
+  static const income = Color(0xFF5BE39A);
+  static const expense = Color(0xFFFF7A7A);
 
   static const lightBackground = Color(0xFFF7F7F7);
   static const lightSurface = Color(0xFFFFFFFF);

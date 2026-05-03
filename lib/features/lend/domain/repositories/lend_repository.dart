@@ -30,4 +30,6 @@ abstract class LendRepository {
   });
 
   Future<void> clearSettlement(String entryId);
+
+  Future<void> deletePerson(String personId);
 }

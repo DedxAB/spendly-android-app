@@ -166,6 +166,16 @@ class SettingsPage extends ConsumerWidget {
             iconColor: muted,
             dividerColor: divider,
           ),
+          _ProfileRow(
+            icon: Icons.delete_forever_outlined,
+            title: 'Erase All Data',
+            subtitle: 'Reset app to a clean start',
+            onTap: () => _eraseAllData(context, ref),
+            textColor: primary,
+            subtitleColor: muted,
+            iconColor: const Color(0xFFFF8D8D),
+            dividerColor: divider,
+          ),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(12),
@@ -229,7 +239,9 @@ class SettingsPage extends ConsumerWidget {
                               }
                             },
                       child: Text(
-                        cloudSync?.isConnected == true ? 'Disconnect' : 'Connect',
+                        cloudSync?.isConnected == true
+                            ? 'Disconnect'
+                            : 'Connect',
                       ),
                     ),
                     OutlinedButton(
@@ -534,15 +546,44 @@ class SettingsPage extends ConsumerWidget {
               await ref.read(settingsRepositoryProvider).importJson(raw);
               if (!context.mounted) return;
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Import completed')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Import completed')));
             },
             child: const Text('Import'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _eraseAllData(BuildContext context, WidgetRef ref) async {
+    final shouldErase = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Erase all data?'),
+        content: const Text(
+          'This will permanently remove all transactions, categories, recurring rules, and lend/borrow records.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Erase'),
+          ),
+        ],
+      ),
+    );
+    if (shouldErase != true) return;
+    await ref.read(settingsRepositoryProvider).clearAllData();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('All data erased')));
+    context.go('/splash');
   }
 }
 
@@ -664,4 +705,3 @@ class _ProfileRow extends StatelessWidget {
     );
   }
 }
-

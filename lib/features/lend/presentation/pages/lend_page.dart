@@ -11,6 +11,35 @@ import 'package:spendly/features/lend/presentation/providers/lend_provider.dart'
 class LendPage extends ConsumerWidget {
   const LendPage({super.key});
 
+  Future<void> _confirmDeletePerson(
+    BuildContext context,
+    WidgetRef ref, {
+    required String personId,
+    required String personName,
+  }) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete person?'),
+        content: Text(
+          'Delete $personName and all related lend/borrow entries?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (shouldDelete != true) return;
+    await ref.read(lendRepositoryProvider).deletePerson(personId);
+  }
+
   Future<void> _showAddPersonDialog(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
     await showDialog<void>(
@@ -188,14 +217,43 @@ class LendPage extends ConsumerWidget {
                         ),
                       ),
                       subtitle: Text('${item.activeEntryCount} active entries'),
-                      trailing: Text(
-                        '${item.netBalance >= 0 ? '+' : '-'}${Formatters.currency(item.netBalance.abs())}',
-                        style: TextStyle(
-                          color: isPositive
-                              ? AppColors.income
-                              : AppColors.expense,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
+                      trailing: SizedBox(
+                        width: 140,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                '${item.netBalance >= 0 ? '+' : '-'}${Formatters.currency(item.netBalance.abs())}',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: isPositive
+                                      ? AppColors.income
+                                      : AppColors.expense,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              padding: EdgeInsets.zero,
+                              onSelected: (value) async {
+                                if (value != 'delete') return;
+                                await _confirmDeletePerson(
+                                  context,
+                                  ref,
+                                  personId: item.person.id,
+                                  personName: item.person.name,
+                                );
+                              },
+                              itemBuilder: (context) => const [
+                                PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Text('Delete person'),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
