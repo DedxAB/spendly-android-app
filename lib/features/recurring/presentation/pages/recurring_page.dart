@@ -3,8 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/constants/app_constants.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_icons.dart';
 import 'package:spendly/core/utils/formatters.dart';
+import 'package:spendly/core/utils/money.dart';
+import 'package:spendly/core/widgets/app_confirm_dialog.dart';
+import 'package:spendly/core/widgets/dialog_actions_row.dart';
 import 'package:spendly/core/widgets/glass_card.dart';
+import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/categories/data/repositories/categories_repository_impl.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
 import 'package:spendly/features/recurring/data/repositories/recurring_repository_impl.dart';
@@ -42,7 +47,20 @@ class RecurringPage extends ConsumerWidget {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => StatefulBuilder(
+      builder: (context) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: Colors.white,
+            onPrimary: Colors.black,
+            surface: Color(0xFF0F0F0F),
+            onSurface: Colors.white,
+          ),
+          dialogTheme: const DialogThemeData(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            backgroundColor: Color(0xFF0F0F0F),
+          ),
+        ),
+        child: StatefulBuilder(
         builder: (context, setState) {
           final dropdownMenuColor =
               Theme.of(context).brightness == Brightness.dark
@@ -148,7 +166,7 @@ class RecurringPage extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Start Date'),
                     subtitle: Text(Formatters.date(selectedStartDate)),
-                    trailing: const Icon(Icons.calendar_month),
+                    trailing: const Icon(AppIcons.calendar),
                     onTap: () async {
                       final picked = await showDatePicker(
                         context: context,
@@ -167,14 +185,13 @@ class RecurringPage extends ConsumerWidget {
               ),
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () async {
+              DialogActionsRow(
+                cancelText: 'Cancel',
+                confirmText: 'Save',
+                onCancel: () => Navigator.pop(context),
+                onConfirm: () async {
                   final title = titleController.text.trim();
-                  final amount = double.tryParse(amountController.text.trim());
+                  final amount = Money.tryParse(amountController.text.trim());
                   if (title.isEmpty || amount == null || amount <= 0) return;
 
                   final now = DateTime.now();
@@ -201,11 +218,11 @@ class RecurringPage extends ConsumerWidget {
                   await ref.read(recurringRepositoryProvider).processDueRules();
                   if (context.mounted) Navigator.pop(context);
                 },
-                child: const Text('Save'),
               ),
             ],
           );
         },
+      ),
       ),
     );
   }
@@ -215,10 +232,16 @@ class RecurringPage extends ConsumerWidget {
     final rules = ref.watch(recurringRulesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Recurring')),
+      backgroundColor: Colors.black,
+      appBar: NoirHeader(
+        showLeading: true,
+        leadingIcon: AppIcons.chevronLeft,
+        onLeadingTap: () => Navigator.of(context).maybePop(),
+        showProfileAction: false,
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddDialog(context, ref),
-        icon: const Icon(Icons.add),
+        icon: const Icon(AppIcons.repeat),
         label: const Text('Add Rule'),
       ),
       body: rules.when(
@@ -232,12 +255,18 @@ class RecurringPage extends ConsumerWidget {
             itemCount: items.length,
             itemBuilder: (context, index) {
               final item = items[index];
+              final dueToday = DateTime(
+                    item.nextDueDate.year,
+                    item.nextDueDate.month,
+                    item.nextDueDate.day,
+                  ) ==
+                  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
               return Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: GlassCard(
                   child: ListTile(
                     leading: Icon(
-                      item.isActive ? Icons.repeat : Icons.pause_circle_outline,
+                      item.isActive ? AppIcons.repeat : Icons.pause_circle_outline,
                       color: item.isActive
                           ? AppColors.emerald
                           : Theme.of(context).colorScheme.outline,
@@ -248,6 +277,15 @@ class RecurringPage extends ConsumerWidget {
                     ),
                     subtitle: Text(
                       '${item.frequency.value.toUpperCase()} | Next: ${Formatters.date(item.nextDueDate)}',
+                    ),
+                    titleTextStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                    subtitleTextStyle: const TextStyle(
+                      color: Color(0xFFB8B8B8),
+                      fontSize: 12,
                     ),
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -268,12 +306,27 @@ class RecurringPage extends ConsumerWidget {
                                 .setActive(item.id, value);
                           },
                         ),
+                        if (dueToday)
+                          const Text(
+                            'DUE',
+                            style: TextStyle(
+                              color: Color(0xFFFFB3A8),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1,
+                            ),
+                          ),
                       ],
                     ),
                     onLongPress: () async {
-                      await ref
-                          .read(recurringRepositoryProvider)
-                          .softDelete(item.id);
+                      final shouldDelete = await showAppDeleteConfirmDialog(
+                        context,
+                        title: 'Delete recurring rule?',
+                        message: 'Delete "${item.title}"?',
+                      );
+                      if (shouldDelete) {
+                        await ref.read(recurringRepositoryProvider).softDelete(item.id);
+                      }
                     },
                   ),
                 ),

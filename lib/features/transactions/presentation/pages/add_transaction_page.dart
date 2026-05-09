@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spendly/core/constants/app_constants.dart';
 import 'package:spendly/core/constants/app_enums.dart';
+import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/utils/money.dart';
+import 'package:spendly/core/widgets/app_modal_surface.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
@@ -84,7 +88,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
       _account = existing.paymentMode;
       _date = existing.date;
       _selectedCategoryId = existing.categoryId;
-      _amountController.text = existing.amount.toStringAsFixed(0);
+      _amountController.text = existing.amount.toStringAsFixed(2);
       _noteController.text = existing.note ?? '';
     } else {
       _type = widget.initialType ?? TransactionType.expense;
@@ -99,7 +103,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
   }
 
   Future<void> _save(List<CategoryEntity> categories) async {
-    final amount = double.tryParse(_amountController.text.trim());
+    final amount = Money.tryParse(_amountController.text.trim());
     if (amount == null || amount <= 0 || _selectedCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Add amount and choose category')),
@@ -236,18 +240,13 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
       data: MediaQuery.of(
         context,
       ).copyWith(textScaler: const TextScaler.linear(1)),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.black,
-          border: Border(top: BorderSide(color: Color(0xFF2B2B2B))),
-          borderRadius: BorderRadius.zero,
-        ),
+      child: AppModalSurface(
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-            20,
-            8,
-            20,
-            MediaQuery.of(context).viewInsets.bottom + 16,
+            AppSpacing.mdPlus,
+            AppSpacing.xs,
+            AppSpacing.mdPlus,
+            MediaQuery.of(context).viewInsets.bottom + AppSpacing.sm,
           ),
           child: categoriesAsync.when(
             data: (categories) {
@@ -286,7 +285,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                       IconButton(
                         onPressed: () => Navigator.of(context).maybePop(),
                         icon: const Icon(
-                          Icons.close,
+                          AppIcons.close,
                           color: Color(0xFFE0E0E0),
                           size: 28,
                         ),
@@ -406,7 +405,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                             ),
                           ),
                           const Icon(
-                            Icons.calendar_month_rounded,
+                            AppIcons.calendar,
                             color: Color(0xFFB0B0B0),
                             size: 20,
                           ),
@@ -543,7 +542,7 @@ class _SheetChoiceChip extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? Colors.white : Colors.black,
-          borderRadius: BorderRadius.zero,
+          borderRadius: BorderRadius.circular(AppRadii.md),
           border: Border.all(
             color: selected ? Colors.white : const Color(0xFF4A4A4A),
           ),
@@ -579,7 +578,7 @@ class _AccountSegment extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFF4A4A4A)),
-        borderRadius: BorderRadius.zero,
+        borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: Row(
         children: List.generate(items.length, (index) {

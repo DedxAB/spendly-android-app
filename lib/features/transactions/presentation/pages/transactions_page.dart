@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_icons.dart';
 import 'package:spendly/core/utils/formatters.dart';
+import 'package:spendly/core/widgets/app_confirm_dialog.dart';
+import 'package:spendly/core/widgets/app_modal_surface.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
@@ -25,11 +28,16 @@ class TransactionsPage extends ConsumerWidget {
     return Scaffold(
       appBar: NoirHeader(
         showLeading: true,
-        leadingIcon: Icons.calendar_month_outlined,
+        leadingIcon: AppIcons.calendar,
         onLeadingTap: () => context.push('/calendar'),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.mdPlus,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
         children: [
           Text(
             'SEARCH LEDGER',
@@ -37,28 +45,28 @@ class TransactionsPage extends ConsumerWidget {
               context,
             ).textTheme.labelLarge?.copyWith(letterSpacing: 2),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.smPlus),
           TextField(
             onChanged: filterController.setSearchQuery,
             style: const TextStyle(fontSize: 18),
             decoration: const InputDecoration(
               hintText: 'MERCHANT, CATEGORY, OR AMOUNT',
-              prefixIcon: Icon(Icons.search),
+              prefixIcon: Icon(AppIcons.search),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.sm),
           Align(
             alignment: Alignment.centerRight,
             child: SizedBox(
               width: 134,
               child: OutlinedButton.icon(
                 onPressed: () => _openFilters(context, ref, filters),
-                icon: const Icon(Icons.tune, size: 16),
+                icon: const Icon(AppIcons.filter, size: 16),
                 label: const Text('FILTERS'),
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.mdPlus),
           const Divider(color: AppColors.borderDark),
           transactions.when(
             data: (items) {
@@ -81,7 +89,7 @@ class TransactionsPage extends ConsumerWidget {
                             Text(
                               entry.key,
                               style: const TextStyle(
-                                fontFamily: 'Georgia',
+                                fontFamily: 'Bricolage Grotesque',
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -100,7 +108,11 @@ class TransactionsPage extends ConsumerWidget {
                                     );
                                     return false;
                                   }
-                                  return true;
+                                  return showAppDeleteConfirmDialog(
+                                    context,
+                                    title: 'Delete transaction?',
+                                    message: 'This transaction will be removed.',
+                                  );
                                 },
                                 onDismissed: (_) {
                                   ref
@@ -113,7 +125,7 @@ class TransactionsPage extends ConsumerWidget {
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                   ),
-                                  child: const Icon(Icons.edit),
+                                  child: const Icon(AppIcons.edit),
                                 ),
                                 secondaryBackground: Container(
                                   alignment: Alignment.centerRight,
@@ -121,7 +133,7 @@ class TransactionsPage extends ConsumerWidget {
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                   ),
-                                  child: const Icon(Icons.delete),
+                                  child: const Icon(AppIcons.trash),
                                 ),
                                 child: _HistoryRow(
                                   title:
@@ -183,24 +195,24 @@ class TransactionsPage extends ConsumerWidget {
   static IconData _iconFor(String text) {
     final t = text.toLowerCase();
     if (t.contains('food') || t.contains('dining')) {
-      return Icons.restaurant;
+      return AppIcons.food;
     }
     if (t.contains('uber') || t.contains('transport')) {
-      return Icons.directions_car;
+      return AppIcons.car;
     }
     if (t.contains('shop') || t.contains('store')) {
-      return Icons.shopping_bag;
+      return AppIcons.bag;
     }
     if (t.contains('health') || t.contains('gym')) {
-      return Icons.fitness_center;
+      return AppIcons.gym;
     }
     if (t.contains('travel') || t.contains('air')) {
-      return Icons.flight;
+      return AppIcons.flight;
     }
     if (t.contains('transfer') || t.contains('salary')) {
-      return Icons.payments;
+      return AppIcons.money;
     }
-    return Icons.receipt;
+    return AppIcons.receipt;
   }
 
   Future<void> _openFilters(
@@ -210,62 +222,97 @@ class TransactionsPage extends ConsumerWidget {
   ) async {
     await showModalBottomSheet<void>(
       context: context,
-      showDragHandle: true,
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Wrap(
-                spacing: 8,
-                children: [
-                  ChoiceChip(
-                    label: const Text('All'),
-                    selected: filters.type == null,
-                    onSelected: (_) => ref
-                        .read(transactionFilterProvider.notifier)
-                        .setType(null),
+      isScrollControlled: true,
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return AppModalSurface(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              AppSpacing.xs,
+              AppSpacing.sm,
+              MediaQuery.of(sheetContext).viewInsets.bottom + AppSpacing.sm,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    width: 64,
+                    height: 4,
+                    color: const Color(0xFF6A6A6A),
                   ),
-                  ChoiceChip(
-                    label: const Text('Income'),
-                    selected: filters.type == 'income',
-                    onSelected: (_) => ref
-                        .read(transactionFilterProvider.notifier)
-                        .setType('income'),
+                ),
+                const SizedBox(height: AppSpacing.smPlus),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Filters',
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  ChoiceChip(
-                    label: const Text('Expense'),
-                    selected: filters.type == 'expense',
-                    onSelected: (_) => ref
-                        .read(transactionFilterProvider.notifier)
-                        .setType('expense'),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Wrap(
+                  spacing: AppSpacing.xs,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('All'),
+                      selected: filters.type == null,
+                      onSelected: (_) => ref
+                          .read(transactionFilterProvider.notifier)
+                          .setType(null),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Income'),
+                      selected: filters.type == 'income',
+                      onSelected: (_) => ref
+                          .read(transactionFilterProvider.notifier)
+                          .setType('income'),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Expense'),
+                      selected: filters.type == 'expense',
+                      onSelected: (_) => ref
+                          .read(transactionFilterProvider.notifier)
+                          .setType('expense'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Wrap(
+                  spacing: AppSpacing.xs,
+                  children: PaymentMode.values
+                      .map(
+                        (m) => ChoiceChip(
+                          label: Text(m.label),
+                          selected: filters.paymentMode == m,
+                          onSelected: (_) => ref
+                              .read(transactionFilterProvider.notifier)
+                              .applyAdvanced(
+                                paymentMode: filters.paymentMode == m
+                                    ? null
+                                    : m,
+                                minAmount: filters.minAmount,
+                                maxAmount: filters.maxAmount,
+                                sortOption: filters.sortOption,
+                                customFrom: filters.customFrom,
+                                customTo: filters.customTo,
+                              ),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+                const SizedBox(height: AppSpacing.smPlus),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(sheetContext),
+                    child: const Text('Close'),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                children: PaymentMode.values
-                    .map(
-                      (m) => ChoiceChip(
-                        label: Text(m.label),
-                        selected: filters.paymentMode == m,
-                        onSelected: (_) => ref
-                            .read(transactionFilterProvider.notifier)
-                            .applyAdvanced(
-                              paymentMode: filters.paymentMode == m ? null : m,
-                              minAmount: filters.minAmount,
-                              maxAmount: filters.maxAmount,
-                              sortOption: filters.sortOption,
-                              customFrom: filters.customFrom,
-                              customTo: filters.customTo,
-                            ),
-                      ),
-                    )
-                    .toList(growable: false),
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -291,49 +338,42 @@ class _HistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.borderDark)),
       ),
       child: Row(
         children: [
           Container(
-            width: 50,
-            height: 50,
-            color: const Color(0xFF1A1A1A),
-            child: Icon(icon, color: Colors.white),
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(AppRadii.md),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontFamily: 'Georgia',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    letterSpacing: 1.5,
-                    color: Color(0xFFC0C0C0),
-                  ),
+                  style: Theme.of(context).textTheme.labelMedium,
                 ),
               ],
             ),
           ),
           Text(
             '${income ? '+' : '-'}${Formatters.currency(amount)}',
-            style: TextStyle(
-              fontFamily: 'Georgia',
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontFamily: 'Inter',
               color: income ? const Color(0xFF5DF393) : Colors.white,
             ),
           ),

@@ -27,7 +27,9 @@ class AppColors {
 class AppSpacing {
   static const xxs = 4.0;
   static const xs = 8.0;
+  static const smPlus = 12.0;
   static const sm = 16.0;
+  static const mdPlus = 20.0;
   static const md = 24.0;
   static const lg = 32.0;
   static const xl = 40.0;

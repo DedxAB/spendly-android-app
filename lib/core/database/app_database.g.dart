@@ -36,6 +36,18 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _amountPaiseMeta = const VerificationMeta(
+    'amountPaise',
+  );
+  @override
+  late final GeneratedColumn<int> amountPaise = GeneratedColumn<int>(
+    'amount_paise',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _categoryIdMeta = const VerificationMeta(
     'categoryId',
   );
@@ -143,6 +155,7 @@ class $TransactionsTable extends Transactions
     id,
     type,
     amount,
+    amountPaise,
     categoryId,
     paymentMode,
     note,
@@ -185,6 +198,15 @@ class $TransactionsTable extends Transactions
       );
     } else if (isInserting) {
       context.missing(_amountMeta);
+    }
+    if (data.containsKey('amount_paise')) {
+      context.handle(
+        _amountPaiseMeta,
+        amountPaise.isAcceptableOrUnknown(
+          data['amount_paise']!,
+          _amountPaiseMeta,
+        ),
+      );
     }
     if (data.containsKey('category_id')) {
       context.handle(
@@ -280,6 +302,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.double,
         data['${effectivePrefix}amount'],
       )!,
+      amountPaise: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount_paise'],
+      )!,
       categoryId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}category_id'],
@@ -329,6 +355,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String id;
   final String type;
   final double amount;
+  final int amountPaise;
   final String categoryId;
   final String paymentMode;
   final String? note;
@@ -342,6 +369,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.id,
     required this.type,
     required this.amount,
+    required this.amountPaise,
     required this.categoryId,
     required this.paymentMode,
     this.note,
@@ -358,6 +386,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['id'] = Variable<String>(id);
     map['type'] = Variable<String>(type);
     map['amount'] = Variable<double>(amount);
+    map['amount_paise'] = Variable<int>(amountPaise);
     map['category_id'] = Variable<String>(categoryId);
     map['payment_mode'] = Variable<String>(paymentMode);
     if (!nullToAbsent || note != null) {
@@ -379,6 +408,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       id: Value(id),
       type: Value(type),
       amount: Value(amount),
+      amountPaise: Value(amountPaise),
       categoryId: Value(categoryId),
       paymentMode: Value(paymentMode),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
@@ -402,6 +432,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       id: serializer.fromJson<String>(json['id']),
       type: serializer.fromJson<String>(json['type']),
       amount: serializer.fromJson<double>(json['amount']),
+      amountPaise: serializer.fromJson<int>(json['amountPaise']),
       categoryId: serializer.fromJson<String>(json['categoryId']),
       paymentMode: serializer.fromJson<String>(json['paymentMode']),
       note: serializer.fromJson<String?>(json['note']),
@@ -422,6 +453,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'id': serializer.toJson<String>(id),
       'type': serializer.toJson<String>(type),
       'amount': serializer.toJson<double>(amount),
+      'amountPaise': serializer.toJson<int>(amountPaise),
       'categoryId': serializer.toJson<String>(categoryId),
       'paymentMode': serializer.toJson<String>(paymentMode),
       'note': serializer.toJson<String?>(note),
@@ -438,6 +470,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     String? id,
     String? type,
     double? amount,
+    int? amountPaise,
     String? categoryId,
     String? paymentMode,
     Value<String?> note = const Value.absent(),
@@ -451,6 +484,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     id: id ?? this.id,
     type: type ?? this.type,
     amount: amount ?? this.amount,
+    amountPaise: amountPaise ?? this.amountPaise,
     categoryId: categoryId ?? this.categoryId,
     paymentMode: paymentMode ?? this.paymentMode,
     note: note.present ? note.value : this.note,
@@ -468,6 +502,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       id: data.id.present ? data.id.value : this.id,
       type: data.type.present ? data.type.value : this.type,
       amount: data.amount.present ? data.amount.value : this.amount,
+      amountPaise: data.amountPaise.present
+          ? data.amountPaise.value
+          : this.amountPaise,
       categoryId: data.categoryId.present
           ? data.categoryId.value
           : this.categoryId,
@@ -494,6 +531,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('id: $id, ')
           ..write('type: $type, ')
           ..write('amount: $amount, ')
+          ..write('amountPaise: $amountPaise, ')
           ..write('categoryId: $categoryId, ')
           ..write('paymentMode: $paymentMode, ')
           ..write('note: $note, ')
@@ -512,6 +550,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     id,
     type,
     amount,
+    amountPaise,
     categoryId,
     paymentMode,
     note,
@@ -529,6 +568,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.id == this.id &&
           other.type == this.type &&
           other.amount == this.amount &&
+          other.amountPaise == this.amountPaise &&
           other.categoryId == this.categoryId &&
           other.paymentMode == this.paymentMode &&
           other.note == this.note &&
@@ -544,6 +584,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String> id;
   final Value<String> type;
   final Value<double> amount;
+  final Value<int> amountPaise;
   final Value<String> categoryId;
   final Value<String> paymentMode;
   final Value<String?> note;
@@ -558,6 +599,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.id = const Value.absent(),
     this.type = const Value.absent(),
     this.amount = const Value.absent(),
+    this.amountPaise = const Value.absent(),
     this.categoryId = const Value.absent(),
     this.paymentMode = const Value.absent(),
     this.note = const Value.absent(),
@@ -573,6 +615,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required String id,
     required String type,
     required double amount,
+    this.amountPaise = const Value.absent(),
     required String categoryId,
     required String paymentMode,
     this.note = const Value.absent(),
@@ -595,6 +638,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? id,
     Expression<String>? type,
     Expression<double>? amount,
+    Expression<int>? amountPaise,
     Expression<String>? categoryId,
     Expression<String>? paymentMode,
     Expression<String>? note,
@@ -610,6 +654,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (id != null) 'id': id,
       if (type != null) 'type': type,
       if (amount != null) 'amount': amount,
+      if (amountPaise != null) 'amount_paise': amountPaise,
       if (categoryId != null) 'category_id': categoryId,
       if (paymentMode != null) 'payment_mode': paymentMode,
       if (note != null) 'note': note,
@@ -628,6 +673,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String>? id,
     Value<String>? type,
     Value<double>? amount,
+    Value<int>? amountPaise,
     Value<String>? categoryId,
     Value<String>? paymentMode,
     Value<String?>? note,
@@ -643,6 +689,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       id: id ?? this.id,
       type: type ?? this.type,
       amount: amount ?? this.amount,
+      amountPaise: amountPaise ?? this.amountPaise,
       categoryId: categoryId ?? this.categoryId,
       paymentMode: paymentMode ?? this.paymentMode,
       note: note ?? this.note,
@@ -667,6 +714,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     }
     if (amount.present) {
       map['amount'] = Variable<double>(amount.value);
+    }
+    if (amountPaise.present) {
+      map['amount_paise'] = Variable<int>(amountPaise.value);
     }
     if (categoryId.present) {
       map['category_id'] = Variable<String>(categoryId.value);
@@ -707,6 +757,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('id: $id, ')
           ..write('type: $type, ')
           ..write('amount: $amount, ')
+          ..write('amountPaise: $amountPaise, ')
           ..write('categoryId: $categoryId, ')
           ..write('paymentMode: $paymentMode, ')
           ..write('note: $note, ')
@@ -1262,6 +1313,18 @@ class $RecurringRulesTable extends RecurringRules
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _amountPaiseMeta = const VerificationMeta(
+    'amountPaise',
+  );
+  @override
+  late final GeneratedColumn<int> amountPaise = GeneratedColumn<int>(
+    'amount_paise',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _categoryIdMeta = const VerificationMeta(
     'categoryId',
   );
@@ -1384,6 +1447,7 @@ class $RecurringRulesTable extends RecurringRules
     title,
     type,
     amount,
+    amountPaise,
     categoryId,
     paymentMode,
     frequency,
@@ -1433,6 +1497,15 @@ class $RecurringRulesTable extends RecurringRules
       );
     } else if (isInserting) {
       context.missing(_amountMeta);
+    }
+    if (data.containsKey('amount_paise')) {
+      context.handle(
+        _amountPaiseMeta,
+        amountPaise.isAcceptableOrUnknown(
+          data['amount_paise']!,
+          _amountPaiseMeta,
+        ),
+      );
     }
     if (data.containsKey('category_id')) {
       context.handle(
@@ -1539,6 +1612,10 @@ class $RecurringRulesTable extends RecurringRules
         DriftSqlType.double,
         data['${effectivePrefix}amount'],
       )!,
+      amountPaise: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount_paise'],
+      )!,
       categoryId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}category_id'],
@@ -1593,6 +1670,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
   final String title;
   final String type;
   final double amount;
+  final int amountPaise;
   final String categoryId;
   final String paymentMode;
   final String frequency;
@@ -1608,6 +1686,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     required this.title,
     required this.type,
     required this.amount,
+    required this.amountPaise,
     required this.categoryId,
     required this.paymentMode,
     required this.frequency,
@@ -1626,6 +1705,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     map['title'] = Variable<String>(title);
     map['type'] = Variable<String>(type);
     map['amount'] = Variable<double>(amount);
+    map['amount_paise'] = Variable<int>(amountPaise);
     map['category_id'] = Variable<String>(categoryId);
     map['payment_mode'] = Variable<String>(paymentMode);
     map['frequency'] = Variable<String>(frequency);
@@ -1647,6 +1727,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       title: Value(title),
       type: Value(type),
       amount: Value(amount),
+      amountPaise: Value(amountPaise),
       categoryId: Value(categoryId),
       paymentMode: Value(paymentMode),
       frequency: Value(frequency),
@@ -1670,6 +1751,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       title: serializer.fromJson<String>(json['title']),
       type: serializer.fromJson<String>(json['type']),
       amount: serializer.fromJson<double>(json['amount']),
+      amountPaise: serializer.fromJson<int>(json['amountPaise']),
       categoryId: serializer.fromJson<String>(json['categoryId']),
       paymentMode: serializer.fromJson<String>(json['paymentMode']),
       frequency: serializer.fromJson<String>(json['frequency']),
@@ -1690,6 +1772,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       'title': serializer.toJson<String>(title),
       'type': serializer.toJson<String>(type),
       'amount': serializer.toJson<double>(amount),
+      'amountPaise': serializer.toJson<int>(amountPaise),
       'categoryId': serializer.toJson<String>(categoryId),
       'paymentMode': serializer.toJson<String>(paymentMode),
       'frequency': serializer.toJson<String>(frequency),
@@ -1708,6 +1791,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     String? title,
     String? type,
     double? amount,
+    int? amountPaise,
     String? categoryId,
     String? paymentMode,
     String? frequency,
@@ -1723,6 +1807,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     title: title ?? this.title,
     type: type ?? this.type,
     amount: amount ?? this.amount,
+    amountPaise: amountPaise ?? this.amountPaise,
     categoryId: categoryId ?? this.categoryId,
     paymentMode: paymentMode ?? this.paymentMode,
     frequency: frequency ?? this.frequency,
@@ -1740,6 +1825,9 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       title: data.title.present ? data.title.value : this.title,
       type: data.type.present ? data.type.value : this.type,
       amount: data.amount.present ? data.amount.value : this.amount,
+      amountPaise: data.amountPaise.present
+          ? data.amountPaise.value
+          : this.amountPaise,
       categoryId: data.categoryId.present
           ? data.categoryId.value
           : this.categoryId,
@@ -1766,6 +1854,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
           ..write('title: $title, ')
           ..write('type: $type, ')
           ..write('amount: $amount, ')
+          ..write('amountPaise: $amountPaise, ')
           ..write('categoryId: $categoryId, ')
           ..write('paymentMode: $paymentMode, ')
           ..write('frequency: $frequency, ')
@@ -1786,6 +1875,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     title,
     type,
     amount,
+    amountPaise,
     categoryId,
     paymentMode,
     frequency,
@@ -1805,6 +1895,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
           other.title == this.title &&
           other.type == this.type &&
           other.amount == this.amount &&
+          other.amountPaise == this.amountPaise &&
           other.categoryId == this.categoryId &&
           other.paymentMode == this.paymentMode &&
           other.frequency == this.frequency &&
@@ -1822,6 +1913,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
   final Value<String> title;
   final Value<String> type;
   final Value<double> amount;
+  final Value<int> amountPaise;
   final Value<String> categoryId;
   final Value<String> paymentMode;
   final Value<String> frequency;
@@ -1838,6 +1930,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     this.title = const Value.absent(),
     this.type = const Value.absent(),
     this.amount = const Value.absent(),
+    this.amountPaise = const Value.absent(),
     this.categoryId = const Value.absent(),
     this.paymentMode = const Value.absent(),
     this.frequency = const Value.absent(),
@@ -1855,6 +1948,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     required String title,
     this.type = const Value.absent(),
     required double amount,
+    this.amountPaise = const Value.absent(),
     required String categoryId,
     required String paymentMode,
     required String frequency,
@@ -1881,6 +1975,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     Expression<String>? title,
     Expression<String>? type,
     Expression<double>? amount,
+    Expression<int>? amountPaise,
     Expression<String>? categoryId,
     Expression<String>? paymentMode,
     Expression<String>? frequency,
@@ -1898,6 +1993,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
       if (title != null) 'title': title,
       if (type != null) 'type': type,
       if (amount != null) 'amount': amount,
+      if (amountPaise != null) 'amount_paise': amountPaise,
       if (categoryId != null) 'category_id': categoryId,
       if (paymentMode != null) 'payment_mode': paymentMode,
       if (frequency != null) 'frequency': frequency,
@@ -1917,6 +2013,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     Value<String>? title,
     Value<String>? type,
     Value<double>? amount,
+    Value<int>? amountPaise,
     Value<String>? categoryId,
     Value<String>? paymentMode,
     Value<String>? frequency,
@@ -1934,6 +2031,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
       title: title ?? this.title,
       type: type ?? this.type,
       amount: amount ?? this.amount,
+      amountPaise: amountPaise ?? this.amountPaise,
       categoryId: categoryId ?? this.categoryId,
       paymentMode: paymentMode ?? this.paymentMode,
       frequency: frequency ?? this.frequency,
@@ -1962,6 +2060,9 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     }
     if (amount.present) {
       map['amount'] = Variable<double>(amount.value);
+    }
+    if (amountPaise.present) {
+      map['amount_paise'] = Variable<int>(amountPaise.value);
     }
     if (categoryId.present) {
       map['category_id'] = Variable<String>(categoryId.value);
@@ -2006,6 +2107,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
           ..write('title: $title, ')
           ..write('type: $type, ')
           ..write('amount: $amount, ')
+          ..write('amountPaise: $amountPaise, ')
           ..write('categoryId: $categoryId, ')
           ..write('paymentMode: $paymentMode, ')
           ..write('frequency: $frequency, ')
@@ -2045,6 +2147,17 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
     aliasedName,
     false,
     type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _monthlyBudgetPaiseMeta =
+      const VerificationMeta('monthlyBudgetPaise');
+  @override
+  late final GeneratedColumn<int> monthlyBudgetPaise = GeneratedColumn<int>(
+    'monthly_budget_paise',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -2126,6 +2239,7 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   List<GeneratedColumn> get $columns => [
     id,
     monthlyBudget,
+    monthlyBudgetPaise,
     currency,
     themeMode,
     transactionHintsSeen,
@@ -2154,6 +2268,15 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
         monthlyBudget.isAcceptableOrUnknown(
           data['monthly_budget']!,
           _monthlyBudgetMeta,
+        ),
+      );
+    }
+    if (data.containsKey('monthly_budget_paise')) {
+      context.handle(
+        _monthlyBudgetPaiseMeta,
+        monthlyBudgetPaise.isAcceptableOrUnknown(
+          data['monthly_budget_paise']!,
+          _monthlyBudgetPaiseMeta,
         ),
       );
     }
@@ -2221,6 +2344,10 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
         DriftSqlType.double,
         data['${effectivePrefix}monthly_budget'],
       )!,
+      monthlyBudgetPaise: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}monthly_budget_paise'],
+      )!,
       currency: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
@@ -2257,6 +2384,7 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
 class Setting extends DataClass implements Insertable<Setting> {
   final int id;
   final double monthlyBudget;
+  final int monthlyBudgetPaise;
   final String currency;
   final String themeMode;
   final bool transactionHintsSeen;
@@ -2266,6 +2394,7 @@ class Setting extends DataClass implements Insertable<Setting> {
   const Setting({
     required this.id,
     required this.monthlyBudget,
+    required this.monthlyBudgetPaise,
     required this.currency,
     required this.themeMode,
     required this.transactionHintsSeen,
@@ -2278,6 +2407,7 @@ class Setting extends DataClass implements Insertable<Setting> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['monthly_budget'] = Variable<double>(monthlyBudget);
+    map['monthly_budget_paise'] = Variable<int>(monthlyBudgetPaise);
     map['currency'] = Variable<String>(currency);
     map['theme_mode'] = Variable<String>(themeMode);
     map['transaction_hints_seen'] = Variable<bool>(transactionHintsSeen);
@@ -2293,6 +2423,7 @@ class Setting extends DataClass implements Insertable<Setting> {
     return SettingsCompanion(
       id: Value(id),
       monthlyBudget: Value(monthlyBudget),
+      monthlyBudgetPaise: Value(monthlyBudgetPaise),
       currency: Value(currency),
       themeMode: Value(themeMode),
       transactionHintsSeen: Value(transactionHintsSeen),
@@ -2312,6 +2443,7 @@ class Setting extends DataClass implements Insertable<Setting> {
     return Setting(
       id: serializer.fromJson<int>(json['id']),
       monthlyBudget: serializer.fromJson<double>(json['monthlyBudget']),
+      monthlyBudgetPaise: serializer.fromJson<int>(json['monthlyBudgetPaise']),
       currency: serializer.fromJson<String>(json['currency']),
       themeMode: serializer.fromJson<String>(json['themeMode']),
       transactionHintsSeen: serializer.fromJson<bool>(
@@ -2330,6 +2462,7 @@ class Setting extends DataClass implements Insertable<Setting> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'monthlyBudget': serializer.toJson<double>(monthlyBudget),
+      'monthlyBudgetPaise': serializer.toJson<int>(monthlyBudgetPaise),
       'currency': serializer.toJson<String>(currency),
       'themeMode': serializer.toJson<String>(themeMode),
       'transactionHintsSeen': serializer.toJson<bool>(transactionHintsSeen),
@@ -2342,6 +2475,7 @@ class Setting extends DataClass implements Insertable<Setting> {
   Setting copyWith({
     int? id,
     double? monthlyBudget,
+    int? monthlyBudgetPaise,
     String? currency,
     String? themeMode,
     bool? transactionHintsSeen,
@@ -2351,6 +2485,7 @@ class Setting extends DataClass implements Insertable<Setting> {
   }) => Setting(
     id: id ?? this.id,
     monthlyBudget: monthlyBudget ?? this.monthlyBudget,
+    monthlyBudgetPaise: monthlyBudgetPaise ?? this.monthlyBudgetPaise,
     currency: currency ?? this.currency,
     themeMode: themeMode ?? this.themeMode,
     transactionHintsSeen: transactionHintsSeen ?? this.transactionHintsSeen,
@@ -2366,6 +2501,9 @@ class Setting extends DataClass implements Insertable<Setting> {
       monthlyBudget: data.monthlyBudget.present
           ? data.monthlyBudget.value
           : this.monthlyBudget,
+      monthlyBudgetPaise: data.monthlyBudgetPaise.present
+          ? data.monthlyBudgetPaise.value
+          : this.monthlyBudgetPaise,
       currency: data.currency.present ? data.currency.value : this.currency,
       themeMode: data.themeMode.present ? data.themeMode.value : this.themeMode,
       transactionHintsSeen: data.transactionHintsSeen.present
@@ -2386,6 +2524,7 @@ class Setting extends DataClass implements Insertable<Setting> {
     return (StringBuffer('Setting(')
           ..write('id: $id, ')
           ..write('monthlyBudget: $monthlyBudget, ')
+          ..write('monthlyBudgetPaise: $monthlyBudgetPaise, ')
           ..write('currency: $currency, ')
           ..write('themeMode: $themeMode, ')
           ..write('transactionHintsSeen: $transactionHintsSeen, ')
@@ -2400,6 +2539,7 @@ class Setting extends DataClass implements Insertable<Setting> {
   int get hashCode => Object.hash(
     id,
     monthlyBudget,
+    monthlyBudgetPaise,
     currency,
     themeMode,
     transactionHintsSeen,
@@ -2413,6 +2553,7 @@ class Setting extends DataClass implements Insertable<Setting> {
       (other is Setting &&
           other.id == this.id &&
           other.monthlyBudget == this.monthlyBudget &&
+          other.monthlyBudgetPaise == this.monthlyBudgetPaise &&
           other.currency == this.currency &&
           other.themeMode == this.themeMode &&
           other.transactionHintsSeen == this.transactionHintsSeen &&
@@ -2424,6 +2565,7 @@ class Setting extends DataClass implements Insertable<Setting> {
 class SettingsCompanion extends UpdateCompanion<Setting> {
   final Value<int> id;
   final Value<double> monthlyBudget;
+  final Value<int> monthlyBudgetPaise;
   final Value<String> currency;
   final Value<String> themeMode;
   final Value<bool> transactionHintsSeen;
@@ -2433,6 +2575,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   const SettingsCompanion({
     this.id = const Value.absent(),
     this.monthlyBudget = const Value.absent(),
+    this.monthlyBudgetPaise = const Value.absent(),
     this.currency = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.transactionHintsSeen = const Value.absent(),
@@ -2443,6 +2586,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   SettingsCompanion.insert({
     this.id = const Value.absent(),
     this.monthlyBudget = const Value.absent(),
+    this.monthlyBudgetPaise = const Value.absent(),
     this.currency = const Value.absent(),
     this.themeMode = const Value.absent(),
     this.transactionHintsSeen = const Value.absent(),
@@ -2453,6 +2597,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   static Insertable<Setting> custom({
     Expression<int>? id,
     Expression<double>? monthlyBudget,
+    Expression<int>? monthlyBudgetPaise,
     Expression<String>? currency,
     Expression<String>? themeMode,
     Expression<bool>? transactionHintsSeen,
@@ -2463,6 +2608,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (monthlyBudget != null) 'monthly_budget': monthlyBudget,
+      if (monthlyBudgetPaise != null)
+        'monthly_budget_paise': monthlyBudgetPaise,
       if (currency != null) 'currency': currency,
       if (themeMode != null) 'theme_mode': themeMode,
       if (transactionHintsSeen != null)
@@ -2477,6 +2624,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   SettingsCompanion copyWith({
     Value<int>? id,
     Value<double>? monthlyBudget,
+    Value<int>? monthlyBudgetPaise,
     Value<String>? currency,
     Value<String>? themeMode,
     Value<bool>? transactionHintsSeen,
@@ -2487,6 +2635,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     return SettingsCompanion(
       id: id ?? this.id,
       monthlyBudget: monthlyBudget ?? this.monthlyBudget,
+      monthlyBudgetPaise: monthlyBudgetPaise ?? this.monthlyBudgetPaise,
       currency: currency ?? this.currency,
       themeMode: themeMode ?? this.themeMode,
       transactionHintsSeen: transactionHintsSeen ?? this.transactionHintsSeen,
@@ -2504,6 +2653,9 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     }
     if (monthlyBudget.present) {
       map['monthly_budget'] = Variable<double>(monthlyBudget.value);
+    }
+    if (monthlyBudgetPaise.present) {
+      map['monthly_budget_paise'] = Variable<int>(monthlyBudgetPaise.value);
     }
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
@@ -2535,6 +2687,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     return (StringBuffer('SettingsCompanion(')
           ..write('id: $id, ')
           ..write('monthlyBudget: $monthlyBudget, ')
+          ..write('monthlyBudgetPaise: $monthlyBudgetPaise, ')
           ..write('currency: $currency, ')
           ..write('themeMode: $themeMode, ')
           ..write('transactionHintsSeen: $transactionHintsSeen, ')
@@ -3452,6 +3605,18 @@ class $LendEntriesTable extends LendEntries
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _amountPaiseMeta = const VerificationMeta(
+    'amountPaise',
+  );
+  @override
+  late final GeneratedColumn<int> amountPaise = GeneratedColumn<int>(
+    'amount_paise',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<int> date = GeneratedColumn<int>(
@@ -3494,6 +3659,17 @@ class $LendEntriesTable extends LendEntries
     aliasedName,
     false,
     type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _settledAmountPaiseMeta =
+      const VerificationMeta('settledAmountPaise');
+  @override
+  late final GeneratedColumn<int> settledAmountPaise = GeneratedColumn<int>(
+    'settled_amount_paise',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
@@ -3551,10 +3727,12 @@ class $LendEntriesTable extends LendEntries
     personId,
     type,
     amount,
+    amountPaise,
     date,
     note,
     isSettled,
     settledAmount,
+    settledAmountPaise,
     settledAt,
     createdAt,
     updatedAt,
@@ -3601,6 +3779,15 @@ class $LendEntriesTable extends LendEntries
     } else if (isInserting) {
       context.missing(_amountMeta);
     }
+    if (data.containsKey('amount_paise')) {
+      context.handle(
+        _amountPaiseMeta,
+        amountPaise.isAcceptableOrUnknown(
+          data['amount_paise']!,
+          _amountPaiseMeta,
+        ),
+      );
+    }
     if (data.containsKey('date')) {
       context.handle(
         _dateMeta,
@@ -3627,6 +3814,15 @@ class $LendEntriesTable extends LendEntries
         settledAmount.isAcceptableOrUnknown(
           data['settled_amount']!,
           _settledAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('settled_amount_paise')) {
+      context.handle(
+        _settledAmountPaiseMeta,
+        settledAmountPaise.isAcceptableOrUnknown(
+          data['settled_amount_paise']!,
+          _settledAmountPaiseMeta,
         ),
       );
     }
@@ -3683,6 +3879,10 @@ class $LendEntriesTable extends LendEntries
         DriftSqlType.double,
         data['${effectivePrefix}amount'],
       )!,
+      amountPaise: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount_paise'],
+      )!,
       date: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}date'],
@@ -3698,6 +3898,10 @@ class $LendEntriesTable extends LendEntries
       settledAmount: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}settled_amount'],
+      )!,
+      settledAmountPaise: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}settled_amount_paise'],
       )!,
       settledAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -3729,10 +3933,12 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
   final String personId;
   final String type;
   final double amount;
+  final int amountPaise;
   final int date;
   final String? note;
   final bool isSettled;
   final double settledAmount;
+  final int settledAmountPaise;
   final int? settledAt;
   final int createdAt;
   final int updatedAt;
@@ -3742,10 +3948,12 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
     required this.personId,
     required this.type,
     required this.amount,
+    required this.amountPaise,
     required this.date,
     this.note,
     required this.isSettled,
     required this.settledAmount,
+    required this.settledAmountPaise,
     this.settledAt,
     required this.createdAt,
     required this.updatedAt,
@@ -3758,12 +3966,14 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
     map['person_id'] = Variable<String>(personId);
     map['type'] = Variable<String>(type);
     map['amount'] = Variable<double>(amount);
+    map['amount_paise'] = Variable<int>(amountPaise);
     map['date'] = Variable<int>(date);
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
     map['is_settled'] = Variable<bool>(isSettled);
     map['settled_amount'] = Variable<double>(settledAmount);
+    map['settled_amount_paise'] = Variable<int>(settledAmountPaise);
     if (!nullToAbsent || settledAt != null) {
       map['settled_at'] = Variable<int>(settledAt);
     }
@@ -3779,10 +3989,12 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
       personId: Value(personId),
       type: Value(type),
       amount: Value(amount),
+      amountPaise: Value(amountPaise),
       date: Value(date),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       isSettled: Value(isSettled),
       settledAmount: Value(settledAmount),
+      settledAmountPaise: Value(settledAmountPaise),
       settledAt: settledAt == null && nullToAbsent
           ? const Value.absent()
           : Value(settledAt),
@@ -3802,10 +4014,12 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
       personId: serializer.fromJson<String>(json['personId']),
       type: serializer.fromJson<String>(json['type']),
       amount: serializer.fromJson<double>(json['amount']),
+      amountPaise: serializer.fromJson<int>(json['amountPaise']),
       date: serializer.fromJson<int>(json['date']),
       note: serializer.fromJson<String?>(json['note']),
       isSettled: serializer.fromJson<bool>(json['isSettled']),
       settledAmount: serializer.fromJson<double>(json['settledAmount']),
+      settledAmountPaise: serializer.fromJson<int>(json['settledAmountPaise']),
       settledAt: serializer.fromJson<int?>(json['settledAt']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
@@ -3820,10 +4034,12 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
       'personId': serializer.toJson<String>(personId),
       'type': serializer.toJson<String>(type),
       'amount': serializer.toJson<double>(amount),
+      'amountPaise': serializer.toJson<int>(amountPaise),
       'date': serializer.toJson<int>(date),
       'note': serializer.toJson<String?>(note),
       'isSettled': serializer.toJson<bool>(isSettled),
       'settledAmount': serializer.toJson<double>(settledAmount),
+      'settledAmountPaise': serializer.toJson<int>(settledAmountPaise),
       'settledAt': serializer.toJson<int?>(settledAt),
       'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
@@ -3836,10 +4052,12 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
     String? personId,
     String? type,
     double? amount,
+    int? amountPaise,
     int? date,
     Value<String?> note = const Value.absent(),
     bool? isSettled,
     double? settledAmount,
+    int? settledAmountPaise,
     Value<int?> settledAt = const Value.absent(),
     int? createdAt,
     int? updatedAt,
@@ -3849,10 +4067,12 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
     personId: personId ?? this.personId,
     type: type ?? this.type,
     amount: amount ?? this.amount,
+    amountPaise: amountPaise ?? this.amountPaise,
     date: date ?? this.date,
     note: note.present ? note.value : this.note,
     isSettled: isSettled ?? this.isSettled,
     settledAmount: settledAmount ?? this.settledAmount,
+    settledAmountPaise: settledAmountPaise ?? this.settledAmountPaise,
     settledAt: settledAt.present ? settledAt.value : this.settledAt,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -3864,12 +4084,18 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
       personId: data.personId.present ? data.personId.value : this.personId,
       type: data.type.present ? data.type.value : this.type,
       amount: data.amount.present ? data.amount.value : this.amount,
+      amountPaise: data.amountPaise.present
+          ? data.amountPaise.value
+          : this.amountPaise,
       date: data.date.present ? data.date.value : this.date,
       note: data.note.present ? data.note.value : this.note,
       isSettled: data.isSettled.present ? data.isSettled.value : this.isSettled,
       settledAmount: data.settledAmount.present
           ? data.settledAmount.value
           : this.settledAmount,
+      settledAmountPaise: data.settledAmountPaise.present
+          ? data.settledAmountPaise.value
+          : this.settledAmountPaise,
       settledAt: data.settledAt.present ? data.settledAt.value : this.settledAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -3884,10 +4110,12 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
           ..write('personId: $personId, ')
           ..write('type: $type, ')
           ..write('amount: $amount, ')
+          ..write('amountPaise: $amountPaise, ')
           ..write('date: $date, ')
           ..write('note: $note, ')
           ..write('isSettled: $isSettled, ')
           ..write('settledAmount: $settledAmount, ')
+          ..write('settledAmountPaise: $settledAmountPaise, ')
           ..write('settledAt: $settledAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -3902,10 +4130,12 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
     personId,
     type,
     amount,
+    amountPaise,
     date,
     note,
     isSettled,
     settledAmount,
+    settledAmountPaise,
     settledAt,
     createdAt,
     updatedAt,
@@ -3919,10 +4149,12 @@ class LendEntry extends DataClass implements Insertable<LendEntry> {
           other.personId == this.personId &&
           other.type == this.type &&
           other.amount == this.amount &&
+          other.amountPaise == this.amountPaise &&
           other.date == this.date &&
           other.note == this.note &&
           other.isSettled == this.isSettled &&
           other.settledAmount == this.settledAmount &&
+          other.settledAmountPaise == this.settledAmountPaise &&
           other.settledAt == this.settledAt &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -3934,10 +4166,12 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
   final Value<String> personId;
   final Value<String> type;
   final Value<double> amount;
+  final Value<int> amountPaise;
   final Value<int> date;
   final Value<String?> note;
   final Value<bool> isSettled;
   final Value<double> settledAmount;
+  final Value<int> settledAmountPaise;
   final Value<int?> settledAt;
   final Value<int> createdAt;
   final Value<int> updatedAt;
@@ -3948,10 +4182,12 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     this.personId = const Value.absent(),
     this.type = const Value.absent(),
     this.amount = const Value.absent(),
+    this.amountPaise = const Value.absent(),
     this.date = const Value.absent(),
     this.note = const Value.absent(),
     this.isSettled = const Value.absent(),
     this.settledAmount = const Value.absent(),
+    this.settledAmountPaise = const Value.absent(),
     this.settledAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -3963,10 +4199,12 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     required String personId,
     required String type,
     required double amount,
+    this.amountPaise = const Value.absent(),
     required int date,
     this.note = const Value.absent(),
     this.isSettled = const Value.absent(),
     this.settledAmount = const Value.absent(),
+    this.settledAmountPaise = const Value.absent(),
     this.settledAt = const Value.absent(),
     required int createdAt,
     required int updatedAt,
@@ -3984,10 +4222,12 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     Expression<String>? personId,
     Expression<String>? type,
     Expression<double>? amount,
+    Expression<int>? amountPaise,
     Expression<int>? date,
     Expression<String>? note,
     Expression<bool>? isSettled,
     Expression<double>? settledAmount,
+    Expression<int>? settledAmountPaise,
     Expression<int>? settledAt,
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
@@ -3999,10 +4239,13 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
       if (personId != null) 'person_id': personId,
       if (type != null) 'type': type,
       if (amount != null) 'amount': amount,
+      if (amountPaise != null) 'amount_paise': amountPaise,
       if (date != null) 'date': date,
       if (note != null) 'note': note,
       if (isSettled != null) 'is_settled': isSettled,
       if (settledAmount != null) 'settled_amount': settledAmount,
+      if (settledAmountPaise != null)
+        'settled_amount_paise': settledAmountPaise,
       if (settledAt != null) 'settled_at': settledAt,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -4016,10 +4259,12 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     Value<String>? personId,
     Value<String>? type,
     Value<double>? amount,
+    Value<int>? amountPaise,
     Value<int>? date,
     Value<String?>? note,
     Value<bool>? isSettled,
     Value<double>? settledAmount,
+    Value<int>? settledAmountPaise,
     Value<int?>? settledAt,
     Value<int>? createdAt,
     Value<int>? updatedAt,
@@ -4031,10 +4276,12 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
       personId: personId ?? this.personId,
       type: type ?? this.type,
       amount: amount ?? this.amount,
+      amountPaise: amountPaise ?? this.amountPaise,
       date: date ?? this.date,
       note: note ?? this.note,
       isSettled: isSettled ?? this.isSettled,
       settledAmount: settledAmount ?? this.settledAmount,
+      settledAmountPaise: settledAmountPaise ?? this.settledAmountPaise,
       settledAt: settledAt ?? this.settledAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -4058,6 +4305,9 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     if (amount.present) {
       map['amount'] = Variable<double>(amount.value);
     }
+    if (amountPaise.present) {
+      map['amount_paise'] = Variable<int>(amountPaise.value);
+    }
     if (date.present) {
       map['date'] = Variable<int>(date.value);
     }
@@ -4069,6 +4319,9 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
     }
     if (settledAmount.present) {
       map['settled_amount'] = Variable<double>(settledAmount.value);
+    }
+    if (settledAmountPaise.present) {
+      map['settled_amount_paise'] = Variable<int>(settledAmountPaise.value);
     }
     if (settledAt.present) {
       map['settled_at'] = Variable<int>(settledAt.value);
@@ -4095,10 +4348,12 @@ class LendEntriesCompanion extends UpdateCompanion<LendEntry> {
           ..write('personId: $personId, ')
           ..write('type: $type, ')
           ..write('amount: $amount, ')
+          ..write('amountPaise: $amountPaise, ')
           ..write('date: $date, ')
           ..write('note: $note, ')
           ..write('isSettled: $isSettled, ')
           ..write('settledAmount: $settledAmount, ')
+          ..write('settledAmountPaise: $settledAmountPaise, ')
           ..write('settledAt: $settledAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -4155,6 +4410,18 @@ class $LendSettlementEventsTable extends LendSettlementEvents
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _amountPaiseMeta = const VerificationMeta(
+    'amountPaise',
+  );
+  @override
+  late final GeneratedColumn<int> amountPaise = GeneratedColumn<int>(
+    'amount_paise',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<int> date = GeneratedColumn<int>(
@@ -4196,6 +4463,7 @@ class $LendSettlementEventsTable extends LendSettlementEvents
     entryId,
     personId,
     amount,
+    amountPaise,
     date,
     createdAt,
     isDeleted,
@@ -4240,6 +4508,15 @@ class $LendSettlementEventsTable extends LendSettlementEvents
       );
     } else if (isInserting) {
       context.missing(_amountMeta);
+    }
+    if (data.containsKey('amount_paise')) {
+      context.handle(
+        _amountPaiseMeta,
+        amountPaise.isAcceptableOrUnknown(
+          data['amount_paise']!,
+          _amountPaiseMeta,
+        ),
+      );
     }
     if (data.containsKey('date')) {
       context.handle(
@@ -4288,6 +4565,10 @@ class $LendSettlementEventsTable extends LendSettlementEvents
         DriftSqlType.double,
         data['${effectivePrefix}amount'],
       )!,
+      amountPaise: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount_paise'],
+      )!,
       date: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}date'],
@@ -4315,6 +4596,7 @@ class LendSettlementEvent extends DataClass
   final String entryId;
   final String personId;
   final double amount;
+  final int amountPaise;
   final int date;
   final int createdAt;
   final bool isDeleted;
@@ -4323,6 +4605,7 @@ class LendSettlementEvent extends DataClass
     required this.entryId,
     required this.personId,
     required this.amount,
+    required this.amountPaise,
     required this.date,
     required this.createdAt,
     required this.isDeleted,
@@ -4334,6 +4617,7 @@ class LendSettlementEvent extends DataClass
     map['entry_id'] = Variable<String>(entryId);
     map['person_id'] = Variable<String>(personId);
     map['amount'] = Variable<double>(amount);
+    map['amount_paise'] = Variable<int>(amountPaise);
     map['date'] = Variable<int>(date);
     map['created_at'] = Variable<int>(createdAt);
     map['is_deleted'] = Variable<bool>(isDeleted);
@@ -4346,6 +4630,7 @@ class LendSettlementEvent extends DataClass
       entryId: Value(entryId),
       personId: Value(personId),
       amount: Value(amount),
+      amountPaise: Value(amountPaise),
       date: Value(date),
       createdAt: Value(createdAt),
       isDeleted: Value(isDeleted),
@@ -4362,6 +4647,7 @@ class LendSettlementEvent extends DataClass
       entryId: serializer.fromJson<String>(json['entryId']),
       personId: serializer.fromJson<String>(json['personId']),
       amount: serializer.fromJson<double>(json['amount']),
+      amountPaise: serializer.fromJson<int>(json['amountPaise']),
       date: serializer.fromJson<int>(json['date']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
@@ -4375,6 +4661,7 @@ class LendSettlementEvent extends DataClass
       'entryId': serializer.toJson<String>(entryId),
       'personId': serializer.toJson<String>(personId),
       'amount': serializer.toJson<double>(amount),
+      'amountPaise': serializer.toJson<int>(amountPaise),
       'date': serializer.toJson<int>(date),
       'createdAt': serializer.toJson<int>(createdAt),
       'isDeleted': serializer.toJson<bool>(isDeleted),
@@ -4386,6 +4673,7 @@ class LendSettlementEvent extends DataClass
     String? entryId,
     String? personId,
     double? amount,
+    int? amountPaise,
     int? date,
     int? createdAt,
     bool? isDeleted,
@@ -4394,6 +4682,7 @@ class LendSettlementEvent extends DataClass
     entryId: entryId ?? this.entryId,
     personId: personId ?? this.personId,
     amount: amount ?? this.amount,
+    amountPaise: amountPaise ?? this.amountPaise,
     date: date ?? this.date,
     createdAt: createdAt ?? this.createdAt,
     isDeleted: isDeleted ?? this.isDeleted,
@@ -4404,6 +4693,9 @@ class LendSettlementEvent extends DataClass
       entryId: data.entryId.present ? data.entryId.value : this.entryId,
       personId: data.personId.present ? data.personId.value : this.personId,
       amount: data.amount.present ? data.amount.value : this.amount,
+      amountPaise: data.amountPaise.present
+          ? data.amountPaise.value
+          : this.amountPaise,
       date: data.date.present ? data.date.value : this.date,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
@@ -4417,6 +4709,7 @@ class LendSettlementEvent extends DataClass
           ..write('entryId: $entryId, ')
           ..write('personId: $personId, ')
           ..write('amount: $amount, ')
+          ..write('amountPaise: $amountPaise, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt, ')
           ..write('isDeleted: $isDeleted')
@@ -4425,8 +4718,16 @@ class LendSettlementEvent extends DataClass
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, entryId, personId, amount, date, createdAt, isDeleted);
+  int get hashCode => Object.hash(
+    id,
+    entryId,
+    personId,
+    amount,
+    amountPaise,
+    date,
+    createdAt,
+    isDeleted,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4435,6 +4736,7 @@ class LendSettlementEvent extends DataClass
           other.entryId == this.entryId &&
           other.personId == this.personId &&
           other.amount == this.amount &&
+          other.amountPaise == this.amountPaise &&
           other.date == this.date &&
           other.createdAt == this.createdAt &&
           other.isDeleted == this.isDeleted);
@@ -4446,6 +4748,7 @@ class LendSettlementEventsCompanion
   final Value<String> entryId;
   final Value<String> personId;
   final Value<double> amount;
+  final Value<int> amountPaise;
   final Value<int> date;
   final Value<int> createdAt;
   final Value<bool> isDeleted;
@@ -4455,6 +4758,7 @@ class LendSettlementEventsCompanion
     this.entryId = const Value.absent(),
     this.personId = const Value.absent(),
     this.amount = const Value.absent(),
+    this.amountPaise = const Value.absent(),
     this.date = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.isDeleted = const Value.absent(),
@@ -4465,6 +4769,7 @@ class LendSettlementEventsCompanion
     required String entryId,
     required String personId,
     required double amount,
+    this.amountPaise = const Value.absent(),
     required int date,
     required int createdAt,
     this.isDeleted = const Value.absent(),
@@ -4480,6 +4785,7 @@ class LendSettlementEventsCompanion
     Expression<String>? entryId,
     Expression<String>? personId,
     Expression<double>? amount,
+    Expression<int>? amountPaise,
     Expression<int>? date,
     Expression<int>? createdAt,
     Expression<bool>? isDeleted,
@@ -4490,6 +4796,7 @@ class LendSettlementEventsCompanion
       if (entryId != null) 'entry_id': entryId,
       if (personId != null) 'person_id': personId,
       if (amount != null) 'amount': amount,
+      if (amountPaise != null) 'amount_paise': amountPaise,
       if (date != null) 'date': date,
       if (createdAt != null) 'created_at': createdAt,
       if (isDeleted != null) 'is_deleted': isDeleted,
@@ -4502,6 +4809,7 @@ class LendSettlementEventsCompanion
     Value<String>? entryId,
     Value<String>? personId,
     Value<double>? amount,
+    Value<int>? amountPaise,
     Value<int>? date,
     Value<int>? createdAt,
     Value<bool>? isDeleted,
@@ -4512,6 +4820,7 @@ class LendSettlementEventsCompanion
       entryId: entryId ?? this.entryId,
       personId: personId ?? this.personId,
       amount: amount ?? this.amount,
+      amountPaise: amountPaise ?? this.amountPaise,
       date: date ?? this.date,
       createdAt: createdAt ?? this.createdAt,
       isDeleted: isDeleted ?? this.isDeleted,
@@ -4533,6 +4842,9 @@ class LendSettlementEventsCompanion
     }
     if (amount.present) {
       map['amount'] = Variable<double>(amount.value);
+    }
+    if (amountPaise.present) {
+      map['amount_paise'] = Variable<int>(amountPaise.value);
     }
     if (date.present) {
       map['date'] = Variable<int>(date.value);
@@ -4556,6 +4868,7 @@ class LendSettlementEventsCompanion
           ..write('entryId: $entryId, ')
           ..write('personId: $personId, ')
           ..write('amount: $amount, ')
+          ..write('amountPaise: $amountPaise, ')
           ..write('date: $date, ')
           ..write('createdAt: $createdAt, ')
           ..write('isDeleted: $isDeleted, ')
@@ -4833,6 +5146,389 @@ class MonthlyReflectionsCompanion extends UpdateCompanion<MonthlyReflection> {
   }
 }
 
+class $CategoryBudgetsTable extends CategoryBudgets
+    with TableInfo<$CategoryBudgetsTable, CategoryBudget> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CategoryBudgetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _monthKeyMeta = const VerificationMeta(
+    'monthKey',
+  );
+  @override
+  late final GeneratedColumn<String> monthKey = GeneratedColumn<String>(
+    'month_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
+    'categoryId',
+  );
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+    'category_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _budgetAmountMeta = const VerificationMeta(
+    'budgetAmount',
+  );
+  @override
+  late final GeneratedColumn<double> budgetAmount = GeneratedColumn<double>(
+    'budget_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _budgetAmountPaiseMeta = const VerificationMeta(
+    'budgetAmountPaise',
+  );
+  @override
+  late final GeneratedColumn<int> budgetAmountPaise = GeneratedColumn<int>(
+    'budget_amount_paise',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    monthKey,
+    categoryId,
+    budgetAmount,
+    budgetAmountPaise,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'category_budgets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CategoryBudget> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('month_key')) {
+      context.handle(
+        _monthKeyMeta,
+        monthKey.isAcceptableOrUnknown(data['month_key']!, _monthKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_monthKeyMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+        _categoryIdMeta,
+        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_categoryIdMeta);
+    }
+    if (data.containsKey('budget_amount')) {
+      context.handle(
+        _budgetAmountMeta,
+        budgetAmount.isAcceptableOrUnknown(
+          data['budget_amount']!,
+          _budgetAmountMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_budgetAmountMeta);
+    }
+    if (data.containsKey('budget_amount_paise')) {
+      context.handle(
+        _budgetAmountPaiseMeta,
+        budgetAmountPaise.isAcceptableOrUnknown(
+          data['budget_amount_paise']!,
+          _budgetAmountPaiseMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {monthKey, categoryId};
+  @override
+  CategoryBudget map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CategoryBudget(
+      monthKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}month_key'],
+      )!,
+      categoryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category_id'],
+      )!,
+      budgetAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}budget_amount'],
+      )!,
+      budgetAmountPaise: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}budget_amount_paise'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CategoryBudgetsTable createAlias(String alias) {
+    return $CategoryBudgetsTable(attachedDatabase, alias);
+  }
+}
+
+class CategoryBudget extends DataClass implements Insertable<CategoryBudget> {
+  final String monthKey;
+  final String categoryId;
+  final double budgetAmount;
+  final int budgetAmountPaise;
+  final int updatedAt;
+  const CategoryBudget({
+    required this.monthKey,
+    required this.categoryId,
+    required this.budgetAmount,
+    required this.budgetAmountPaise,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['month_key'] = Variable<String>(monthKey);
+    map['category_id'] = Variable<String>(categoryId);
+    map['budget_amount'] = Variable<double>(budgetAmount);
+    map['budget_amount_paise'] = Variable<int>(budgetAmountPaise);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  CategoryBudgetsCompanion toCompanion(bool nullToAbsent) {
+    return CategoryBudgetsCompanion(
+      monthKey: Value(monthKey),
+      categoryId: Value(categoryId),
+      budgetAmount: Value(budgetAmount),
+      budgetAmountPaise: Value(budgetAmountPaise),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CategoryBudget.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CategoryBudget(
+      monthKey: serializer.fromJson<String>(json['monthKey']),
+      categoryId: serializer.fromJson<String>(json['categoryId']),
+      budgetAmount: serializer.fromJson<double>(json['budgetAmount']),
+      budgetAmountPaise: serializer.fromJson<int>(json['budgetAmountPaise']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'monthKey': serializer.toJson<String>(monthKey),
+      'categoryId': serializer.toJson<String>(categoryId),
+      'budgetAmount': serializer.toJson<double>(budgetAmount),
+      'budgetAmountPaise': serializer.toJson<int>(budgetAmountPaise),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  CategoryBudget copyWith({
+    String? monthKey,
+    String? categoryId,
+    double? budgetAmount,
+    int? budgetAmountPaise,
+    int? updatedAt,
+  }) => CategoryBudget(
+    monthKey: monthKey ?? this.monthKey,
+    categoryId: categoryId ?? this.categoryId,
+    budgetAmount: budgetAmount ?? this.budgetAmount,
+    budgetAmountPaise: budgetAmountPaise ?? this.budgetAmountPaise,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  CategoryBudget copyWithCompanion(CategoryBudgetsCompanion data) {
+    return CategoryBudget(
+      monthKey: data.monthKey.present ? data.monthKey.value : this.monthKey,
+      categoryId: data.categoryId.present
+          ? data.categoryId.value
+          : this.categoryId,
+      budgetAmount: data.budgetAmount.present
+          ? data.budgetAmount.value
+          : this.budgetAmount,
+      budgetAmountPaise: data.budgetAmountPaise.present
+          ? data.budgetAmountPaise.value
+          : this.budgetAmountPaise,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CategoryBudget(')
+          ..write('monthKey: $monthKey, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('budgetAmount: $budgetAmount, ')
+          ..write('budgetAmountPaise: $budgetAmountPaise, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    monthKey,
+    categoryId,
+    budgetAmount,
+    budgetAmountPaise,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CategoryBudget &&
+          other.monthKey == this.monthKey &&
+          other.categoryId == this.categoryId &&
+          other.budgetAmount == this.budgetAmount &&
+          other.budgetAmountPaise == this.budgetAmountPaise &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CategoryBudgetsCompanion extends UpdateCompanion<CategoryBudget> {
+  final Value<String> monthKey;
+  final Value<String> categoryId;
+  final Value<double> budgetAmount;
+  final Value<int> budgetAmountPaise;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const CategoryBudgetsCompanion({
+    this.monthKey = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.budgetAmount = const Value.absent(),
+    this.budgetAmountPaise = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CategoryBudgetsCompanion.insert({
+    required String monthKey,
+    required String categoryId,
+    required double budgetAmount,
+    this.budgetAmountPaise = const Value.absent(),
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  }) : monthKey = Value(monthKey),
+       categoryId = Value(categoryId),
+       budgetAmount = Value(budgetAmount),
+       updatedAt = Value(updatedAt);
+  static Insertable<CategoryBudget> custom({
+    Expression<String>? monthKey,
+    Expression<String>? categoryId,
+    Expression<double>? budgetAmount,
+    Expression<int>? budgetAmountPaise,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (monthKey != null) 'month_key': monthKey,
+      if (categoryId != null) 'category_id': categoryId,
+      if (budgetAmount != null) 'budget_amount': budgetAmount,
+      if (budgetAmountPaise != null) 'budget_amount_paise': budgetAmountPaise,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CategoryBudgetsCompanion copyWith({
+    Value<String>? monthKey,
+    Value<String>? categoryId,
+    Value<double>? budgetAmount,
+    Value<int>? budgetAmountPaise,
+    Value<int>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CategoryBudgetsCompanion(
+      monthKey: monthKey ?? this.monthKey,
+      categoryId: categoryId ?? this.categoryId,
+      budgetAmount: budgetAmount ?? this.budgetAmount,
+      budgetAmountPaise: budgetAmountPaise ?? this.budgetAmountPaise,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (monthKey.present) {
+      map['month_key'] = Variable<String>(monthKey.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (budgetAmount.present) {
+      map['budget_amount'] = Variable<double>(budgetAmount.value);
+    }
+    if (budgetAmountPaise.present) {
+      map['budget_amount_paise'] = Variable<int>(budgetAmountPaise.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CategoryBudgetsCompanion(')
+          ..write('monthKey: $monthKey, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('budgetAmount: $budgetAmount, ')
+          ..write('budgetAmountPaise: $budgetAmountPaise, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4847,6 +5543,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $LendSettlementEventsTable(this);
   late final $MonthlyReflectionsTable monthlyReflections =
       $MonthlyReflectionsTable(this);
+  late final $CategoryBudgetsTable categoryBudgets = $CategoryBudgetsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4861,6 +5560,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     lendEntries,
     lendSettlementEvents,
     monthlyReflections,
+    categoryBudgets,
   ];
 }
 
@@ -4869,6 +5569,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required String id,
       required String type,
       required double amount,
+      Value<int> amountPaise,
       required String categoryId,
       required String paymentMode,
       Value<String?> note,
@@ -4885,6 +5586,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> type,
       Value<double> amount,
+      Value<int> amountPaise,
       Value<String> categoryId,
       Value<String> paymentMode,
       Value<String?> note,
@@ -4918,6 +5620,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<double> get amount => $composableBuilder(
     column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4991,6 +5698,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get categoryId => $composableBuilder(
     column: $table.categoryId,
     builder: (column) => ColumnOrderings(column),
@@ -5054,6 +5766,11 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<double> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get categoryId => $composableBuilder(
     column: $table.categoryId,
@@ -5125,6 +5842,7 @@ class $$TransactionsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<double> amount = const Value.absent(),
+                Value<int> amountPaise = const Value.absent(),
                 Value<String> categoryId = const Value.absent(),
                 Value<String> paymentMode = const Value.absent(),
                 Value<String?> note = const Value.absent(),
@@ -5139,6 +5857,7 @@ class $$TransactionsTableTableManager
                 id: id,
                 type: type,
                 amount: amount,
+                amountPaise: amountPaise,
                 categoryId: categoryId,
                 paymentMode: paymentMode,
                 note: note,
@@ -5155,6 +5874,7 @@ class $$TransactionsTableTableManager
                 required String id,
                 required String type,
                 required double amount,
+                Value<int> amountPaise = const Value.absent(),
                 required String categoryId,
                 required String paymentMode,
                 Value<String?> note = const Value.absent(),
@@ -5169,6 +5889,7 @@ class $$TransactionsTableTableManager
                 id: id,
                 type: type,
                 amount: amount,
+                amountPaise: amountPaise,
                 categoryId: categoryId,
                 paymentMode: paymentMode,
                 note: note,
@@ -5462,6 +6183,7 @@ typedef $$RecurringRulesTableCreateCompanionBuilder =
       required String title,
       Value<String> type,
       required double amount,
+      Value<int> amountPaise,
       required String categoryId,
       required String paymentMode,
       required String frequency,
@@ -5480,6 +6202,7 @@ typedef $$RecurringRulesTableUpdateCompanionBuilder =
       Value<String> title,
       Value<String> type,
       Value<double> amount,
+      Value<int> amountPaise,
       Value<String> categoryId,
       Value<String> paymentMode,
       Value<String> frequency,
@@ -5519,6 +6242,11 @@ class $$RecurringRulesTableFilterComposer
 
   ColumnFilters<double> get amount => $composableBuilder(
     column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5602,6 +6330,11 @@ class $$RecurringRulesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get categoryId => $composableBuilder(
     column: $table.categoryId,
     builder: (column) => ColumnOrderings(column),
@@ -5673,6 +6406,11 @@ class $$RecurringRulesTableAnnotationComposer
 
   GeneratedColumn<double> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get categoryId => $composableBuilder(
     column: $table.categoryId,
@@ -5748,6 +6486,7 @@ class $$RecurringRulesTableTableManager
                 Value<String> title = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<double> amount = const Value.absent(),
+                Value<int> amountPaise = const Value.absent(),
                 Value<String> categoryId = const Value.absent(),
                 Value<String> paymentMode = const Value.absent(),
                 Value<String> frequency = const Value.absent(),
@@ -5764,6 +6503,7 @@ class $$RecurringRulesTableTableManager
                 title: title,
                 type: type,
                 amount: amount,
+                amountPaise: amountPaise,
                 categoryId: categoryId,
                 paymentMode: paymentMode,
                 frequency: frequency,
@@ -5782,6 +6522,7 @@ class $$RecurringRulesTableTableManager
                 required String title,
                 Value<String> type = const Value.absent(),
                 required double amount,
+                Value<int> amountPaise = const Value.absent(),
                 required String categoryId,
                 required String paymentMode,
                 required String frequency,
@@ -5798,6 +6539,7 @@ class $$RecurringRulesTableTableManager
                 title: title,
                 type: type,
                 amount: amount,
+                amountPaise: amountPaise,
                 categoryId: categoryId,
                 paymentMode: paymentMode,
                 frequency: frequency,
@@ -5839,6 +6581,7 @@ typedef $$SettingsTableCreateCompanionBuilder =
     SettingsCompanion Function({
       Value<int> id,
       Value<double> monthlyBudget,
+      Value<int> monthlyBudgetPaise,
       Value<String> currency,
       Value<String> themeMode,
       Value<bool> transactionHintsSeen,
@@ -5850,6 +6593,7 @@ typedef $$SettingsTableUpdateCompanionBuilder =
     SettingsCompanion Function({
       Value<int> id,
       Value<double> monthlyBudget,
+      Value<int> monthlyBudgetPaise,
       Value<String> currency,
       Value<String> themeMode,
       Value<bool> transactionHintsSeen,
@@ -5874,6 +6618,11 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<double> get monthlyBudget => $composableBuilder(
     column: $table.monthlyBudget,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get monthlyBudgetPaise => $composableBuilder(
+    column: $table.monthlyBudgetPaise,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5927,6 +6676,11 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get monthlyBudgetPaise => $composableBuilder(
+    column: $table.monthlyBudgetPaise,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get currency => $composableBuilder(
     column: $table.currency,
     builder: (column) => ColumnOrderings(column),
@@ -5972,6 +6726,11 @@ class $$SettingsTableAnnotationComposer
 
   GeneratedColumn<double> get monthlyBudget => $composableBuilder(
     column: $table.monthlyBudget,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get monthlyBudgetPaise => $composableBuilder(
+    column: $table.monthlyBudgetPaise,
     builder: (column) => column,
   );
 
@@ -6030,6 +6789,7 @@ class $$SettingsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<double> monthlyBudget = const Value.absent(),
+                Value<int> monthlyBudgetPaise = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<String> themeMode = const Value.absent(),
                 Value<bool> transactionHintsSeen = const Value.absent(),
@@ -6039,6 +6799,7 @@ class $$SettingsTableTableManager
               }) => SettingsCompanion(
                 id: id,
                 monthlyBudget: monthlyBudget,
+                monthlyBudgetPaise: monthlyBudgetPaise,
                 currency: currency,
                 themeMode: themeMode,
                 transactionHintsSeen: transactionHintsSeen,
@@ -6050,6 +6811,7 @@ class $$SettingsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<double> monthlyBudget = const Value.absent(),
+                Value<int> monthlyBudgetPaise = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<String> themeMode = const Value.absent(),
                 Value<bool> transactionHintsSeen = const Value.absent(),
@@ -6059,6 +6821,7 @@ class $$SettingsTableTableManager
               }) => SettingsCompanion.insert(
                 id: id,
                 monthlyBudget: monthlyBudget,
+                monthlyBudgetPaise: monthlyBudgetPaise,
                 currency: currency,
                 themeMode: themeMode,
                 transactionHintsSeen: transactionHintsSeen,
@@ -6547,10 +7310,12 @@ typedef $$LendEntriesTableCreateCompanionBuilder =
       required String personId,
       required String type,
       required double amount,
+      Value<int> amountPaise,
       required int date,
       Value<String?> note,
       Value<bool> isSettled,
       Value<double> settledAmount,
+      Value<int> settledAmountPaise,
       Value<int?> settledAt,
       required int createdAt,
       required int updatedAt,
@@ -6563,10 +7328,12 @@ typedef $$LendEntriesTableUpdateCompanionBuilder =
       Value<String> personId,
       Value<String> type,
       Value<double> amount,
+      Value<int> amountPaise,
       Value<int> date,
       Value<String?> note,
       Value<bool> isSettled,
       Value<double> settledAmount,
+      Value<int> settledAmountPaise,
       Value<int?> settledAt,
       Value<int> createdAt,
       Value<int> updatedAt,
@@ -6603,6 +7370,11 @@ class $$LendEntriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get date => $composableBuilder(
     column: $table.date,
     builder: (column) => ColumnFilters(column),
@@ -6620,6 +7392,11 @@ class $$LendEntriesTableFilterComposer
 
   ColumnFilters<double> get settledAmount => $composableBuilder(
     column: $table.settledAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get settledAmountPaise => $composableBuilder(
+    column: $table.settledAmountPaise,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6673,6 +7450,11 @@ class $$LendEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get date => $composableBuilder(
     column: $table.date,
     builder: (column) => ColumnOrderings(column),
@@ -6690,6 +7472,11 @@ class $$LendEntriesTableOrderingComposer
 
   ColumnOrderings<double> get settledAmount => $composableBuilder(
     column: $table.settledAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get settledAmountPaise => $composableBuilder(
+    column: $table.settledAmountPaise,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -6735,6 +7522,11 @@ class $$LendEntriesTableAnnotationComposer
   GeneratedColumn<double> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
 
+  GeneratedColumn<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get date =>
       $composableBuilder(column: $table.date, builder: (column) => column);
 
@@ -6746,6 +7538,11 @@ class $$LendEntriesTableAnnotationComposer
 
   GeneratedColumn<double> get settledAmount => $composableBuilder(
     column: $table.settledAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get settledAmountPaise => $composableBuilder(
+    column: $table.settledAmountPaise,
     builder: (column) => column,
   );
 
@@ -6797,10 +7594,12 @@ class $$LendEntriesTableTableManager
                 Value<String> personId = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<double> amount = const Value.absent(),
+                Value<int> amountPaise = const Value.absent(),
                 Value<int> date = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<bool> isSettled = const Value.absent(),
                 Value<double> settledAmount = const Value.absent(),
+                Value<int> settledAmountPaise = const Value.absent(),
                 Value<int?> settledAt = const Value.absent(),
                 Value<int> createdAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
@@ -6811,10 +7610,12 @@ class $$LendEntriesTableTableManager
                 personId: personId,
                 type: type,
                 amount: amount,
+                amountPaise: amountPaise,
                 date: date,
                 note: note,
                 isSettled: isSettled,
                 settledAmount: settledAmount,
+                settledAmountPaise: settledAmountPaise,
                 settledAt: settledAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -6827,10 +7628,12 @@ class $$LendEntriesTableTableManager
                 required String personId,
                 required String type,
                 required double amount,
+                Value<int> amountPaise = const Value.absent(),
                 required int date,
                 Value<String?> note = const Value.absent(),
                 Value<bool> isSettled = const Value.absent(),
                 Value<double> settledAmount = const Value.absent(),
+                Value<int> settledAmountPaise = const Value.absent(),
                 Value<int?> settledAt = const Value.absent(),
                 required int createdAt,
                 required int updatedAt,
@@ -6841,10 +7644,12 @@ class $$LendEntriesTableTableManager
                 personId: personId,
                 type: type,
                 amount: amount,
+                amountPaise: amountPaise,
                 date: date,
                 note: note,
                 isSettled: isSettled,
                 settledAmount: settledAmount,
+                settledAmountPaise: settledAmountPaise,
                 settledAt: settledAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -6879,6 +7684,7 @@ typedef $$LendSettlementEventsTableCreateCompanionBuilder =
       required String entryId,
       required String personId,
       required double amount,
+      Value<int> amountPaise,
       required int date,
       required int createdAt,
       Value<bool> isDeleted,
@@ -6890,6 +7696,7 @@ typedef $$LendSettlementEventsTableUpdateCompanionBuilder =
       Value<String> entryId,
       Value<String> personId,
       Value<double> amount,
+      Value<int> amountPaise,
       Value<int> date,
       Value<int> createdAt,
       Value<bool> isDeleted,
@@ -6922,6 +7729,11 @@ class $$LendSettlementEventsTableFilterComposer
 
   ColumnFilters<double> get amount => $composableBuilder(
     column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6970,6 +7782,11 @@ class $$LendSettlementEventsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get date => $composableBuilder(
     column: $table.date,
     builder: (column) => ColumnOrderings(column),
@@ -7006,6 +7823,11 @@ class $$LendSettlementEventsTableAnnotationComposer
 
   GeneratedColumn<double> get amount =>
       $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<int> get amountPaise => $composableBuilder(
+    column: $table.amountPaise,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get date =>
       $composableBuilder(column: $table.date, builder: (column) => column);
@@ -7064,6 +7886,7 @@ class $$LendSettlementEventsTableTableManager
                 Value<String> entryId = const Value.absent(),
                 Value<String> personId = const Value.absent(),
                 Value<double> amount = const Value.absent(),
+                Value<int> amountPaise = const Value.absent(),
                 Value<int> date = const Value.absent(),
                 Value<int> createdAt = const Value.absent(),
                 Value<bool> isDeleted = const Value.absent(),
@@ -7073,6 +7896,7 @@ class $$LendSettlementEventsTableTableManager
                 entryId: entryId,
                 personId: personId,
                 amount: amount,
+                amountPaise: amountPaise,
                 date: date,
                 createdAt: createdAt,
                 isDeleted: isDeleted,
@@ -7084,6 +7908,7 @@ class $$LendSettlementEventsTableTableManager
                 required String entryId,
                 required String personId,
                 required double amount,
+                Value<int> amountPaise = const Value.absent(),
                 required int date,
                 required int createdAt,
                 Value<bool> isDeleted = const Value.absent(),
@@ -7093,6 +7918,7 @@ class $$LendSettlementEventsTableTableManager
                 entryId: entryId,
                 personId: personId,
                 amount: amount,
+                amountPaise: amountPaise,
                 date: date,
                 createdAt: createdAt,
                 isDeleted: isDeleted,
@@ -7302,6 +8128,218 @@ typedef $$MonthlyReflectionsTableProcessedTableManager =
       MonthlyReflection,
       PrefetchHooks Function()
     >;
+typedef $$CategoryBudgetsTableCreateCompanionBuilder =
+    CategoryBudgetsCompanion Function({
+      required String monthKey,
+      required String categoryId,
+      required double budgetAmount,
+      Value<int> budgetAmountPaise,
+      required int updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CategoryBudgetsTableUpdateCompanionBuilder =
+    CategoryBudgetsCompanion Function({
+      Value<String> monthKey,
+      Value<String> categoryId,
+      Value<double> budgetAmount,
+      Value<int> budgetAmountPaise,
+      Value<int> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$CategoryBudgetsTableFilterComposer
+    extends Composer<_$AppDatabase, $CategoryBudgetsTable> {
+  $$CategoryBudgetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get monthKey => $composableBuilder(
+    column: $table.monthKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get budgetAmount => $composableBuilder(
+    column: $table.budgetAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get budgetAmountPaise => $composableBuilder(
+    column: $table.budgetAmountPaise,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CategoryBudgetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CategoryBudgetsTable> {
+  $$CategoryBudgetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get monthKey => $composableBuilder(
+    column: $table.monthKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get budgetAmount => $composableBuilder(
+    column: $table.budgetAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get budgetAmountPaise => $composableBuilder(
+    column: $table.budgetAmountPaise,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CategoryBudgetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CategoryBudgetsTable> {
+  $$CategoryBudgetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get monthKey =>
+      $composableBuilder(column: $table.monthKey, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get budgetAmount => $composableBuilder(
+    column: $table.budgetAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get budgetAmountPaise => $composableBuilder(
+    column: $table.budgetAmountPaise,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CategoryBudgetsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CategoryBudgetsTable,
+          CategoryBudget,
+          $$CategoryBudgetsTableFilterComposer,
+          $$CategoryBudgetsTableOrderingComposer,
+          $$CategoryBudgetsTableAnnotationComposer,
+          $$CategoryBudgetsTableCreateCompanionBuilder,
+          $$CategoryBudgetsTableUpdateCompanionBuilder,
+          (
+            CategoryBudget,
+            BaseReferences<
+              _$AppDatabase,
+              $CategoryBudgetsTable,
+              CategoryBudget
+            >,
+          ),
+          CategoryBudget,
+          PrefetchHooks Function()
+        > {
+  $$CategoryBudgetsTableTableManager(
+    _$AppDatabase db,
+    $CategoryBudgetsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CategoryBudgetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CategoryBudgetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CategoryBudgetsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> monthKey = const Value.absent(),
+                Value<String> categoryId = const Value.absent(),
+                Value<double> budgetAmount = const Value.absent(),
+                Value<int> budgetAmountPaise = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CategoryBudgetsCompanion(
+                monthKey: monthKey,
+                categoryId: categoryId,
+                budgetAmount: budgetAmount,
+                budgetAmountPaise: budgetAmountPaise,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String monthKey,
+                required String categoryId,
+                required double budgetAmount,
+                Value<int> budgetAmountPaise = const Value.absent(),
+                required int updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CategoryBudgetsCompanion.insert(
+                monthKey: monthKey,
+                categoryId: categoryId,
+                budgetAmount: budgetAmount,
+                budgetAmountPaise: budgetAmountPaise,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CategoryBudgetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CategoryBudgetsTable,
+      CategoryBudget,
+      $$CategoryBudgetsTableFilterComposer,
+      $$CategoryBudgetsTableOrderingComposer,
+      $$CategoryBudgetsTableAnnotationComposer,
+      $$CategoryBudgetsTableCreateCompanionBuilder,
+      $$CategoryBudgetsTableUpdateCompanionBuilder,
+      (
+        CategoryBudget,
+        BaseReferences<_$AppDatabase, $CategoryBudgetsTable, CategoryBudget>,
+      ),
+      CategoryBudget,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7324,4 +8362,6 @@ class $AppDatabaseManager {
       $$LendSettlementEventsTableTableManager(_db, _db.lendSettlementEvents);
   $$MonthlyReflectionsTableTableManager get monthlyReflections =>
       $$MonthlyReflectionsTableTableManager(_db, _db.monthlyReflections);
+  $$CategoryBudgetsTableTableManager get categoryBudgets =>
+      $$CategoryBudgetsTableTableManager(_db, _db.categoryBudgets);
 }

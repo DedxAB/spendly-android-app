@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/features/user/presentation/providers/user_profile_provider.dart';
 
-class NoirHeader extends StatelessWidget implements PreferredSizeWidget {
+class NoirHeader extends ConsumerWidget implements PreferredSizeWidget {
   const NoirHeader({
     super.key,
     this.showLeading = false,
@@ -22,14 +24,19 @@ class NoirHeader extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(72);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(userProfileProvider).valueOrNull;
+    final imageUrl = (profile?.imageUrl?.trim().isNotEmpty ?? false)
+        ? profile!.imageUrl!.trim()
+        : null;
+
     return AppBar(
       toolbarHeight: 72,
       centerTitle: true,
       title: const Text(
         'SPENDLY',
         style: TextStyle(
-          fontFamily: 'Georgia',
+          fontFamily: 'Bricolage Grotesque',
           fontSize: 18,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.2,
@@ -49,17 +56,24 @@ class NoirHeader extends StatelessWidget implements PreferredSizeWidget {
                 child: InkWell(
                   onTap: onProfileTap ?? () => context.push('/settings'),
                   borderRadius: BorderRadius.zero,
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.rectangle,
-                      border: Border.all(color: AppColors.borderDark),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.rectangle,
+                        border: Border.all(color: AppColors.borderDark),
+                      ),
+                      child: imageUrl == null
+                          ? const Icon(Icons.person, size: 18)
+                          : Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  const Icon(Icons.person, size: 18),
+                            ),
                     ),
-                    child: const Icon(Icons.person, size: 18),
                   ),
                 ),
-              ),
             ]
           : const [],
       bottom: const PreferredSize(

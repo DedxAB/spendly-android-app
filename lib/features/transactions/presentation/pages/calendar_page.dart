@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:spendly/core/constants/app_constants.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/theme/app_typography.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
 import 'package:spendly/features/transactions/presentation/providers/transactions_provider.dart';
@@ -19,7 +21,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   static final NumberFormat _currency = NumberFormat.currency(
     locale: 'en_IN',
     symbol: AppConstants.currencySymbol,
-    decimalDigits: 0,
+    decimalDigits: 2,
   );
 
   late DateTime _displayMonth;
@@ -70,11 +72,16 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
     return Scaffold(
       appBar: NoirHeader(
         showLeading: true,
-        leadingIcon: Icons.arrow_back,
+        leadingIcon: AppIcons.chevronLeft,
         onLeadingTap: () => Navigator.of(context).maybePop(),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.mdPlus,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
         children: [
           Row(
             children: [
@@ -82,7 +89,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                 child: Text(
                   DateFormat('MMMM yyyy').format(_displayMonth),
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Bricolage Grotesque',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
@@ -106,9 +113,9 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.sm),
           const Divider(color: AppColors.borderDark),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.smPlus),
           Text(
             'TOTAL SPENDING',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -116,16 +123,12 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             _currency.format(monthlyTotal),
-            style: const TextStyle(
-              fontFamily: 'Georgia',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.mdPlus),
           _MonthGrid(
             visibleDays: visibleDays,
             displayMonth: _displayMonth,
@@ -133,14 +136,14 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             expenseByDay: expenseByDay,
             onTapDay: (day) => setState(() => _selectedDate = day),
           ),
-          const SizedBox(height: 26),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Expanded(
                 child: Text(
                   DateFormat('MMMM d').format(_selectedDate),
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Bricolage Grotesque',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
@@ -155,7 +158,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.xs),
           const Divider(color: AppColors.borderDark),
           const SizedBox(height: 10),
           if (selectedItems.isEmpty)
@@ -189,23 +192,23 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
     if (t.contains('food') ||
         t.contains('dining') ||
         t.contains('restaurant')) {
-      return Icons.restaurant;
+      return AppIcons.food;
     }
     if (t.contains('uber') || t.contains('transport') || t.contains('taxi')) {
-      return Icons.directions_car;
+      return AppIcons.car;
     }
     if (t.contains('shop') || t.contains('store')) {
-      return Icons.shopping_bag;
+      return AppIcons.bag;
     }
     if (t.contains('travel') || t.contains('flight') || t.contains('air')) {
-      return Icons.flight;
+      return AppIcons.flight;
     }
     if (t.contains('salary') ||
         t.contains('income') ||
         t.contains('transfer')) {
-      return Icons.payments;
+      return AppIcons.money;
     }
-    return Icons.receipt_long;
+    return AppIcons.receipt;
   }
 
   static List<DateTime> _buildVisibleDays(DateTime month) {
@@ -228,7 +231,10 @@ class _MonthNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: Colors.white)),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(AppRadii.md),
+      ),
       child: Row(
         children: [
           InkWell(
@@ -236,16 +242,16 @@ class _MonthNav extends StatelessWidget {
             child: const SizedBox(
               width: 44,
               height: 44,
-              child: Icon(Icons.chevron_left, size: 24),
+              child: Icon(AppIcons.chevronLeft, size: 22),
             ),
           ),
-          Container(width: 1, height: 44, color: Colors.white),
+          Container(width: 1, height: 44, color: Theme.of(context).dividerColor),
           InkWell(
             onTap: onNext,
             child: const SizedBox(
               width: 44,
               height: 44,
-              child: Icon(Icons.chevron_right, size: 24),
+              child: Icon(AppIcons.chevronRight, size: 22),
             ),
           ),
         ],
@@ -280,7 +286,10 @@ class _MonthGrid extends StatelessWidget {
     const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: Colors.white)),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+      ),
       child: Column(
         children: [
           Row(
@@ -292,8 +301,8 @@ class _MonthGrid extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: const BoxDecoration(
                       border: Border(
-                        right: BorderSide(color: Colors.white),
-                        bottom: BorderSide(color: Colors.white),
+                        right: BorderSide(color: AppColors.borderDark),
+                        bottom: BorderSide(color: AppColors.borderDark),
                       ),
                     ),
                     child: Text(
@@ -331,7 +340,7 @@ class _MonthGrid extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(6, 6, 6, 4),
                   decoration: BoxDecoration(
                     color: isSelected ? const Color(0xFFE5E5E5) : Colors.black,
-                    border: Border.all(color: Colors.white),
+                    border: Border.all(color: AppColors.borderDark),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,20 +405,23 @@ class _CalendarTransactionRow extends StatelessWidget {
   static final NumberFormat _currency = NumberFormat.currency(
     locale: 'en_IN',
     symbol: '${AppConstants.currencySymbol} ',
-    decimalDigits: 0,
+    decimalDigits: 2,
   );
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         children: [
           Container(
             width: 52,
             height: 52,
-            decoration: BoxDecoration(border: Border.all(color: Colors.white)),
-            child: Icon(icon, color: Colors.white),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadii.md),
+              color: const Color(0xFF1A1A1A),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -421,25 +433,14 @@ class _CalendarTransactionRow extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Bricolage Grotesque',
                   ),
                 ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 2,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFB9B9B9),
-                  ),
-                ),
+                Text(subtitle, style: Theme.of(context).textTheme.labelMedium),
               ],
             ),
           ),
-          Text(
-            _currency.format(amount),
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-          ),
+          Text(_currency.format(amount), style: AppTypography.amountStyle(Colors.white)),
         ],
       ),
     );

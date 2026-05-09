@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/features/cloud_sync/data/repositories/cloud_sync_repository_impl.dart';
 import 'package:spendly/features/cloud_sync/domain/entities/cloud_sync_state.dart';
 import 'package:spendly/features/cloud_sync/domain/entities/google_profile_entity.dart';
+import 'package:spendly/features/user/data/repositories/user_profile_repository_impl.dart';
+import 'package:spendly/features/user/presentation/providers/user_profile_provider.dart';
 
 final cloudSyncControllerProvider =
     AsyncNotifierProvider<CloudSyncController, CloudSyncState>(
@@ -26,6 +28,21 @@ class CloudSyncController extends AsyncNotifier<CloudSyncState> {
     state = AsyncData(current.copyWith(isProcessing: true));
     try {
       final updated = await repository.connectAccount();
+      final googleProfile = await repository.fetchGoogleProfile();
+      if (googleProfile != null) {
+        final currentProfile = ref.read(userProfileProvider).valueOrNull;
+        await ref
+            .read(userProfileRepositoryProvider)
+            .updateProfile(
+              name: (googleProfile.displayName ?? '').trim().isNotEmpty
+                  ? googleProfile.displayName!.trim()
+                  : (currentProfile?.name ?? 'User'),
+              imageUrl: googleProfile.photoUrl ?? currentProfile?.imageUrl,
+              email: googleProfile.email,
+              phone: currentProfile?.phone,
+              onboardingCompleted: currentProfile?.onboardingCompleted,
+            );
+      }
       state = AsyncData(updated.copyWith(isProcessing: false));
     } catch (_) {
       state = AsyncData(current.copyWith(isProcessing: false));

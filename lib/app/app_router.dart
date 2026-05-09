@@ -1,9 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_icons.dart';
 import 'package:spendly/features/categories/presentation/pages/categories_page.dart';
 import 'package:spendly/features/cloud_sync/data/repositories/cloud_sync_repository_impl.dart';
 import 'package:spendly/features/home/presentation/pages/home_page.dart';
@@ -166,23 +166,23 @@ class AppShell extends StatelessWidget {
     final selectedIndex = _indexForLocation(location);
     final items = [
       _ShellNavItem(
-        icon: CupertinoIcons.home,
-        selectedIcon: CupertinoIcons.house_fill,
+        icon: AppIcons.home,
+        selectedIcon: AppIcons.home,
         label: 'HOME',
       ),
       _ShellNavItem(
-        icon: CupertinoIcons.arrow_counterclockwise,
-        selectedIcon: CupertinoIcons.arrow_counterclockwise_circle_fill,
+        icon: AppIcons.history,
+        selectedIcon: AppIcons.history,
         label: 'HISTORY',
       ),
       _ShellNavItem(
-        icon: CupertinoIcons.chart_bar_alt_fill,
-        selectedIcon: CupertinoIcons.chart_bar_alt_fill,
+        icon: AppIcons.analytics,
+        selectedIcon: AppIcons.analytics,
         label: 'ANALYTICS',
       ),
       _ShellNavItem(
-        icon: CupertinoIcons.creditcard,
-        selectedIcon: CupertinoIcons.creditcard_fill,
+        icon: AppIcons.budget,
+        selectedIcon: AppIcons.budget,
         label: 'BUDGET',
       ),
     ];
@@ -297,7 +297,7 @@ class _ShellNavTile extends StatelessWidget {
               Text(
                 item.label,
                 style: TextStyle(
-                  fontFamily: 'Georgia',
+                  fontFamily: 'Bricolage Grotesque',
                   fontSize: 10,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   letterSpacing: 1.0,

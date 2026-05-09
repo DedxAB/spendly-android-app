@@ -4,6 +4,8 @@ class Transactions extends Table {
   TextColumn get id => text()();
   TextColumn get type => text()();
   RealColumn get amount => real()();
+  IntColumn get amountPaise =>
+      integer().named('amount_paise').withDefault(const Constant(0))();
   TextColumn get categoryId => text().named('category_id')();
   TextColumn get paymentMode => text().named('payment_mode')();
   TextColumn get note => text().nullable()();
@@ -45,6 +47,8 @@ class RecurringRules extends Table {
   TextColumn get title => text()();
   TextColumn get type => text().withDefault(const Constant('expense'))();
   RealColumn get amount => real()();
+  IntColumn get amountPaise =>
+      integer().named('amount_paise').withDefault(const Constant(0))();
   TextColumn get categoryId => text().named('category_id')();
   TextColumn get paymentMode => text().named('payment_mode')();
   TextColumn get frequency => text()();
@@ -66,6 +70,8 @@ class Settings extends Table {
   IntColumn get id => integer()();
   RealColumn get monthlyBudget =>
       real().named('monthly_budget').withDefault(const Constant(0))();
+  IntColumn get monthlyBudgetPaise =>
+      integer().named('monthly_budget_paise').withDefault(const Constant(0))();
   TextColumn get currency => text().withDefault(const Constant('INR'))();
   TextColumn get themeMode =>
       text().named('theme_mode').withDefault(const Constant('system'))();
@@ -116,12 +122,16 @@ class LendEntries extends Table {
   TextColumn get personId => text().named('person_id')();
   TextColumn get type => text()();
   RealColumn get amount => real()();
+  IntColumn get amountPaise =>
+      integer().named('amount_paise').withDefault(const Constant(0))();
   IntColumn get date => integer()();
   TextColumn get note => text().nullable()();
   BoolColumn get isSettled =>
       boolean().named('is_settled').withDefault(const Constant(false))();
   RealColumn get settledAmount =>
       real().named('settled_amount').withDefault(const Constant(0))();
+  IntColumn get settledAmountPaise =>
+      integer().named('settled_amount_paise').withDefault(const Constant(0))();
   IntColumn get settledAt => integer().named('settled_at').nullable()();
   IntColumn get createdAt => integer().named('created_at')();
   IntColumn get updatedAt => integer().named('updated_at')();
@@ -137,6 +147,8 @@ class LendSettlementEvents extends Table {
   TextColumn get entryId => text().named('entry_id')();
   TextColumn get personId => text().named('person_id')();
   RealColumn get amount => real()();
+  IntColumn get amountPaise =>
+      integer().named('amount_paise').withDefault(const Constant(0))();
   IntColumn get date => integer()();
   IntColumn get createdAt => integer().named('created_at')();
   BoolColumn get isDeleted =>
@@ -153,4 +165,16 @@ class MonthlyReflections extends Table {
 
   @override
   Set<Column<Object>> get primaryKey => {monthKey};
+}
+
+class CategoryBudgets extends Table {
+  TextColumn get monthKey => text().named('month_key')();
+  TextColumn get categoryId => text().named('category_id')();
+  RealColumn get budgetAmount => real().named('budget_amount')();
+  IntColumn get budgetAmountPaise =>
+      integer().named('budget_amount_paise').withDefault(const Constant(0))();
+  IntColumn get updatedAt => integer().named('updated_at')();
+
+  @override
+  Set<Column<Object>> get primaryKey => {monthKey, categoryId};
 }

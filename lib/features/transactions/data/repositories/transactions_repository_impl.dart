@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/database/mappers.dart';
+import 'package:spendly/core/utils/money.dart';
 import 'package:spendly/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:spendly/features/transactions/domain/repositories/transactions_repository.dart';
 
@@ -11,16 +12,22 @@ class TransactionsRepositoryImpl implements TransactionsRepository {
 
   @override
   Future<void> add(TransactionEntity transaction) async {
+    final normalized = transaction.copyWith(
+      amount: Money.normalize(transaction.amount),
+    );
     await _ref
         .read(appDatabaseProvider)
-        .upsertTransaction(transactionToCompanion(transaction));
+        .upsertTransaction(transactionToCompanion(normalized));
   }
 
   @override
   Future<void> update(TransactionEntity transaction) async {
+    final normalized = transaction.copyWith(
+      amount: Money.normalize(transaction.amount),
+    );
     await _ref
         .read(appDatabaseProvider)
-        .upsertTransaction(transactionToCompanion(transaction));
+        .upsertTransaction(transactionToCompanion(normalized));
   }
 
   @override

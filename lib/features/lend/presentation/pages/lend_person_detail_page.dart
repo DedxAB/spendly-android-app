@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:spendly/core/constants/app_enums.dart';
+import 'package:spendly/core/widgets/app_confirm_dialog.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/utils/formatters.dart';
+import 'package:spendly/core/utils/money.dart';
+import 'package:spendly/core/widgets/dialog_actions_row.dart';
 import 'package:spendly/core/widgets/glass_card.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/lend/data/repositories/lend_repository_impl.dart';
@@ -21,26 +24,12 @@ class LendPersonDetailPage extends ConsumerWidget {
     WidgetRef ref, {
     required String personName,
   }) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete person?'),
-        content: Text(
-          'Delete $personName and all related lend/borrow entries?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final shouldDelete = await showAppDeleteConfirmDialog(
+      context,
+      title: 'Delete person?',
+      message: 'Delete $personName and all related lend/borrow entries?',
     );
-    if (shouldDelete != true) return;
+    if (!shouldDelete) return;
     await ref.read(lendRepositoryProvider).deletePerson(personId);
     if (context.mounted) {
       context.go('/lend');
@@ -156,7 +145,7 @@ class LendPersonDetailPage extends ConsumerWidget {
     required double remainingAmount,
   }) async {
     final amountController = TextEditingController(
-      text: remainingAmount.toStringAsFixed(0),
+      text: remainingAmount.toStringAsFixed(2),
     );
     var selectedDate = DateTime.now();
 
@@ -227,18 +216,12 @@ class LendPersonDetailPage extends ConsumerWidget {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
-                ),
-              ),
-              onPressed: () async {
-                final amount = double.tryParse(amountController.text.trim());
+            DialogActionsRow(
+              cancelText: 'Cancel',
+              confirmText: 'Settle',
+              onCancel: () => Navigator.pop(context),
+              onConfirm: () async {
+                final amount = Money.tryParse(amountController.text.trim());
                 if (amount == null || amount <= 0) return;
                 await ref
                     .read(lendRepositoryProvider)
@@ -249,7 +232,6 @@ class LendPersonDetailPage extends ConsumerWidget {
                     );
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Settle'),
             ),
           ],
         ),
@@ -466,18 +448,12 @@ class LendPersonDetailPage extends ConsumerWidget {
               ),
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                ),
-                onPressed: () async {
-                  final amount = double.tryParse(amountController.text.trim());
+              DialogActionsRow(
+                cancelText: 'Cancel',
+                confirmText: 'Save',
+                onCancel: () => Navigator.pop(context),
+                onConfirm: () async {
+                  final amount = Money.tryParse(amountController.text.trim());
                   if (amount == null || amount <= 0) return;
                   await ref
                       .read(lendRepositoryProvider)
@@ -490,7 +466,6 @@ class LendPersonDetailPage extends ConsumerWidget {
                       );
                   if (context.mounted) Navigator.pop(context);
                 },
-                child: const Text('Save'),
               ),
             ],
           ),
@@ -545,7 +520,7 @@ class LendPersonDetailPage extends ConsumerWidget {
                 child: Text(
                   person?.name ?? 'Person',
                   style: const TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Bricolage Grotesque',
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                   ),
@@ -596,7 +571,7 @@ class LendPersonDetailPage extends ConsumerWidget {
           const Text(
             'History',
             style: TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Bricolage Grotesque',
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
