@@ -23,6 +23,8 @@ dependencies:
   json_annotation: ^4.9.0
   fl_chart: ^0.71.0
   intl: ^0.20.2
+  google_fonts: ^6.2.1
+  lucide_icons_flutter: ^3.0.6
   google_sign_in: ^6.2.2
   googleapis: ^14.0.0
   googleapis_auth: ^1.6.0
@@ -50,7 +52,8 @@ flutter:
 
 flutter_launcher_icons:
   android: true
-  ios: true
+  ios: false
   image_path_android: "ic_launcher.png"
   adaptive_icon_foreground: "ic_launcher_foreground.png"
+  adaptive_icon_monochrome: "ic_launcher_round.png"
   adaptive_icon_background: "#000000"

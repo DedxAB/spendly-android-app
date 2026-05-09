@@ -6,6 +6,7 @@ import 'package:spendly/core/constants/app_constants.dart';
 import 'package:spendly/core/database/app_database.dart';
 import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/database/mappers.dart';
+import 'package:spendly/core/utils/money.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_entry_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_person_entity.dart';
@@ -140,6 +141,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
     final lendEntries = await db.getLendEntries();
     final lendSettlementEvents = await db.getLendSettlementEvents();
     final reflections = await db.getMonthlyReflections();
+    final now = DateTime.now();
+    final monthKey = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    final categoryBudgets = await db.getCategoryBudgetsForMonth(monthKey);
 
     final payload = {
       'schemaVersion': AppConstants.exportSchemaVersion,
@@ -167,6 +171,16 @@ class SettingsRepositoryImpl implements SettingsRepository {
             .toList(growable: false),
         'monthlyReflections': reflections
             .map((e) => e.toEntity().toJson())
+            .toList(growable: false),
+        'categoryBudgets': categoryBudgets
+            .map(
+              (e) => {
+                'monthKey': e.monthKey,
+                'categoryId': e.categoryId,
+                'budgetAmount': e.budgetAmount,
+                'updatedAt': e.updatedAt,
+              },
+            )
             .toList(growable: false),
       },
     };
@@ -198,6 +212,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       data['lendSettlementEvents'],
     );
     final monthlyReflectionsJson = _asObjectMapList(data['monthlyReflections']);
+    final categoryBudgetsJson = _asObjectMapList(data['categoryBudgets']);
 
     final settings = settingsJson != null
         ? SettingsEntity.fromJson(_normalizeSettingsJson(settingsJson))
@@ -265,6 +280,24 @@ class SettingsRepositoryImpl implements SettingsRepository {
           ),
         )
         .toList(growable: false);
+    final categoryBudgetRows = categoryBudgetsJson
+        .map(
+          (json) => CategoryBudgetsCompanion.insert(
+            monthKey: (json['monthKey'] as String?) ?? '',
+            categoryId: (json['categoryId'] as String?) ?? '',
+            budgetAmount: (json['budgetAmount'] as num?)?.toDouble() ?? 0,
+            budgetAmountPaise: Value(
+              (json['budgetAmountPaise'] as int?) ??
+                  (((json['budgetAmount'] as num?)?.toDouble() ?? 0) * 100)
+                      .round(),
+            ),
+            updatedAt:
+                (json['updatedAt'] as int?) ??
+                DateTime.now().millisecondsSinceEpoch,
+          ),
+        )
+        .where((row) => row.monthKey.value.isNotEmpty && row.categoryId.value.isNotEmpty)
+        .toList(growable: false);
 
     await _ref
         .read(appDatabaseProvider)
@@ -276,6 +309,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
           lendEntryRows: lendEntryRows,
           lendSettlementEventRows: lendSettlementEventRows,
           monthlyReflectionRows: monthlyReflectionRows,
+          categoryBudgetRows: categoryBudgetRows,
           settingsRow: settingsToCompanion(settings),
           userProfileRow: userProfileToCompanion(userProfile),
         );
@@ -285,10 +319,12 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Future<void> setBudget(double budget) async {
     final db = _ref.read(appDatabaseProvider);
     final current = await db.getSettingsRow();
+    final normalizedBudget = Money.normalize(budget);
     await db.upsertSettings(
       SettingsCompanion.insert(
         id: const Value(1),
-        monthlyBudget: Value(budget),
+        monthlyBudget: Value(normalizedBudget),
+        monthlyBudgetPaise: Value(Money.toPaise(normalizedBudget)),
         currency: Value(current?.currency ?? 'INR'),
         themeMode: const Value('dark'),
         transactionHintsSeen: Value(current?.transactionHintsSeen ?? false),
@@ -310,6 +346,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
       SettingsCompanion.insert(
         id: const Value(1),
         monthlyBudget: Value(current?.monthlyBudget ?? 0),
+        monthlyBudgetPaise: Value(
+          Money.toPaise((current?.monthlyBudget ?? 0).toDouble()),
+        ),
         currency: Value(current?.currency ?? 'INR'),
         themeMode: const Value('dark'),
         transactionHintsSeen: Value(budgetAlertsEnabled),
@@ -328,6 +367,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
       SettingsCompanion.insert(
         id: const Value(1),
         monthlyBudget: Value(current?.monthlyBudget ?? 0),
+        monthlyBudgetPaise: Value(
+          Money.toPaise((current?.monthlyBudget ?? 0).toDouble()),
+        ),
         currency: Value(current?.currency ?? 'INR'),
         themeMode: const Value('dark'),
         transactionHintsSeen: Value(current?.transactionHintsSeen ?? false),

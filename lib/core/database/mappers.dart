@@ -1,6 +1,7 @@
-﻿import 'package:drift/drift.dart';
+import 'package:drift/drift.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/database/app_database.dart';
+import 'package:spendly/core/utils/money.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
 import 'package:spendly/features/insights/domain/entities/monthly_reflection_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_entry_entity.dart';
@@ -16,7 +17,7 @@ extension TransactionMapper on Transaction {
     return TransactionEntity(
       id: id,
       type: TransactionTypeX.fromValue(type),
-      amount: amount,
+      amount: amountPaise > 0 ? Money.fromPaise(amountPaise) : amount,
       categoryId: categoryId,
       paymentMode: PaymentModeX.fromValue(paymentMode),
       note: note,
@@ -49,7 +50,9 @@ extension SettingMapper on Setting {
   SettingsEntity toEntity() {
     return SettingsEntity(
       id: id,
-      monthlyBudget: monthlyBudget,
+      monthlyBudget: monthlyBudgetPaise > 0
+          ? Money.fromPaise(monthlyBudgetPaise)
+          : monthlyBudget,
       currency: currency,
       budgetAlertsEnabled: transactionHintsSeen,
       dailyReminderEnabled: dailyReminderEnabled,
@@ -67,7 +70,7 @@ extension RecurringRuleMapper on RecurringRule {
       id: id,
       title: title,
       type: TransactionTypeX.fromValue(type),
-      amount: amount,
+      amount: amountPaise > 0 ? Money.fromPaise(amountPaise) : amount,
       categoryId: categoryId,
       paymentMode: PaymentModeX.fromValue(paymentMode),
       frequency: RecurringFrequencyX.fromValue(frequency),
@@ -115,11 +118,13 @@ extension LendEntryMapper on LendEntry {
       id: id,
       personId: personId,
       type: LendEntryTypeX.fromValue(type),
-      amount: amount,
+      amount: amountPaise > 0 ? Money.fromPaise(amountPaise) : amount,
       date: DateTime.fromMillisecondsSinceEpoch(date),
       note: note,
       isSettled: isSettled,
-      settledAmount: settledAmount,
+      settledAmount: settledAmountPaise > 0
+          ? Money.fromPaise(settledAmountPaise)
+          : settledAmount,
       settledAt: settledAt == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(settledAt!),
@@ -136,7 +141,7 @@ extension LendSettlementEventMapper on LendSettlementEvent {
       id: id,
       entryId: entryId,
       personId: personId,
-      amount: amount,
+      amount: amountPaise > 0 ? Money.fromPaise(amountPaise) : amount,
       date: DateTime.fromMillisecondsSinceEpoch(date),
       createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
       isDeleted: isDeleted,
@@ -159,6 +164,7 @@ TransactionsCompanion transactionToCompanion(TransactionEntity entity) {
     id: entity.id,
     type: entity.type.value,
     amount: entity.amount,
+    amountPaise: Value(Money.toPaise(entity.amount)),
     categoryId: entity.categoryId,
     paymentMode: entity.paymentMode.value,
     note: Value(entity.note),
@@ -188,6 +194,7 @@ SettingsCompanion settingsToCompanion(SettingsEntity entity) {
   return SettingsCompanion.insert(
     id: Value(entity.id),
     monthlyBudget: Value(entity.monthlyBudget),
+    monthlyBudgetPaise: Value(Money.toPaise(entity.monthlyBudget)),
     currency: Value(entity.currency),
     themeMode: const Value('dark'),
     transactionHintsSeen: Value(entity.budgetAlertsEnabled),
@@ -203,6 +210,7 @@ RecurringRulesCompanion recurringRuleToCompanion(RecurringRuleEntity entity) {
     title: entity.title,
     type: Value(entity.type.value),
     amount: entity.amount,
+    amountPaise: Value(Money.toPaise(entity.amount)),
     categoryId: entity.categoryId,
     paymentMode: entity.paymentMode.value,
     frequency: entity.frequency.value,
@@ -245,10 +253,12 @@ LendEntriesCompanion lendEntryToCompanion(LendEntryEntity entity) {
     personId: entity.personId,
     type: entity.type.value,
     amount: entity.amount,
+    amountPaise: Value(Money.toPaise(entity.amount)),
     date: entity.date.millisecondsSinceEpoch,
     note: Value(entity.note),
     isSettled: Value(entity.isSettled),
     settledAmount: Value(entity.settledAmount),
+    settledAmountPaise: Value(Money.toPaise(entity.settledAmount)),
     settledAt: Value(entity.settledAt?.millisecondsSinceEpoch),
     createdAt: entity.createdAt.millisecondsSinceEpoch,
     updatedAt: entity.updatedAt.millisecondsSinceEpoch,
@@ -264,6 +274,7 @@ LendSettlementEventsCompanion lendSettlementEventToCompanion(
     entryId: entity.entryId,
     personId: entity.personId,
     amount: entity.amount,
+    amountPaise: Value(Money.toPaise(entity.amount)),
     date: entity.date.millisecondsSinceEpoch,
     createdAt: entity.createdAt.millisecondsSinceEpoch,
     isDeleted: Value(entity.isDeleted),

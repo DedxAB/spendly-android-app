@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:spendly/core/utils/formatters.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -24,7 +25,14 @@ class LocalNotificationService {
 
   Future<void> scheduleDailyReminder({int hour = 20, int minute = 0}) async {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
@@ -57,7 +65,7 @@ class LocalNotificationService {
     await _plugin.show(
       _budgetAlertId,
       'Budget exceeded',
-      'You are over budget by ₹${overBy.toStringAsFixed(0)} this month.',
+      'You are over budget by ${Formatters.currency(overBy)} this month.',
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'budget_alert_channel',

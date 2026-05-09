@@ -3,7 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/widgets/app_confirm_dialog.dart';
+import 'package:spendly/core/widgets/app_modal_surface.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
+import 'package:spendly/core/widgets/dialog_actions_row.dart';
 import 'package:spendly/features/cloud_sync/presentation/providers/cloud_sync_provider.dart';
 import 'package:spendly/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:spendly/features/settings/presentation/providers/settings_provider.dart';
@@ -49,7 +54,7 @@ class SettingsPage extends ConsumerWidget {
         showProfileAction: false,
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(26, 26, 26, 26),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -68,7 +73,7 @@ class SettingsPage extends ConsumerWidget {
                       name,
                       style: const TextStyle(
                         color: primary,
-                        fontFamily: 'Georgia',
+                        fontFamily: 'Bricolage Grotesque',
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
                         height: 1,
@@ -80,7 +85,7 @@ class SettingsPage extends ConsumerWidget {
                       style: TextStyle(
                         color: secondary,
                         fontSize: 14,
-                        fontFamily: 'Georgia',
+                        fontFamily: 'Bricolage Grotesque',
                       ),
                     ),
                   ],
@@ -88,11 +93,11 @@ class SettingsPage extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: AppSpacing.md),
           const _SectionLabel('PREFERENCES', color: secondary),
           const Divider(color: divider, height: 26),
           _ProfileRow(
-            icon: Icons.person,
+            icon: AppIcons.user,
             title: 'Account',
             onTap: () => _editAccount(context, ref),
             textColor: primary,
@@ -100,7 +105,7 @@ class SettingsPage extends ConsumerWidget {
             dividerColor: divider,
           ),
           _ProfileRow(
-            icon: Icons.shield,
+            icon: AppIcons.shield,
             title: 'Security',
             onTap: () => _openSecurity(context, ref),
             textColor: primary,
@@ -108,7 +113,7 @@ class SettingsPage extends ConsumerWidget {
             dividerColor: divider,
           ),
           _ProfileRow(
-            icon: Icons.notifications,
+            icon: AppIcons.notifications,
             title: 'Notifications',
             onTap: () => context.push('/notifications'),
             textColor: primary,
@@ -116,7 +121,7 @@ class SettingsPage extends ConsumerWidget {
             dividerColor: divider,
           ),
           _ProfileRow(
-            icon: Icons.category_outlined,
+            icon: AppIcons.categories,
             title: 'Categories',
             onTap: () => context.push('/categories'),
             textColor: primary,
@@ -124,7 +129,7 @@ class SettingsPage extends ConsumerWidget {
             dividerColor: divider,
           ),
           _ProfileRow(
-            icon: Icons.handshake_outlined,
+            icon: AppIcons.money,
             title: 'Lend & Borrow',
             subtitle: 'Track people and settlements',
             onTap: () => context.go('/lend'),
@@ -134,7 +139,7 @@ class SettingsPage extends ConsumerWidget {
             dividerColor: divider,
           ),
           _ProfileRow(
-            icon: Icons.repeat,
+            icon: AppIcons.repeat,
             title: 'Recurring',
             subtitle: 'Automate repeating expenses',
             onTap: () => context.push('/recurring'),
@@ -147,7 +152,7 @@ class SettingsPage extends ConsumerWidget {
           const _SectionLabel('DATA & SYSTEM', color: secondary),
           const Divider(color: divider, height: 26),
           _ProfileRow(
-            icon: Icons.file_download_outlined,
+            icon: AppIcons.download,
             title: 'Export Data',
             subtitle: 'CSV, JSON formats available',
             onTap: () => _openExport(context, ref),
@@ -157,7 +162,7 @@ class SettingsPage extends ConsumerWidget {
             dividerColor: divider,
           ),
           _ProfileRow(
-            icon: Icons.file_upload_outlined,
+            icon: AppIcons.upload,
             title: 'Import Data',
             subtitle: 'Import from JSON backup',
             onTap: () => _openImport(context, ref),
@@ -167,7 +172,7 @@ class SettingsPage extends ConsumerWidget {
             dividerColor: divider,
           ),
           _ProfileRow(
-            icon: Icons.delete_forever_outlined,
+            icon: AppIcons.trash,
             title: 'Erase All Data',
             subtitle: 'Reset app to a clean start',
             onTap: () => _eraseAllData(context, ref),
@@ -178,10 +183,11 @@ class SettingsPage extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               border: Border.all(color: divider),
               color: const Color(0xFF121212),
+              borderRadius: BorderRadius.circular(AppRadii.lg),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,21 +196,21 @@ class SettingsPage extends ConsumerWidget {
                   'Cloud Sync',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   cloudSync?.isConnected == true
                       ? 'Connected: ${cloudSync?.connectedEmail ?? '-'}'
                       : 'Not connected',
                   style: const TextStyle(color: muted, fontSize: 12),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   cloudSync?.lastBackupAt == null
                       ? 'Last backup: never'
                       : 'Last backup: ${DateFormat('dd MMM, hh:mm a').format(cloudSync!.lastBackupAt!)}',
                   style: const TextStyle(color: muted, fontSize: 12),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.smPlus),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
@@ -369,91 +375,64 @@ class SettingsPage extends ConsumerWidget {
       isScrollControlled: true,
       showDragHandle: false,
       backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF0F0F0F),
-          border: Border(top: BorderSide(color: Color(0xFF2A2A2A))),
-        ),
-        padding: EdgeInsets.fromLTRB(
-          16,
-          8,
-          16,
-          MediaQuery.of(context).viewInsets.bottom + 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 64,
-                height: 4,
-                color: const Color(0xFF6A6A6A),
-              ),
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              'Account',
-              style: TextStyle(
-                fontFamily: 'Georgia',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: name,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: image,
-              decoration: const InputDecoration(labelText: 'Profile photo URL'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: email,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: phone,
-              decoration: const InputDecoration(labelText: 'Phone'),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
+      builder: (_) => AppModalSurface(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.sm,
+            AppSpacing.xs,
+            AppSpacing.sm,
+            MediaQuery.of(context).viewInsets.bottom + AppSpacing.sm,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 64,
+                  height: 4,
+                  color: const Color(0xFF6A6A6A),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
-                      ),
-                    ),
-                    onPressed: () async {
-                      await ref
-                          .read(userProfileRepositoryProvider)
-                          .updateProfile(
-                            name: name.text.trim(),
-                            imageUrl: image.text.trim(),
-                            email: email.text.trim(),
-                            phone: phone.text.trim(),
-                          );
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    child: const Text('Save'),
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: AppSpacing.smPlus),
+              Text('Account', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.smPlus),
+              TextField(
+                controller: name,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              TextField(
+                controller: image,
+                decoration: const InputDecoration(labelText: 'Profile photo URL'),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              TextField(
+                controller: email,
+                decoration: const InputDecoration(labelText: 'Email'),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              TextField(
+                controller: phone,
+                decoration: const InputDecoration(labelText: 'Phone'),
+              ),
+              const SizedBox(height: AppSpacing.smPlus),
+              DialogActionsRow(
+                cancelText: 'Cancel',
+                confirmText: 'Save',
+                onCancel: () => Navigator.pop(context),
+                onConfirm: () async {
+                  await ref.read(userProfileRepositoryProvider).updateProfile(
+                    name: name.text.trim(),
+                    imageUrl: image.text.trim(),
+                    email: email.text.trim(),
+                    phone: phone.text.trim(),
+                  );
+                  if (context.mounted) Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -463,26 +442,42 @@ class SettingsPage extends ConsumerWidget {
     final cloud = ref.read(cloudSyncControllerProvider).valueOrNull;
     await showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Security'),
-        content: Text(
-          cloud?.isConnected == true
-              ? 'Google backup connected: ${cloud?.connectedEmail ?? ''}'
-              : 'No backup account connected.',
-        ),
-        actions: [
-          if (cloud?.isConnected != true)
-            FilledButton(
-              onPressed: () => ref
-                  .read(cloudSyncControllerProvider.notifier)
-                  .connectAccount(),
-              child: const Text('Connect Google'),
-            ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+      builder: (dialogContext) => Theme(
+        data: Theme.of(dialogContext).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: Colors.white,
+            onPrimary: Colors.black,
+            surface: Color(0xFF0F0F0F),
+            onSurface: Colors.white,
           ),
-        ],
+          dialogTheme: const DialogThemeData(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            backgroundColor: Color(0xFF0F0F0F),
+          ),
+        ),
+        child: AlertDialog(
+          title: const Text('Security'),
+          content: Text(
+            cloud?.isConnected == true
+                ? 'Google backup connected: ${cloud?.connectedEmail ?? ''}'
+                : 'No backup account connected.',
+          ),
+          actions: [
+            DialogActionsRow(
+              cancelText: 'Close',
+              confirmText: cloud?.isConnected == true ? 'Done' : 'Connect',
+              onCancel: () => Navigator.pop(dialogContext),
+              onConfirm: () async {
+                if (cloud?.isConnected != true) {
+                  await ref
+                      .read(cloudSyncControllerProvider.notifier)
+                      .connectAccount();
+                }
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -492,28 +487,40 @@ class SettingsPage extends ConsumerWidget {
     if (!context.mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => Theme(
+        data: Theme.of(dialogContext).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: Colors.white,
+            onPrimary: Colors.black,
+            surface: Color(0xFF0F0F0F),
+            onSurface: Colors.white,
+          ),
+          dialogTheme: const DialogThemeData(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            backgroundColor: Color(0xFF0F0F0F),
+          ),
+        ),
+        child: AlertDialog(
         title: const Text('Export JSON'),
         content: SizedBox(
           width: 480,
           child: SingleChildScrollView(child: SelectableText(payload)),
         ),
         actions: [
-          TextButton(
-            onPressed: () {
+          DialogActionsRow(
+            cancelText: 'Close',
+            confirmText: 'Copy',
+            onCancel: () => Navigator.pop(dialogContext),
+            onConfirm: () {
               Clipboard.setData(ClipboardData(text: payload));
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('JSON copied to clipboard')),
               );
             },
-            child: const Text('Copy'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
           ),
         ],
+      ),
       ),
     );
   }
@@ -522,7 +529,20 @@ class SettingsPage extends ConsumerWidget {
     final controller = TextEditingController();
     await showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => Theme(
+        data: Theme.of(dialogContext).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: Colors.white,
+            onPrimary: Colors.black,
+            surface: Color(0xFF0F0F0F),
+            onSurface: Colors.white,
+          ),
+          dialogTheme: const DialogThemeData(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            backgroundColor: Color(0xFF0F0F0F),
+          ),
+        ),
+        child: AlertDialog(
         title: const Text('Import JSON'),
         content: SizedBox(
           width: 520,
@@ -535,49 +555,36 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
+          DialogActionsRow(
+            cancelText: 'Cancel',
+            confirmText: 'Import',
+            onCancel: () => Navigator.pop(dialogContext),
+            onConfirm: () async {
               final raw = controller.text.trim();
               if (raw.isEmpty) return;
               await ref.read(settingsRepositoryProvider).importJson(raw);
-              if (!context.mounted) return;
-              Navigator.pop(context);
+              if (!dialogContext.mounted) return;
+              Navigator.pop(dialogContext);
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(const SnackBar(content: Text('Import completed')));
             },
-            child: const Text('Import'),
           ),
         ],
+      ),
       ),
     );
   }
 
   Future<void> _eraseAllData(BuildContext context, WidgetRef ref) async {
-    final shouldErase = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Erase all data?'),
-        content: const Text(
+    final shouldErase = await showAppDeleteConfirmDialog(
+      context,
+      title: 'Erase all data?',
+      message:
           'This will permanently remove all transactions, categories, recurring rules, and lend/borrow records.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Erase'),
-          ),
-        ],
-      ),
+      confirmText: 'Erase',
     );
-    if (shouldErase != true) return;
+    if (!shouldErase) return;
     await ref.read(settingsRepositoryProvider).clearAllData();
     if (!context.mounted) return;
     ScaffoldMessenger.of(
@@ -628,7 +635,7 @@ class _SectionLabel extends StatelessWidget {
       text,
       style: TextStyle(
         color: color,
-        fontFamily: 'Georgia',
+        fontFamily: 'Bricolage Grotesque',
         fontSize: 14,
         letterSpacing: 1.4,
         fontWeight: FontWeight.w700,
@@ -679,7 +686,7 @@ class _ProfileRow extends StatelessWidget {
                     title,
                     style: TextStyle(
                       color: textColor,
-                      fontFamily: 'Georgia',
+                      fontFamily: 'Bricolage Grotesque',
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                     ),
@@ -698,7 +705,7 @@ class _ProfileRow extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: iconColor, size: 22),
+            Icon(AppIcons.chevronRight, color: iconColor, size: 22),
           ],
         ),
       ),

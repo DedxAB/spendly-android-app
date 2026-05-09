@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/database/default_categories.dart';
 import 'package:spendly/core/database/tables.dart';
+import 'package:spendly/core/utils/money.dart';
 
 part 'app_database.g.dart';
 
@@ -37,6 +38,7 @@ Future<File> _resolveDatabaseFile() async {
     LendEntries,
     LendSettlementEvents,
     MonthlyReflections,
+    CategoryBudgets,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -48,7 +50,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -113,6 +115,40 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(settings, settings.lastBudgetAlertAt);
         }
       }
+      if (from < 15) {
+        await m.createTable(categoryBudgets);
+      }
+      if (from < 16) {
+        await m.addColumn(transactions, transactions.amountPaise);
+        await m.addColumn(recurringRules, recurringRules.amountPaise);
+        await m.addColumn(settings, settings.monthlyBudgetPaise);
+        await m.addColumn(lendEntries, lendEntries.amountPaise);
+        await m.addColumn(lendEntries, lendEntries.settledAmountPaise);
+        await m.addColumn(lendSettlementEvents, lendSettlementEvents.amountPaise);
+        await m.addColumn(categoryBudgets, categoryBudgets.budgetAmountPaise);
+
+        await customStatement(
+          'UPDATE transactions SET amount_paise = CAST(ROUND(amount * 100.0) AS INTEGER) WHERE amount_paise = 0;',
+        );
+        await customStatement(
+          'UPDATE recurring_rules SET amount_paise = CAST(ROUND(amount * 100.0) AS INTEGER) WHERE amount_paise = 0;',
+        );
+        await customStatement(
+          'UPDATE settings SET monthly_budget_paise = CAST(ROUND(monthly_budget * 100.0) AS INTEGER) WHERE monthly_budget_paise = 0;',
+        );
+        await customStatement(
+          'UPDATE lend_entries SET amount_paise = CAST(ROUND(amount * 100.0) AS INTEGER) WHERE amount_paise = 0;',
+        );
+        await customStatement(
+          'UPDATE lend_entries SET settled_amount_paise = CAST(ROUND(settled_amount * 100.0) AS INTEGER) WHERE settled_amount_paise = 0;',
+        );
+        await customStatement(
+          'UPDATE lend_settlement_events SET amount_paise = CAST(ROUND(amount * 100.0) AS INTEGER) WHERE amount_paise = 0;',
+        );
+        await customStatement(
+          'UPDATE category_budgets SET budget_amount_paise = CAST(ROUND(budget_amount * 100.0) AS INTEGER) WHERE budget_amount_paise = 0;',
+        );
+      }
     },
     beforeOpen: (details) async {
       if (details.versionNow >= 12) {
@@ -128,6 +164,7 @@ class AppDatabase extends _$AppDatabase {
       SettingsCompanion.insert(
         id: const Value(1),
         monthlyBudget: const Value(0),
+        monthlyBudgetPaise: const Value(0),
         currency: const Value('INR'),
         themeMode: const Value('system'),
         transactionHintsSeen: const Value(false),
@@ -542,6 +579,7 @@ class AppDatabase extends _$AppDatabase {
       LendEntriesCompanion(
         isSettled: Value(isSettled),
         settledAmount: Value(settledAmount ?? 0),
+        settledAmountPaise: Value(Money.toPaise(settledAmount ?? 0)),
         settledAt: Value(isSettled ? settledAtEpoch : null),
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
@@ -564,6 +602,22 @@ class AppDatabase extends _$AppDatabase {
     await into(monthlyReflections).insertOnConflictUpdate(companion);
   }
 
+  Stream<List<CategoryBudget>> watchCategoryBudgetsForMonth(String monthKey) {
+    final query = select(categoryBudgets)
+      ..where((tbl) => tbl.monthKey.equals(monthKey));
+    return query.watch();
+  }
+
+  Future<List<CategoryBudget>> getCategoryBudgetsForMonth(String monthKey) {
+    final query = select(categoryBudgets)
+      ..where((tbl) => tbl.monthKey.equals(monthKey));
+    return query.get();
+  }
+
+  Future<void> upsertCategoryBudget(CategoryBudgetsCompanion companion) async {
+    await into(categoryBudgets).insertOnConflictUpdate(companion);
+  }
+
   Future<void> replaceAllData({
     required List<CategoriesCompanion> categoryRows,
     required List<TransactionsCompanion> transactionRows,
@@ -572,6 +626,7 @@ class AppDatabase extends _$AppDatabase {
     required List<LendEntriesCompanion> lendEntryRows,
     required List<LendSettlementEventsCompanion> lendSettlementEventRows,
     required List<MonthlyReflectionsCompanion> monthlyReflectionRows,
+    required List<CategoryBudgetsCompanion> categoryBudgetRows,
     required SettingsCompanion settingsRow,
     required UserProfilesCompanion userProfileRow,
   }) async {
@@ -583,6 +638,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(lendSettlementEvents).go();
       await delete(lendPeople).go();
       await delete(monthlyReflections).go();
+      await delete(categoryBudgets).go();
       await delete(settings).go();
       await delete(userProfiles).go();
       if (categoryRows.isNotEmpty) {
@@ -610,6 +666,9 @@ class AppDatabase extends _$AppDatabase {
           (b) => b.insertAll(monthlyReflections, monthlyReflectionRows),
         );
       }
+      if (categoryBudgetRows.isNotEmpty) {
+        await batch((b) => b.insertAll(categoryBudgets, categoryBudgetRows));
+      }
       await into(settings).insertOnConflictUpdate(settingsRow);
       await into(userProfiles).insertOnConflictUpdate(userProfileRow);
     });
@@ -624,6 +683,7 @@ class AppDatabase extends _$AppDatabase {
       await delete(lendSettlementEvents).go();
       await delete(lendPeople).go();
       await delete(monthlyReflections).go();
+      await delete(categoryBudgets).go();
       await delete(settings).go();
       await delete(userProfiles).go();
       await _ensureDefaultSettings();

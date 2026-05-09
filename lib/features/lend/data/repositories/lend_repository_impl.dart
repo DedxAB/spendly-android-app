@@ -4,6 +4,7 @@ import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/database/app_database.dart';
 import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/database/mappers.dart';
+import 'package:spendly/core/utils/money.dart';
 import 'package:spendly/features/lend/domain/entities/lend_entry_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_person_entity.dart';
 import 'package:spendly/features/lend/domain/entities/lend_settlement_event_entity.dart';
@@ -71,7 +72,8 @@ class LendRepositoryImpl implements LendRepository {
     required DateTime date,
     String? note,
   }) async {
-    if (amount <= 0) return;
+    final normalizedAmount = Money.normalize(amount);
+    if (normalizedAmount <= 0) return;
     final now = DateTime.now();
     final normalizedNote = note?.trim().isEmpty == true ? null : note?.trim();
     await _db.upsertLendEntry(
@@ -79,11 +81,13 @@ class LendRepositoryImpl implements LendRepository {
         id: const Uuid().v4(),
         personId: personId,
         type: type.value,
-        amount: amount,
+        amount: normalizedAmount,
+        amountPaise: Value(Money.toPaise(normalizedAmount)),
         date: date.millisecondsSinceEpoch,
         note: Value(normalizedNote),
         isSettled: const Value(false),
         settledAmount: const Value(0),
+        settledAmountPaise: const Value(0),
         createdAt: now.millisecondsSinceEpoch,
         updatedAt: now.millisecondsSinceEpoch,
         isDeleted: const Value(false),
@@ -97,10 +101,13 @@ class LendRepositoryImpl implements LendRepository {
     required double amount,
     required DateTime settledAt,
   }) async {
-    if (amount <= 0) return;
+    final normalizedAmount = Money.normalize(amount);
+    if (normalizedAmount <= 0) return;
     final current = await _db.getLendEntryById(entryId);
     if (current == null || current.isDeleted) return;
-    final cappedAmount = amount.clamp(0, current.amount).toDouble();
+    final cappedAmount = Money.normalize(
+      normalizedAmount.clamp(0, current.amount).toDouble(),
+    );
     final now = DateTime.now();
     await _db.upsertLendSettlementEvent(
       LendSettlementEventsCompanion.insert(
@@ -108,6 +115,7 @@ class LendRepositoryImpl implements LendRepository {
         entryId: entryId,
         personId: current.personId,
         amount: cappedAmount,
+        amountPaise: Value(Money.toPaise(cappedAmount)),
         date: settledAt.millisecondsSinceEpoch,
         createdAt: now.millisecondsSinceEpoch,
         isDeleted: const Value(false),
@@ -118,11 +126,12 @@ class LendRepositoryImpl implements LendRepository {
         .fold<double>(0, (sum, event) => sum + event.amount)
         .clamp(0, current.amount)
         .toDouble();
-    final isFullySettled = nextSettled >= current.amount;
+    final normalizedSettled = Money.normalize(nextSettled);
+    final isFullySettled = normalizedSettled >= current.amount;
     await _db.setLendEntrySettled(
       entryId,
       isFullySettled,
-      settledAmount: nextSettled,
+      settledAmount: normalizedSettled,
       settledAtEpoch: settledAt.millisecondsSinceEpoch,
     );
   }
@@ -139,10 +148,11 @@ class LendRepositoryImpl implements LendRepository {
         .fold<double>(0, (sum, event) => sum + event.amount)
         .clamp(0, current.amount)
         .toDouble();
+    final normalizedSettled = Money.normalize(nextSettled);
     await _db.setLendEntrySettled(
       entryId,
-      nextSettled >= current.amount,
-      settledAmount: nextSettled,
+      normalizedSettled >= current.amount,
+      settledAmount: normalizedSettled,
       settledAtEpoch: events.isEmpty ? null : events.first.date,
     );
   }

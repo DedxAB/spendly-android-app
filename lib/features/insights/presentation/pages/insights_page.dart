@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:spendly/core/constants/app_constants.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_icons.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/insights/domain/entities/expense_slice.dart';
@@ -30,22 +32,27 @@ class InsightsPage extends ConsumerWidget {
     return Scaffold(
       appBar: NoirHeader(
         showLeading: true,
-        leadingIcon: Icons.notifications_none_rounded,
+        leadingIcon: AppIcons.bell,
         onLeadingTap: () => context.push('/notifications'),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
         children: [
           const Text(
-            'Monthly\nSpending',
+            'Monthly Spending',
             style: TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Bricolage Grotesque',
               fontSize: 22,
               fontWeight: FontWeight.w700,
               height: 0.9,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.smPlus),
           Text(
             'A detailed review of your outbound\ncapital for the current period.\nIdentifying areas of excess and\nstructural inefficiencies.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -54,12 +61,13 @@ class InsightsPage extends ConsumerWidget {
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 26),
+          const SizedBox(height: AppSpacing.md),
           Container(
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.borderDark),
               color: const Color(0xFF0B0B0B),
+              borderRadius: BorderRadius.circular(AppRadii.lg),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,7 +90,7 @@ class InsightsPage extends ConsumerWidget {
                           Text(
                             Formatters.currency(expense),
                             style: const TextStyle(
-                              fontFamily: 'Georgia',
+                              fontFamily: 'Bricolage Grotesque',
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
@@ -106,7 +114,7 @@ class InsightsPage extends ConsumerWidget {
                         Text(
                           '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}%',
                           style: TextStyle(
-                            fontFamily: 'Georgia',
+                            fontFamily: 'Bricolage Grotesque',
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: change >= 0
@@ -118,7 +126,7 @@ class InsightsPage extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: AppSpacing.smPlus),
                 const Divider(color: AppColors.borderDark),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -134,12 +142,13 @@ class InsightsPage extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: AppSpacing.md),
           Container(
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.borderDark),
               color: const Color(0xFF0B0B0B),
+              borderRadius: BorderRadius.circular(AppRadii.lg),
             ),
             child: distribution.when(
               data: (items) => _CategoryBreakdown(items: items),
@@ -150,7 +159,7 @@ class InsightsPage extends ConsumerWidget {
               error: (_, __) => const Text('Category breakdown unavailable'),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.sm),
           Align(
             alignment: Alignment.center,
             child: Text(
@@ -186,7 +195,7 @@ class _TrendChart extends StatelessWidget {
           show: true,
           horizontalInterval: safeMaxY / 5,
           getDrawingHorizontalLine: (_) =>
-              const FlLine(color: AppColors.borderDark, strokeWidth: 1),
+              const FlLine(color: Color(0xFF252525), strokeWidth: 0.8),
           drawVerticalLine: false,
         ),
         borderData: FlBorderData(
@@ -196,7 +205,7 @@ class _TrendChart extends StatelessWidget {
             left: BorderSide(color: AppColors.borderDark),
           ),
         ),
-        lineTouchData: LineTouchData(enabled: false),
+        lineTouchData: LineTouchData(enabled: true),
         titlesData: FlTitlesData(
           topTitles: const AxisTitles(
             sideTitles: SideTitles(showTitles: false),
@@ -210,7 +219,9 @@ class _TrendChart extends StatelessWidget {
               interval: safeMaxY / 5,
               reservedSize: 42,
               getTitlesWidget: (value, _) => Text(
-                value == 0 ? '0' : '\$${(value / 1000).toStringAsFixed(0)}k',
+                value == 0
+                    ? '0'
+                    : '${AppConstants.currencySymbol}${(value / 1000).toStringAsFixed(0)}k',
                 style: const TextStyle(fontSize: 11, color: Color(0xFFA6A6A6)),
               ),
             ),
@@ -238,9 +249,9 @@ class _TrendChart extends StatelessWidget {
               for (var i = 0; i < points.length; i++)
                 FlSpot(i.toDouble(), points[i].value),
             ],
-            isCurved: false,
+            isCurved: true,
             color: Colors.white,
-            barWidth: 3.5,
+            barWidth: 3,
             dotData: FlDotData(
               show: true,
               getDotPainter: (_, __, ___, ____) =>
@@ -269,7 +280,7 @@ class _CategoryBreakdown extends StatelessWidget {
         const Text(
           'Category Breakdown',
           style: TextStyle(
-            fontFamily: 'Georgia',
+            fontFamily: 'Bricolage Grotesque',
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
@@ -326,4 +337,3 @@ class _CategoryBreakdown extends StatelessWidget {
     );
   }
 }
-

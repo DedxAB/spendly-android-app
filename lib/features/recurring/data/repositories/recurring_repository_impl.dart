@@ -4,6 +4,7 @@ import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/database/app_database.dart';
 import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/database/mappers.dart';
+import 'package:spendly/core/utils/money.dart';
 import 'package:spendly/features/recurring/domain/entities/recurring_rule_entity.dart';
 import 'package:spendly/features/recurring/domain/repositories/recurring_repository.dart';
 import 'package:uuid/uuid.dart';
@@ -17,7 +18,8 @@ class RecurringRepositoryImpl implements RecurringRepository {
 
   @override
   Future<void> addOrUpdate(RecurringRuleEntity rule) async {
-    await _db.upsertRecurringRule(recurringRuleToCompanion(rule));
+    final normalized = rule.copyWith(amount: Money.normalize(rule.amount));
+    await _db.upsertRecurringRule(recurringRuleToCompanion(normalized));
   }
 
   @override
@@ -126,7 +128,8 @@ class RecurringRepositoryImpl implements RecurringRepository {
             TransactionsCompanion.insert(
               id: const Uuid().v4(),
               type: row.type,
-              amount: row.amount,
+              amount: Money.normalize(row.amount),
+              amountPaise: Value(Money.toPaise(row.amount)),
               categoryId: row.categoryId,
               paymentMode: PaymentModeX.fromValue(row.paymentMode).value,
               note: Value(

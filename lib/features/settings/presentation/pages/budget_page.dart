@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:spendly/core/constants/app_enums.dart';
+import 'package:spendly/core/database/app_database.dart';
+import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_icons.dart';
 import 'package:spendly/core/utils/formatters.dart';
+import 'package:spendly/core/utils/money.dart';
+import 'package:spendly/core/widgets/app_modal_surface.dart';
+import 'package:spendly/core/widgets/dialog_actions_row.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
@@ -17,7 +24,7 @@ class BudgetPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsStreamProvider).valueOrNull;
-    final budget = settings?.monthlyBudget ?? 0;
+    final budget = (settings?.monthlyBudget ?? 0).toDouble();
     final transactions =
         ref.watch(allTransactionsProvider).valueOrNull ?? const [];
     final categories = ref.watch(allCategoriesProvider).valueOrNull ?? const [];
@@ -43,16 +50,24 @@ class BudgetPage extends ConsumerWidget {
 
     final byCategory = <String, double>{};
     for (final tx in monthlyItems) {
-      byCategory[tx.categoryId] = (byCategory[tx.categoryId] ?? 0) + tx.amount;
+      byCategory[tx.categoryId] = (byCategory[tx.categoryId] ?? 0.0) + tx.amount;
     }
 
     final categoryCards = byCategory.entries.toList(growable: false)
       ..sort((a, b) => b.value.compareTo(a.value));
+    final monthKey = '${now.year}-${now.month.toString().padLeft(2, '0')}';
+    final categoryBudgetsAsync = ref.watch(
+      _categoryBudgetsForMonthProvider(monthKey),
+    );
+    final budgetByCategory = {
+      for (final b in categoryBudgetsAsync.valueOrNull ?? const [])
+        b.categoryId: b.budgetAmount.toDouble(),
+    };
 
     return Scaffold(
       appBar: NoirHeader(
         showLeading: true,
-        leadingIcon: Icons.notifications_none_rounded,
+        leadingIcon: AppIcons.bell,
         onLeadingTap: () => context.push('/notifications'),
       ),
       body: ListView(
@@ -61,7 +76,7 @@ class BudgetPage extends ConsumerWidget {
           const Text(
             'Budget',
             style: TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Bricolage Grotesque',
               fontSize: 20,
               fontWeight: FontWeight.w700,
             ),
@@ -86,7 +101,7 @@ class BudgetPage extends ConsumerWidget {
                 const Text(
                   'Monthly Health',
                   style: TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Bricolage Grotesque',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
@@ -108,7 +123,7 @@ class BudgetPage extends ConsumerWidget {
                       TextSpan(
                         text: Formatters.currency(monthlySpend),
                         style: const TextStyle(
-                          fontFamily: 'Georgia',
+                          fontFamily: 'Bricolage Grotesque',
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                         ),
@@ -162,7 +177,7 @@ class BudgetPage extends ConsumerWidget {
                           Text(
                             '${safePerDay >= 0 ? Formatters.currency(safePerDay) : '-${Formatters.currency(safePerDay.abs())}'} / day',
                             style: TextStyle(
-                              fontFamily: 'Georgia',
+                              fontFamily: 'Bricolage Grotesque',
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: safePerDay >= 0
@@ -202,7 +217,7 @@ class BudgetPage extends ConsumerWidget {
                 child: Text(
                   'Categories',
                   style: TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Bricolage Grotesque',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
@@ -220,11 +235,7 @@ class BudgetPage extends ConsumerWidget {
                 .where((c) => c.id == entry.key)
                 .firstOrNull;
             final spend = entry.value;
-            final allocated = _allocatedForCategory(
-              budget,
-              categoryCards.length,
-              entry.key.hashCode,
-            );
+            final allocated = (budgetByCategory[entry.key] ?? 0.0).toDouble();
             final ratio = allocated <= 0 ? 0.0 : spend / allocated;
             final over = ratio > 1;
             return Padding(
@@ -244,29 +255,22 @@ class BudgetPage extends ConsumerWidget {
     );
   }
 
-  static double _allocatedForCategory(double totalBudget, int count, int seed) {
-    if (count <= 0 || totalBudget <= 0) return 0;
-    final base = totalBudget / count;
-    final offset = ((seed.abs() % 21) - 10) / 100;
-    return (base * (1 + offset)).clamp(base * 0.6, base * 1.4);
-  }
-
   static IconData _iconFor(String text) {
     final t = text.toLowerCase();
     if (t.contains('house') || t.contains('rent') || t.contains('home')) {
       return Icons.home;
     }
     if (t.contains('food') || t.contains('dining')) {
-      return Icons.restaurant;
+      return AppIcons.food;
     }
     if (t.contains('transport') || t.contains('uber')) {
-      return Icons.directions_car;
+      return AppIcons.car;
     }
     if (t.contains('util')) {
       return Icons.flash_on;
     }
     if (t.contains('shop')) {
-      return Icons.shopping_bag;
+      return AppIcons.bag;
     }
     if (t.contains('entertain')) {
       return Icons.local_activity;
@@ -279,73 +283,165 @@ class BudgetPage extends ConsumerWidget {
     WidgetRef ref,
     double currentBudget,
   ) async {
+    final now = DateTime.now();
+    final monthKey = '${now.year}-${now.month.toString().padLeft(2, '0')}';
     final budgetController = TextEditingController(
-      text: currentBudget > 0 ? currentBudget.toStringAsFixed(0) : '',
+      text: currentBudget > 0 ? currentBudget.toStringAsFixed(2) : '',
     );
+    final categories = ref.read(allCategoriesProvider).valueOrNull ?? const [];
+    final expenseCategories = categories
+        .where((c) => c.type == TransactionType.expense)
+        .toList(growable: false);
+    final existingCategoryBudgets = await ref
+        .read(appDatabaseProvider)
+        .getCategoryBudgetsForMonth(monthKey);
+    final categoryBudgetControllers = {
+      for (final c in expenseCategories)
+        c.id: TextEditingController(
+          text: (existingCategoryBudgets
+                      .where((b) => b.categoryId == c.id)
+                      .firstOrNull
+                      ?.budgetAmount ??
+                  0) >
+              0
+              ? (existingCategoryBudgets
+                        .where((b) => b.categoryId == c.id)
+                        .firstOrNull
+                        ?.budgetAmount ??
+                    0)
+                    .toStringAsFixed(2)
+              : '',
+        ),
+    };
+    if (!context.mounted) return;
     await showModalBottomSheet<void>(
       context: context,
-      showDragHandle: true,
       isScrollControlled: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          8,
-          16,
-          MediaQuery.of(sheetContext).viewInsets.bottom + 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Edit Budget',
-              style: TextStyle(
-                fontFamily: 'Georgia',
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
+      showDragHandle: false,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => AppModalSurface(
+        child: Padding(
+          padding: EdgeInsets.zero,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              AppSpacing.xs,
+              AppSpacing.sm,
+              MediaQuery.of(sheetContext).viewInsets.bottom + AppSpacing.sm,
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: budgetController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Monthly Budget',
-                hintText: 'e.g. 25000',
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 64,
+                    height: 4,
+                    color: const Color(0xFF6A6A6A),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.smPlus),
+                const Text(
+                  'Edit Budget',
+                  style: TextStyle(
+                    fontFamily: 'Bricolage Grotesque',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                TextField(
+                  controller: budgetController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Monthly Budget',
+                    hintText: 'e.g. 25000',
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.smPlus),
+                const Text(
+                  'Category Budgets',
+                  style: TextStyle(
+                    fontFamily: 'Bricolage Grotesque',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                ...expenseCategories.map((c) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: TextField(
+                      controller: categoryBudgetControllers[c.id],
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: c.name,
+                        hintText: '0',
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: AppSpacing.xs),
+                DialogActionsRow(
+                  cancelText: 'Close',
+                  confirmText: 'Save',
+                  onCancel: () => Navigator.pop(sheetContext),
+                  onConfirm: () async {
+                    final next = Money.tryParse(budgetController.text.trim());
+                    if (next == null || next < 0) return;
+                    await ref.read(settingsRepositoryProvider).setBudget(next);
+                    final db = ref.read(appDatabaseProvider);
+                    for (final c in expenseCategories) {
+                      final parsed = Money.tryParse(
+                        categoryBudgetControllers[c.id]!.text.trim(),
+                      );
+                      final value = parsed == null || parsed < 0
+                          ? 0.0
+                          : Money.normalize(parsed);
+                      await db.upsertCategoryBudget(
+                        CategoryBudgetsCompanion.insert(
+                          monthKey: monthKey,
+                          categoryId: c.id,
+                          budgetAmount: value,
+                          budgetAmountPaise: Value(Money.toPaise(value)),
+                          updatedAt: DateTime.now().millisecondsSinceEpoch,
+                        ),
+                      );
+                    }
+                    if (sheetContext.mounted) Navigator.pop(sheetContext);
+                  },
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(sheetContext);
+                      if (!context.mounted) return;
+                      context.push('/categories');
+                    },
+                    child: const Text('Add / Manage Categories'),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () async {
-                  final next = double.tryParse(budgetController.text.trim());
-                  if (next == null || next < 0) return;
-                  await ref.read(settingsRepositoryProvider).setBudget(next);
-                  if (sheetContext.mounted) Navigator.pop(sheetContext);
-                },
-                child: const Text('Save Monthly Budget'),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.pop(sheetContext);
-                  context.push('/categories');
-                },
-                child: const Text('Add / Manage Categories'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
+
+final _categoryBudgetsForMonthProvider =
+    StreamProvider.family<List<CategoryBudget>, String>((ref, monthKey) {
+      return ref
+          .read(appDatabaseProvider)
+          .watchCategoryBudgetsForMonth(monthKey);
+    });
 
 class _BudgetCategoryCard extends StatelessWidget {
   const _BudgetCategoryCard({
@@ -384,7 +480,7 @@ class _BudgetCategoryCard extends StatelessWidget {
                 child: Text(
                   name,
                   style: TextStyle(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Bricolage Grotesque',
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: overBudget ? const Color(0xFFFFB3A8) : Colors.white,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_icons.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
@@ -34,7 +35,7 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       appBar: NoirHeader(
         showLeading: true,
-        leadingIcon: Icons.notifications_none_rounded,
+        leadingIcon: AppIcons.bell,
         onLeadingTap: () => context.push('/notifications'),
       ),
       floatingActionButton: FloatingActionButton(
@@ -42,7 +43,7 @@ class HomePage extends ConsumerWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        child: const Icon(Icons.add, size: 32),
+        child: const Icon(AppIcons.plus, size: 28),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 96),
@@ -127,7 +128,7 @@ class HomePage extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.repeat, size: 16, color: Colors.white),
+                    const Icon(AppIcons.repeat, size: 16, color: Colors.white),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -135,7 +136,7 @@ class HomePage extends ConsumerWidget {
                         style: const TextStyle(fontSize: 12, color: Color(0xFFB2B2B2)),
                       ),
                     ),
-                    const Icon(Icons.chevron_right, size: 16),
+                    const Icon(AppIcons.chevronRight, size: 16),
                   ],
                 ),
               ),
@@ -148,7 +149,7 @@ class HomePage extends ConsumerWidget {
                 child: Text(
                   'Recent Transactions',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontFamily: 'Georgia',
+                    fontFamily: 'Bricolage Grotesque',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
@@ -201,23 +202,23 @@ class HomePage extends ConsumerWidget {
     if (t.contains('food') ||
         t.contains('dining') ||
         t.contains('restaurant')) {
-      return Icons.restaurant;
+      return AppIcons.food;
     }
     if (t.contains('uber') || t.contains('transport') || t.contains('taxi')) {
-      return Icons.directions_car;
+      return AppIcons.car;
     }
     if (t.contains('shop') || t.contains('store')) {
-      return Icons.shopping_bag;
+      return AppIcons.bag;
     }
     if (t.contains('travel') || t.contains('flight') || t.contains('air')) {
-      return Icons.flight;
+      return AppIcons.flight;
     }
     if (t.contains('salary') ||
         t.contains('income') ||
         t.contains('transfer')) {
-      return Icons.payments;
+      return AppIcons.money;
     }
-    return Icons.receipt_long;
+    return AppIcons.receipt;
   }
 
   static String _subtitle(dynamic tx) {
@@ -265,7 +266,7 @@ class _BalanceCard extends StatelessWidget {
           Text(
             Formatters.currency(balance),
             style: const TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Bricolage Grotesque',
               fontSize: 18,
               fontWeight: FontWeight.w700,
               height: 0.95,
@@ -277,7 +278,7 @@ class _BalanceCard extends StatelessWidget {
               const Text(
                 'SPENDLY',
                 style: TextStyle(
-                  fontFamily: 'Georgia',
+                  fontFamily: 'Bricolage Grotesque',
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                 ),
@@ -299,7 +300,7 @@ class _BalanceCard extends StatelessWidget {
                   color: const Color(0xFFD9D9D9),
                   border: Border.all(color: const Color(0xFF8D8D8D)),
                 ),
-                child: const Icon(Icons.contactless_rounded, color: Colors.black),
+                child: const Icon(AppIcons.settings, color: Colors.black),
               ),
             ],
           ),
@@ -383,7 +384,7 @@ class _StatTile extends StatelessWidget {
           Text(
             amount,
             style: const TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Bricolage Grotesque',
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
@@ -500,7 +501,7 @@ class _LendQuickCard extends StatelessWidget {
           children: [
             Row(
               children: const [
-                Icon(Icons.handshake_outlined, size: 16, color: Colors.white),
+                Icon(AppIcons.money, size: 16, color: Colors.white),
                 SizedBox(width: 8),
                 Text(
                   'LEND & BORROW',

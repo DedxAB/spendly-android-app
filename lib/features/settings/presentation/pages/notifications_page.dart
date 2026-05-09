@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/home/presentation/providers/home_provider.dart';
 import 'package:spendly/features/settings/presentation/providers/settings_provider.dart';
@@ -28,7 +29,7 @@ class NotificationsPage extends ConsumerWidget {
           const Text(
             'Notifications',
             style: TextStyle(
-              fontFamily: 'Georgia',
+              fontFamily: 'Bricolage Grotesque',
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
@@ -44,14 +45,14 @@ class NotificationsPage extends ConsumerWidget {
             _NoticeTile(
               title: 'Budget exceeded',
               message:
-                  'You are over budget by ${summary.remainingBudget.abs().toStringAsFixed(0)} this month.',
+                  'You are over budget by ${Formatters.currency(summary.remainingBudget.abs())} this month.',
               color: const Color(0xFFFF6B6B),
             ),
           if (recent.isNotEmpty)
             _NoticeTile(
               title: 'Latest transaction',
               message:
-                  '${recent.first.type.name.toUpperCase()} of ${recent.first.amount.toStringAsFixed(0)} added.',
+                  '${recent.first.type.name.toUpperCase()} of ${Formatters.currency(recent.first.amount)} added.',
               color: const Color(0xFF57F28F),
             ),
           _NoticeTile(

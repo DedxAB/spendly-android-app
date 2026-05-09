@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spendly/core/constants/app_enums.dart';
+import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/widgets/app_confirm_dialog.dart';
+import 'package:spendly/core/widgets/dialog_actions_row.dart';
+import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/categories/data/repositories/categories_repository_impl.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
@@ -12,23 +17,23 @@ class CategoriesPage extends ConsumerWidget {
   static IconData _iconForCategory(String name, TransactionType type) {
     final n = name.toLowerCase();
     if (n.contains('food') || n.contains('dining') || n.contains('restaurant')) {
-      return Icons.restaurant;
+      return AppIcons.food;
     }
     if (n.contains('grocery')) return Icons.local_grocery_store;
-    if (n.contains('travel') || n.contains('flight')) return Icons.flight;
+    if (n.contains('travel') || n.contains('flight')) return AppIcons.flight;
     if (n.contains('transport') || n.contains('taxi') || n.contains('uber')) {
-      return Icons.directions_car;
+      return AppIcons.car;
     }
-    if (n.contains('shopping') || n.contains('shop')) return Icons.shopping_bag;
+    if (n.contains('shopping') || n.contains('shop')) return AppIcons.bag;
     if (n.contains('rent') || n.contains('home')) return Icons.home;
     if (n.contains('bill') || n.contains('utility') || n.contains('electric')) {
-      return Icons.receipt_long;
+      return AppIcons.receipt;
     }
     if (n.contains('health') || n.contains('medical')) return Icons.local_hospital;
     if (n.contains('education') || n.contains('study')) return Icons.school;
     if (n.contains('entertainment') || n.contains('movie')) return Icons.movie;
     if (n.contains('gift')) return Icons.card_giftcard;
-    if (n.contains('salary') || n.contains('income')) return Icons.payments;
+    if (n.contains('salary') || n.contains('income')) return AppIcons.money;
     if (n.contains('freelance') || n.contains('business')) return Icons.work;
     if (n.contains('investment')) return Icons.trending_up;
     return type == TransactionType.income ? Icons.south_west : Icons.north_east;
@@ -40,7 +45,20 @@ class CategoriesPage extends ConsumerWidget {
 
     await showDialog<void>(
       context: context,
-      builder: (context) => StatefulBuilder(
+      builder: (context) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: Colors.white,
+            onPrimary: Colors.black,
+            surface: Color(0xFF0F0F0F),
+            onSurface: Colors.white,
+          ),
+          dialogTheme: const DialogThemeData(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            backgroundColor: Color(0xFF0F0F0F),
+          ),
+        ),
+        child: StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: const Text('Add Category'),
           content: Column(
@@ -69,12 +87,11 @@ class CategoriesPage extends ConsumerWidget {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () async {
+            DialogActionsRow(
+              cancelText: 'Cancel',
+              confirmText: 'Save',
+              onCancel: () => Navigator.pop(context),
+              onConfirm: () async {
                 final name = nameController.text.trim();
                 if (name.isEmpty) return;
                 final now = DateTime.now();
@@ -90,10 +107,10 @@ class CategoriesPage extends ConsumerWidget {
                 await ref.read(categoriesRepositoryProvider).add(category);
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Save'),
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -111,16 +128,17 @@ class CategoriesPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        title: const Text('Categories'),
-        backgroundColor: bg,
-        foregroundColor: primary,
+      appBar: NoirHeader(
+        showLeading: true,
+        leadingIcon: AppIcons.chevronLeft,
+        onLeadingTap: () => Navigator.of(context).maybePop(),
+        showProfileAction: false,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCategoryDialog(context, ref),
         backgroundColor: primary,
         foregroundColor: Colors.black,
-        child: const Icon(Icons.add),
+        child: const Icon(AppIcons.categories),
       ),
       body: categories.when(
         data: (items) {
@@ -142,7 +160,12 @@ class CategoriesPage extends ConsumerWidget {
             ..sort((a, b) => a.name.compareTo(b.name));
 
           return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              AppSpacing.smPlus,
+              AppSpacing.sm,
+              96,
+            ),
             itemCount: expenses.length + incomes.length + 2,
             itemBuilder: (context, index) {
               final expenseHeaderIndex = 0;
@@ -220,9 +243,16 @@ class CategoriesPage extends ConsumerWidget {
                     ),
                   ),
                   trailing: InkWell(
-                    onTap: () => ref
-                        .read(categoriesRepositoryProvider)
-                        .softDelete(category.id),
+                    onTap: () async {
+                      final shouldDelete = await showAppDeleteConfirmDialog(
+                        context,
+                        title: 'Delete category?',
+                        message: 'Delete "${category.name}" category?',
+                      );
+                      if (shouldDelete) {
+                        await ref.read(categoriesRepositoryProvider).softDelete(category.id);
+                      }
+                    },
                     child: Container(
                       width: 34,
                       height: 34,
@@ -232,7 +262,7 @@ class CategoriesPage extends ConsumerWidget {
                         color: const Color(0x221B0000),
                       ),
                       child: const Icon(
-                        Icons.delete_sweep_outlined,
+                        AppIcons.trash,
                         color: destructive,
                         size: 18,
                       ),
