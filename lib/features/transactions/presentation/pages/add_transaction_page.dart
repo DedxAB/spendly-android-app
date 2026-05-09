@@ -6,6 +6,7 @@ import 'package:spendly/core/constants/app_constants.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/theme/app_typography.dart';
 import 'package:spendly/core/utils/money.dart';
 import 'package:spendly/core/widgets/app_modal_surface.dart';
 import 'package:spendly/features/categories/domain/entities/category_entity.dart';
@@ -275,11 +276,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                           widget.existing == null
                               ? 'Add Transaction'
                               : 'Edit Transaction',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
+                          style: AppTypography.sectionTitle(context),
                         ),
                       ),
                       IconButton(
@@ -356,7 +353,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                           (c) => Padding(
                             padding: const EdgeInsets.only(right: 10),
                             child: _SheetChoiceChip(
-                              label: c.name.toUpperCase(),
+                              label: c.name,
                               selected: _selectedCategoryId == c.id,
                               onTap: () =>
                                   setState(() => _selectedCategoryId = c.id),
@@ -426,10 +423,7 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                     child: TextField(
                       controller: _noteController,
                       maxLines: 1,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                       decoration: const InputDecoration(
                         filled: false,
                         enabledBorder: InputBorder.none,
@@ -465,15 +459,15 @@ class _AddExpenseSheetState extends ConsumerState<AddExpenseSheet> {
                       child: Text(
                         widget.existing == null
                             ? (_type == TransactionType.income
-                                  ? 'SAVE INCOME'
-                                  : 'SAVE EXPENSE')
+                                  ? 'Save income'
+                                  : 'Save expense')
                             : (_type == TransactionType.income
-                                  ? 'UPDATE INCOME'
-                                  : 'UPDATE EXPENSE'),
+                                  ? 'Update income'
+                                  : 'Update expense'),
                         style: const TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0,
                         ),
                       ),
                     ),
@@ -571,8 +565,8 @@ class _AccountSegment extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = const [
       (PaymentMode.upi, 'UPI'),
-      (PaymentMode.card, 'CARD'),
-      (PaymentMode.cash, 'CASH'),
+      (PaymentMode.card, 'Card'),
+      (PaymentMode.cash, 'Cash'),
     ];
 
     return Container(
@@ -589,9 +583,7 @@ class _AccountSegment extends StatelessWidget {
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: selected == item.$1
-                      ? Colors.white
-                      : Colors.black,
+                  color: selected == item.$1 ? Colors.white : Colors.black,
                   border: Border(
                     right: BorderSide(
                       color: index == items.length - 1
@@ -601,13 +593,15 @@ class _AccountSegment extends StatelessWidget {
                   ),
                 ),
                 alignment: Alignment.center,
-                child: Text(item.$2,
-                    style: TextStyle(
-                      color: selected == item.$1 ? Colors.black : Colors.white,
-                      fontSize: 13,
-                      letterSpacing: 0.8,
-                      fontWeight: FontWeight.w700,
-                    )),
+                child: Text(
+                  item.$2,
+                  style: TextStyle(
+                    color: selected == item.$1 ? Colors.black : Colors.white,
+                    fontSize: 13,
+                    letterSpacing: 0,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
           );
@@ -626,8 +620,8 @@ class _TypeSegment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = const [
-      (TransactionType.expense, 'EXPENSE'),
-      (TransactionType.income, 'INCOME'),
+      (TransactionType.expense, 'Expense'),
+      (TransactionType.income, 'Income'),
     ];
 
     return Container(
@@ -658,8 +652,8 @@ class _TypeSegment extends StatelessWidget {
                   style: TextStyle(
                     color: selected == item.$1 ? Colors.black : Colors.white,
                     fontSize: 13,
-                    letterSpacing: 0.8,
-                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -670,4 +664,3 @@ class _TypeSegment extends StatelessWidget {
     );
   }
 }
-

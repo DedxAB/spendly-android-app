@@ -5,10 +5,12 @@ import 'package:intl/intl.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/theme/app_typography.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/categories/presentation/providers/categories_provider.dart';
 import 'package:spendly/features/home/presentation/providers/home_provider.dart';
+import 'package:spendly/features/home/presentation/widgets/spendly_black_card.dart';
 import 'package:spendly/features/lend/presentation/providers/lend_provider.dart';
 import 'package:spendly/features/recurring/presentation/providers/recurring_provider.dart';
 import 'package:spendly/features/transactions/presentation/pages/add_transaction_page.dart';
@@ -25,7 +27,8 @@ class HomePage extends ConsumerWidget {
     final recent = ref.watch(recentTransactionsProvider);
     final profile = ref.watch(userProfileProvider).valueOrNull;
     final lendOverview = ref.watch(lendOverviewProvider);
-    final recurringRules = ref.watch(recurringRulesProvider).valueOrNull ?? const [];
+    final recurringRules =
+        ref.watch(recurringRulesProvider).valueOrNull ?? const [];
     final categories = ref.watch(allCategoriesProvider).valueOrNull ?? const [];
     final categoryById = {for (final c in categories) c.id: c.name};
     final cardholderName = (profile?.name.trim().isNotEmpty ?? false)
@@ -46,12 +49,19 @@ class HomePage extends ConsumerWidget {
         child: const Icon(AppIcons.plus, size: 28),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 96),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          96,
+        ),
         children: [
           summary.when(
-            data: (data) => _BalanceCard(
+            data: (data) => SpendlyBlackCard(
               balance: data.currentBalance,
-              name: cardholderName,
+              availableAmount: data.remainingBudget,
+              cardholderName: cardholderName,
+              onTap: () => context.push('/transactions'),
             ),
             loading: () => const SizedBox(
               height: 260,
@@ -121,7 +131,10 @@ class HomePage extends ConsumerWidget {
             InkWell(
               onTap: () => context.push('/recurring'),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0B0B0B),
                   border: Border.all(color: const Color(0xFF242424)),
@@ -133,7 +146,10 @@ class HomePage extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         '${recurringRules.where((r) => r.isActive).length} active recurring rules',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFFB2B2B2)),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFB2B2B2),
+                        ),
                       ),
                     ),
                     const Icon(AppIcons.chevronRight, size: 16),
@@ -148,16 +164,12 @@ class HomePage extends ConsumerWidget {
               Expanded(
                 child: Text(
                   'Recent Transactions',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTypography.sectionTitle(context),
                 ),
               ),
               TextButton(
                 onPressed: () => context.push('/transactions'),
-                child: const Text('VIEW ALL'),
+                child: const Text('View all'),
               ),
             ],
           ),
@@ -231,116 +243,6 @@ class HomePage extends ConsumerWidget {
   }
 }
 
-class _BalanceCard extends StatelessWidget {
-  const _BalanceCard({required this.balance, required this.name});
-
-  final double balance;
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0D0D0D), Color(0xFF171717), Color(0xFF090909)],
-        ),
-        borderRadius: BorderRadius.zero,
-        border: Border.all(color: const Color(0xFF313131)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'TOTAL BALANCE',
-            style: TextStyle(
-              letterSpacing: 2,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFFB2B2B2),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            Formatters.currency(balance),
-            style: const TextStyle(
-              fontFamily: 'Bricolage Grotesque',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              height: 0.95,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              const Text(
-                'SPENDLY',
-                style: TextStyle(
-                  fontFamily: 'Bricolage Grotesque',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(width: 10),
-              const Text(
-                'BLACK',
-                style: TextStyle(
-                  color: Color(0xFF888888),
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Spacer(),
-              Container(
-                width: 44,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD9D9D9),
-                  border: Border.all(color: const Color(0xFF8D8D8D)),
-                ),
-                child: const Icon(AppIcons.settings, color: Colors.black),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            '.... .... .... 4092',
-            style: TextStyle(
-              fontSize: 18,
-              letterSpacing: 2.8,
-              color: Color(0xFFE8E8E8),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Text(
-                'CARDHOLDER\n${name.toUpperCase()}',
-                style: const TextStyle(
-                  color: Color(0xFFB2B2B2),
-                  fontSize: 11,
-                  height: 1.4,
-                ),
-              ),
-              const Spacer(),
-              const Text(
-                'EXPIRES\n12/28',
-                style: TextStyle(
-                  color: Color(0xFFB2B2B2),
-                  fontSize: 11,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _StatTile extends StatelessWidget {
   const _StatTile({
     required this.title,
@@ -373,30 +275,14 @@ class _StatTile extends StatelessWidget {
           if (active) const SizedBox(height: 10),
           Text(
             title,
-            style: const TextStyle(
-              letterSpacing: 1.6,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              height: 1.1,
-            ),
+            style: AppTypography.metadata(context).copyWith(height: 1.25),
           ),
           const Spacer(),
-          Text(
-            amount,
-            style: const TextStyle(
-              fontFamily: 'Bricolage Grotesque',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text(amount, style: AppTypography.amount(context, fontSize: 18)),
           const SizedBox(height: 8),
           Text(
             note,
-            style: TextStyle(
-              color: noteColor,
-              fontSize: 13,
-              height: 1.3,
-            ),
+            style: TextStyle(color: noteColor, fontSize: 13, height: 1.3),
           ),
         ],
       ),
@@ -441,13 +327,7 @@ class _TransactionRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(title, style: AppTypography.rowTitle(context)),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
@@ -461,9 +341,9 @@ class _TransactionRow extends StatelessWidget {
           ),
           Text(
             '${isIncome ? '+' : '-'}${Formatters.currency(amount)}',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
+            style: AppTypography.amount(
+              context,
+              fontSize: 20,
               color: isIncome ? const Color(0xFF57F28F) : Colors.white,
             ),
           ),
@@ -500,17 +380,14 @@ class _LendQuickCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              children: const [
-                Icon(AppIcons.money, size: 16, color: Colors.white),
-                SizedBox(width: 8),
+              children: [
+                const Icon(AppIcons.money, size: 16, color: Colors.white),
+                const SizedBox(width: 8),
                 Text(
                   'LEND & BORROW',
-                  style: TextStyle(
-                    fontSize: 12,
-                    letterSpacing: 1.4,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFBDBDBD),
-                  ),
+                  style: AppTypography.metadata(
+                    context,
+                  ).copyWith(color: const Color(0xFFBDBDBD)),
                 ),
               ],
             ),
@@ -537,10 +414,7 @@ class _LendQuickCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               '$openPeople active people - Tap to open',
-              style: const TextStyle(
-                color: Color(0xFFB2B2B2),
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Color(0xFFB2B2B2), fontSize: 12),
             ),
           ],
         ),
@@ -572,17 +446,14 @@ class _LendMetric extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFFA3A3A3),
-            ),
+            style: const TextStyle(fontSize: 11, color: Color(0xFFA3A3A3)),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(
+            style: AppTypography.amount(
+              context,
               fontSize: 16,
-              fontWeight: FontWeight.w700,
               color: valueColor,
             ),
           ),
@@ -591,4 +462,3 @@ class _LendMetric extends StatelessWidget {
     );
   }
 }
-

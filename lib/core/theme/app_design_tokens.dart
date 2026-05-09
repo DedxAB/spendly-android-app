@@ -40,9 +40,19 @@ class AppRadii {
   static const md = 0.0;
   static const lg = 0.0;
   static const xl = 0.0;
+  static const premiumCard = 0.0;
+}
+
+class AppModalSizes {
+  static const dialogContentWidth = 520.0;
+  static const dialogMaxWidth = 560.0;
+  static const sheetMaxWidth = 720.0;
+  static const horizontalInset = 16.0;
+  static const verticalInset = 24.0;
 }
 
 class AppElevation {
   static const card = 0.0;
   static const fab = 0.0;
+  static const premiumCard = 18.0;
 }

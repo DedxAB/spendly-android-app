@@ -137,10 +137,12 @@ class _SplashPageState extends ConsumerState<SplashPage>
     return Scaffold(
       body: FadeTransition(
         opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-        child: const Center(
+        child: Center(
           child: Text(
             'Spendly',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
         ),
       ),
@@ -168,22 +170,22 @@ class AppShell extends StatelessWidget {
       _ShellNavItem(
         icon: AppIcons.home,
         selectedIcon: AppIcons.home,
-        label: 'HOME',
+        label: 'Home',
       ),
       _ShellNavItem(
         icon: AppIcons.history,
         selectedIcon: AppIcons.history,
-        label: 'HISTORY',
+        label: 'History',
       ),
       _ShellNavItem(
         icon: AppIcons.analytics,
         selectedIcon: AppIcons.analytics,
-        label: 'ANALYTICS',
+        label: 'Analytics',
       ),
       _ShellNavItem(
         icon: AppIcons.budget,
         selectedIcon: AppIcons.budget,
-        label: 'BUDGET',
+        label: 'Budget',
       ),
     ];
 
@@ -296,11 +298,10 @@ class _ShellNavTile extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 item.label,
-                style: TextStyle(
-                  fontFamily: 'Bricolage Grotesque',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontSize: 10,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  letterSpacing: 1.0,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  letterSpacing: 0,
                   color: selected
                       ? Colors.white
                       : (isDark
@@ -315,4 +316,3 @@ class _ShellNavTile extends StatelessWidget {
     );
   }
 }
-

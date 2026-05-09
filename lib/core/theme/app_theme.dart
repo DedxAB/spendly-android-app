@@ -31,13 +31,21 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         scrolledUnderElevation: 0,
         elevation: 0,
-        titleTextStyle: AppTypography.textTheme(Brightness.light).titleLarge
-            ?.copyWith(color: AppColors.lightTextPrimary),
+        titleTextStyle: AppTypography.textTheme(
+          Brightness.light,
+        ).titleLarge?.copyWith(color: AppColors.lightTextPrimary),
       ),
       dividerColor: AppColors.borderLight,
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.lightSurface,
         surfaceTintColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: AppModalSizes.horizontalInset,
+          vertical: AppModalSizes.verticalInset,
+        ),
+        constraints: const BoxConstraints(
+          maxWidth: AppModalSizes.dialogMaxWidth,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.lg),
           side: const BorderSide(color: AppColors.borderLight),
@@ -46,6 +54,9 @@ class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.lightSurface,
         surfaceTintColor: Colors.transparent,
+        constraints: const BoxConstraints(
+          maxWidth: AppModalSizes.sheetMaxWidth,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.lg),
         ),
@@ -53,8 +64,9 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.lightSurface,
-        hintStyle: AppTypography.textTheme(Brightness.light).bodySmall
-            ?.copyWith(color: AppColors.lightTextSecondary),
+        hintStyle: AppTypography.textTheme(
+          Brightness.light,
+        ).bodySmall?.copyWith(color: AppColors.lightTextSecondary),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
@@ -71,8 +83,9 @@ class AppTheme {
           minimumSize: const Size.fromHeight(52),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
-          textStyle: AppTypography.textTheme(Brightness.light).bodyMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
+          textStyle: AppTypography.textTheme(
+            Brightness.light,
+          ).bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.md),
@@ -83,8 +96,9 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(0, 48),
           side: const BorderSide(color: AppColors.borderLight),
-          textStyle: AppTypography.textTheme(Brightness.light).bodySmall
-              ?.copyWith(fontWeight: FontWeight.w600),
+          textStyle: AppTypography.textTheme(
+            Brightness.light,
+          ).bodySmall?.copyWith(fontWeight: FontWeight.w600),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.md),
           ),
@@ -92,8 +106,9 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          textStyle: AppTypography.textTheme(Brightness.light).labelLarge
-              ?.copyWith(fontWeight: FontWeight.w600),
+          textStyle: AppTypography.textTheme(
+            Brightness.light,
+          ).labelLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -133,13 +148,21 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         scrolledUnderElevation: 0,
         elevation: 0,
-        titleTextStyle: AppTypography.textTheme(Brightness.dark).titleLarge
-            ?.copyWith(color: AppColors.darkTextPrimary),
+        titleTextStyle: AppTypography.textTheme(
+          Brightness.dark,
+        ).titleLarge?.copyWith(color: AppColors.darkTextPrimary),
       ),
       dividerColor: AppColors.borderDark,
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.darkSurface,
         surfaceTintColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: AppModalSizes.horizontalInset,
+          vertical: AppModalSizes.verticalInset,
+        ),
+        constraints: const BoxConstraints(
+          maxWidth: AppModalSizes.dialogMaxWidth,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.lg),
           side: const BorderSide(color: AppColors.borderDark),
@@ -148,6 +171,9 @@ class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.darkSurface,
         surfaceTintColor: Colors.transparent,
+        constraints: const BoxConstraints(
+          maxWidth: AppModalSizes.sheetMaxWidth,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.lg),
         ),
@@ -155,8 +181,9 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.darkSurface,
-        hintStyle: AppTypography.textTheme(Brightness.dark).bodySmall
-            ?.copyWith(color: AppColors.darkTextSecondary),
+        hintStyle: AppTypography.textTheme(
+          Brightness.dark,
+        ).bodySmall?.copyWith(color: AppColors.darkTextSecondary),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
@@ -185,8 +212,9 @@ class AppTheme {
           minimumSize: const Size.fromHeight(52),
           backgroundColor: AppColors.onPrimary,
           foregroundColor: AppColors.darkBackground,
-          textStyle: AppTypography.textTheme(Brightness.dark).bodyMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
+          textStyle: AppTypography.textTheme(
+            Brightness.dark,
+          ).bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.md),
@@ -197,8 +225,9 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(0, 48),
           side: const BorderSide(color: AppColors.borderDark),
-          textStyle: AppTypography.textTheme(Brightness.dark).bodySmall
-              ?.copyWith(fontWeight: FontWeight.w600),
+          textStyle: AppTypography.textTheme(
+            Brightness.dark,
+          ).bodySmall?.copyWith(fontWeight: FontWeight.w600),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadii.md),
           ),
@@ -206,8 +235,9 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          textStyle: AppTypography.textTheme(Brightness.dark).labelLarge
-              ?.copyWith(fontWeight: FontWeight.w600),
+          textStyle: AppTypography.textTheme(
+            Brightness.dark,
+          ).labelLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -219,4 +249,3 @@ class AppTheme {
     );
   }
 }
-

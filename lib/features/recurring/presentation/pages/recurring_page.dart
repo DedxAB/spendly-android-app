@@ -61,168 +61,171 @@ class RecurringPage extends ConsumerWidget {
           ),
         ),
         child: StatefulBuilder(
-        builder: (context, setState) {
-          final dropdownMenuColor =
-              Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF16261E)
-              : Colors.white;
-          return AlertDialog(
-            title: const Text('Add Recurring Expense'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(labelText: 'Title'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      prefixText: '${AppConstants.currencySymbol} ',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<CategoryEntity>(
-                    dropdownColor: dropdownMenuColor,
-                    initialValue: selectedCategory,
-                    decoration: const InputDecoration(labelText: 'Category'),
-                    items: categories
-                        .map(
-                          (c) =>
-                              DropdownMenuItem(value: c, child: Text(c.name)),
-                        )
-                        .toList(growable: false),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => selectedCategory = value);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<RecurringFrequency>(
-                    dropdownColor: dropdownMenuColor,
-                    initialValue: selectedFrequency,
-                    decoration: const InputDecoration(labelText: 'Frequency'),
-                    items: const [
-                      DropdownMenuItem(
-                        value: RecurringFrequency.daily,
-                        child: Text('Daily'),
+          builder: (context, setState) {
+            final dropdownMenuColor =
+                Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF16261E)
+                : Colors.white;
+            return AlertDialog(
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: AppModalSizes.horizontalInset,
+                vertical: AppModalSizes.verticalInset,
+              ),
+              title: const Text('Add Recurring Expense'),
+              content: SizedBox(
+                width: AppModalSizes.dialogContentWidth,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: titleController,
+                        decoration: const InputDecoration(labelText: 'Title'),
                       ),
-                      DropdownMenuItem(
-                        value: RecurringFrequency.weekly,
-                        child: Text('Weekly'),
-                      ),
-                      DropdownMenuItem(
-                        value: RecurringFrequency.monthly,
-                        child: Text('Monthly'),
-                      ),
-                      DropdownMenuItem(
-                        value: RecurringFrequency.yearly,
-                        child: Text('Yearly'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => selectedFrequency = value);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  SegmentedButton<PaymentMode>(
-                    segments: const [
-                      ButtonSegment(
-                        value: PaymentMode.upi,
-                        label: Text('UPI'),
-                      ),
-                      ButtonSegment(
-                        value: PaymentMode.card,
-                        label: Text('Card'),
-                      ),
-                      ButtonSegment(
-                        value: PaymentMode.cash,
-                        label: Text('Cash'),
-                      ),
-                    ],
-                    selected: {selectedPaymentMode},
-                    onSelectionChanged: (value) {
-                      setState(() => selectedPaymentMode = value.first);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: noteController,
-                    decoration: const InputDecoration(
-                      labelText: 'Note (optional)',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Start Date'),
-                    subtitle: Text(Formatters.date(selectedStartDate)),
-                    trailing: const Icon(AppIcons.calendar),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedStartDate,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime.now().add(
-                          const Duration(days: 3650),
+                      const SizedBox(height: AppSpacing.xs),
+                      TextField(
+                        controller: amountController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
                         ),
-                      );
-                      if (picked != null) {
-                        setState(() => selectedStartDate = picked);
-                      }
-                    },
+                        decoration: const InputDecoration(
+                          labelText: 'Amount',
+                          prefixText: '${AppConstants.currencySymbol} ',
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      DropdownButtonFormField<CategoryEntity>(
+                        dropdownColor: dropdownMenuColor,
+                        initialValue: selectedCategory,
+                        decoration: const InputDecoration(
+                          labelText: 'Category',
+                        ),
+                        items: categories
+                            .map(
+                              (c) => DropdownMenuItem(
+                                value: c,
+                                child: Text(c.name),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => selectedCategory = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      DropdownButtonFormField<RecurringFrequency>(
+                        dropdownColor: dropdownMenuColor,
+                        initialValue: selectedFrequency,
+                        decoration: const InputDecoration(
+                          labelText: 'Frequency',
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: RecurringFrequency.daily,
+                            child: Text('Daily'),
+                          ),
+                          DropdownMenuItem(
+                            value: RecurringFrequency.weekly,
+                            child: Text('Weekly'),
+                          ),
+                          DropdownMenuItem(
+                            value: RecurringFrequency.monthly,
+                            child: Text('Monthly'),
+                          ),
+                          DropdownMenuItem(
+                            value: RecurringFrequency.yearly,
+                            child: Text('Yearly'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => selectedFrequency = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      _PaymentModeSegment(
+                        selected: selectedPaymentMode,
+                        onChanged: (value) {
+                          setState(() => selectedPaymentMode = value);
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      TextField(
+                        controller: noteController,
+                        decoration: const InputDecoration(
+                          labelText: 'Note (optional)',
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Start Date'),
+                        subtitle: Text(Formatters.date(selectedStartDate)),
+                        trailing: const Icon(AppIcons.calendar),
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedStartDate,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 3650),
+                            ),
+                          );
+                          if (picked != null) {
+                            setState(() => selectedStartDate = picked);
+                          }
+                        },
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-            actions: [
-              DialogActionsRow(
-                cancelText: 'Cancel',
-                confirmText: 'Save',
-                onCancel: () => Navigator.pop(context),
-                onConfirm: () async {
-                  final title = titleController.text.trim();
-                  final amount = Money.tryParse(amountController.text.trim());
-                  if (title.isEmpty || amount == null || amount <= 0) return;
+              actions: [
+                DialogActionsRow(
+                  cancelText: 'Cancel',
+                  confirmText: 'Save',
+                  onCancel: () => Navigator.pop(context),
+                  onConfirm: () async {
+                    final title = titleController.text.trim();
+                    final amount = Money.tryParse(amountController.text.trim());
+                    if (title.isEmpty || amount == null || amount <= 0) return;
 
-                  final now = DateTime.now();
-                  final rule = RecurringRuleEntity(
-                    id: const Uuid().v4(),
-                    title: title,
-                    type: TransactionType.expense,
-                    amount: amount,
-                    categoryId: selectedCategory.id,
-                    paymentMode: selectedPaymentMode,
-                    frequency: selectedFrequency,
-                    note: noteController.text.trim().isEmpty
-                        ? null
-                        : noteController.text.trim(),
-                    startDate: selectedStartDate,
-                    nextDueDate: selectedStartDate,
-                    createdAt: now,
-                    updatedAt: now,
-                    isActive: true,
-                    isDeleted: false,
-                  );
+                    final now = DateTime.now();
+                    final rule = RecurringRuleEntity(
+                      id: const Uuid().v4(),
+                      title: title,
+                      type: TransactionType.expense,
+                      amount: amount,
+                      categoryId: selectedCategory.id,
+                      paymentMode: selectedPaymentMode,
+                      frequency: selectedFrequency,
+                      note: noteController.text.trim().isEmpty
+                          ? null
+                          : noteController.text.trim(),
+                      startDate: selectedStartDate,
+                      nextDueDate: selectedStartDate,
+                      createdAt: now,
+                      updatedAt: now,
+                      isActive: true,
+                      isDeleted: false,
+                    );
 
-                  await ref.read(recurringRepositoryProvider).addOrUpdate(rule);
-                  await ref.read(recurringRepositoryProvider).processDueRules();
-                  if (context.mounted) Navigator.pop(context);
-                },
-              ),
-            ],
-          );
-        },
-      ),
+                    await ref
+                        .read(recurringRepositoryProvider)
+                        .addOrUpdate(rule);
+                    await ref
+                        .read(recurringRepositoryProvider)
+                        .processDueRules();
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -255,18 +258,25 @@ class RecurringPage extends ConsumerWidget {
             itemCount: items.length,
             itemBuilder: (context, index) {
               final item = items[index];
-              final dueToday = DateTime(
+              final dueToday =
+                  DateTime(
                     item.nextDueDate.year,
                     item.nextDueDate.month,
                     item.nextDueDate.day,
                   ) ==
-                  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+                  DateTime(
+                    DateTime.now().year,
+                    DateTime.now().month,
+                    DateTime.now().day,
+                  );
               return Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: GlassCard(
                   child: ListTile(
                     leading: Icon(
-                      item.isActive ? AppIcons.repeat : Icons.pause_circle_outline,
+                      item.isActive
+                          ? AppIcons.repeat
+                          : Icons.pause_circle_outline,
                       color: item.isActive
                           ? AppColors.emerald
                           : Theme.of(context).colorScheme.outline,
@@ -276,7 +286,7 @@ class RecurringPage extends ConsumerWidget {
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
-                      '${item.frequency.value.toUpperCase()} | Next: ${Formatters.date(item.nextDueDate)}',
+                      '${item.frequency.value} | Next: ${Formatters.date(item.nextDueDate)}',
                     ),
                     titleTextStyle: const TextStyle(
                       color: Colors.white,
@@ -325,7 +335,9 @@ class RecurringPage extends ConsumerWidget {
                         message: 'Delete "${item.title}"?',
                       );
                       if (shouldDelete) {
-                        await ref.read(recurringRepositoryProvider).softDelete(item.id);
+                        await ref
+                            .read(recurringRepositoryProvider)
+                            .softDelete(item.id);
                       }
                     },
                   ),
@@ -336,6 +348,63 @@ class RecurringPage extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('Failed to load: $error')),
+      ),
+    );
+  }
+}
+
+class _PaymentModeSegment extends StatelessWidget {
+  const _PaymentModeSegment({required this.selected, required this.onChanged});
+
+  final PaymentMode selected;
+  final ValueChanged<PaymentMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = const [
+      (PaymentMode.upi, 'UPI'),
+      (PaymentMode.card, 'Card'),
+      (PaymentMode.cash, 'Cash'),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFF4A4A4A)),
+        borderRadius: BorderRadius.circular(AppRadii.md),
+      ),
+      child: Row(
+        children: List.generate(items.length, (index) {
+          final item = items[index];
+          final isSelected = selected == item.$1;
+          return Expanded(
+            child: InkWell(
+              onTap: () => onChanged(item.$1),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : Colors.black,
+                  border: Border(
+                    right: BorderSide(
+                      color: index == items.length - 1
+                          ? Colors.transparent
+                          : const Color(0xFF4A4A4A),
+                    ),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  item.$2,
+                  style: TextStyle(
+                    color: isSelected ? Colors.black : Colors.white,
+                    fontSize: 13,
+                    letterSpacing: 0.8,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
