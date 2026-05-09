@@ -18,6 +18,84 @@ import 'package:spendly/features/user/presentation/providers/user_profile_provid
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
+  Future<void> _performGuardedLogout(BuildContext context, WidgetRef ref) async {
+    final cloudController = ref.read(cloudSyncControllerProvider.notifier);
+    final cloud = ref.read(cloudSyncControllerProvider).valueOrNull;
+
+    var shouldContinue = true;
+    var backupDone = false;
+
+    if (cloud?.isConnected == true) {
+      while (!backupDone && shouldContinue) {
+        try {
+          await cloudController.backupNow();
+          backupDone = true;
+        } catch (_) {
+          if (!context.mounted) return;
+          final decision = await showDialog<int>(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('Backup failed'),
+              content: const Text(
+                'Could not create latest backup before logout. What do you want to do?',
+              ),
+              actions: [
+                DialogActionsRow(
+                  cancelText: 'Cancel',
+                  confirmText: 'Retry backup',
+                  onCancel: () => Navigator.pop(dialogContext, 0),
+                  onConfirm: () => Navigator.pop(dialogContext, 1),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(dialogContext, 2),
+                    child: const Text('Logout anyway'),
+                  ),
+                ),
+              ],
+            ),
+          );
+          if (decision == 1) {
+            continue;
+          }
+          if (decision == 2) {
+            shouldContinue = true;
+            break;
+          }
+          shouldContinue = false;
+        }
+      }
+    }
+
+    if (!shouldContinue) return;
+
+    try {
+      final latestCloud = ref.read(cloudSyncControllerProvider).valueOrNull;
+      if (latestCloud?.isConnected == true) {
+        await cloudController.disconnectAccount();
+      }
+      await ref.read(settingsRepositoryProvider).clearAllData();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Logged out. Local data cleared. Google backup preserved.',
+          ),
+        ),
+      );
+      context.go('/splash');
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logout failed. Please try again.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     const bg = Color(0xFF0D0D0D);
@@ -263,9 +341,28 @@ class SettingsPage extends ConsumerWidget {
                     OutlinedButton(
                       onPressed: cloudSync?.isConnected == true
                           ? () async {
-                              await ref
-                                  .read(cloudSyncControllerProvider.notifier)
-                                  .restoreFromDrive();
+                              try {
+                                await ref
+                                    .read(cloudSyncControllerProvider.notifier)
+                                    .restoreFromDrive();
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Restore completed successfully.',
+                                    ),
+                                  ),
+                                );
+                              } catch (_) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Restore failed. Please try again.',
+                                    ),
+                                  ),
+                                );
+                              }
                             }
                           : null,
                       child: const Text('Restore'),
@@ -327,19 +424,7 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ),
               onPressed: () async {
-                final p = profile;
-                await ref
-                    .read(userProfileRepositoryProvider)
-                    .updateProfile(
-                      name: p?.name ?? 'User',
-                      imageUrl: p?.imageUrl,
-                      email: p?.email,
-                      phone: p?.phone,
-                      onboardingCompleted: false,
-                    );
-                if (context.mounted) {
-                  context.go('/splash');
-                }
+                await _performGuardedLogout(context, ref);
               },
               child: const Text(
                 'LOGOUT',
@@ -354,7 +439,7 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: 26),
           const Center(
             child: Text(
-              'Version 2.4.0',
+              'Version 1.1.1',
               style: TextStyle(color: muted, fontSize: 14),
             ),
           ),
