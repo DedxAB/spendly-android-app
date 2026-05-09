@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:spendly/core/constants/app_constants.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/theme/app_typography.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/insights/domain/entities/expense_slice.dart';
@@ -43,15 +44,7 @@ class InsightsPage extends ConsumerWidget {
           AppSpacing.md,
         ),
         children: [
-          const Text(
-            'Monthly Spending',
-            style: TextStyle(
-              fontFamily: 'Bricolage Grotesque',
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              height: 0.9,
-            ),
-          ),
+          Text('Monthly Spending', style: AppTypography.screenTitle(context)),
           const SizedBox(height: AppSpacing.smPlus),
           Text(
             'A detailed review of your outbound\ncapital for the current period.\nIdentifying areas of excess and\nstructural inefficiencies.',
@@ -78,22 +71,14 @@ class InsightsPage extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'TOTAL OUTFLOW',
-                            style: TextStyle(
-                              letterSpacing: 2,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: AppTypography.metadata(context),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             Formatters.currency(expense),
-                            style: const TextStyle(
-                              fontFamily: 'Bricolage Grotesque',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: AppTypography.amount(context, fontSize: 18),
                           ),
                         ],
                       ),
@@ -113,10 +98,9 @@ class InsightsPage extends ConsumerWidget {
                         const SizedBox(height: 8),
                         Text(
                           '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}%',
-                          style: TextStyle(
-                            fontFamily: 'Bricolage Grotesque',
+                          style: AppTypography.amount(
+                            context,
                             fontSize: 18,
-                            fontWeight: FontWeight.w700,
                             color: change >= 0
                                 ? const Color(0xFFFFB3A8)
                                 : const Color(0xFF8AF0A0),
@@ -277,14 +261,7 @@ class _CategoryBreakdown extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Category Breakdown',
-          style: TextStyle(
-            fontFamily: 'Bricolage Grotesque',
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        Text('Category Breakdown', style: AppTypography.sectionTitle(context)),
         const SizedBox(height: 10),
         const Divider(color: AppColors.borderDark),
         const SizedBox(height: 8),

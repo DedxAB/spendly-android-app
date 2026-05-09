@@ -8,6 +8,7 @@ import 'package:spendly/core/database/app_database.dart';
 import 'package:spendly/core/database/database_providers.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/theme/app_typography.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/utils/money.dart';
 import 'package:spendly/core/widgets/app_modal_surface.dart';
@@ -50,7 +51,8 @@ class BudgetPage extends ConsumerWidget {
 
     final byCategory = <String, double>{};
     for (final tx in monthlyItems) {
-      byCategory[tx.categoryId] = (byCategory[tx.categoryId] ?? 0.0) + tx.amount;
+      byCategory[tx.categoryId] =
+          (byCategory[tx.categoryId] ?? 0.0) + tx.amount;
     }
 
     final categoryCards = byCategory.entries.toList(growable: false)
@@ -71,16 +73,14 @@ class BudgetPage extends ConsumerWidget {
         onLeadingTap: () => context.push('/notifications'),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.mdPlus,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
         children: [
-          const Text(
-            'Budget',
-            style: TextStyle(
-              fontFamily: 'Bricolage Grotesque',
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text('Budget', style: AppTypography.screenTitle(context)),
           const SizedBox(height: 4),
           Text(
             '${DateFormat('MMMM').format(now)} Overview',
@@ -98,14 +98,7 @@ class BudgetPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Monthly Health',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                Text('Monthly Health', style: AppTypography.cardTitle(context)),
                 const SizedBox(height: 6),
                 const Text(
                   'TOTAL AVAILABLE VS USED',
@@ -122,11 +115,7 @@ class BudgetPage extends ConsumerWidget {
                     children: [
                       TextSpan(
                         text: Formatters.currency(monthlySpend),
-                        style: const TextStyle(
-                          fontFamily: 'Bricolage Grotesque',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: AppTypography.amount(context),
                       ),
                       TextSpan(
                         text: ' / ${Formatters.currency(budget)}',
@@ -177,7 +166,6 @@ class BudgetPage extends ConsumerWidget {
                           Text(
                             '${safePerDay >= 0 ? Formatters.currency(safePerDay) : '-${Formatters.currency(safePerDay.abs())}'} / day',
                             style: TextStyle(
-                              fontFamily: 'Bricolage Grotesque',
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: safePerDay >= 0
@@ -213,19 +201,15 @@ class BudgetPage extends ConsumerWidget {
           const SizedBox(height: 24),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Categories',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTypography.sectionTitle(context),
                 ),
               ),
               OutlinedButton(
                 onPressed: () => _openBudgetEditor(context, ref, budget),
-                child: const Text('EDIT BUDGETS'),
+                child: const Text('Edit budgets'),
               ),
             ],
           ),
@@ -298,17 +282,18 @@ class BudgetPage extends ConsumerWidget {
     final categoryBudgetControllers = {
       for (final c in expenseCategories)
         c.id: TextEditingController(
-          text: (existingCategoryBudgets
-                      .where((b) => b.categoryId == c.id)
-                      .firstOrNull
-                      ?.budgetAmount ??
-                  0) >
-              0
+          text:
+              (existingCategoryBudgets
+                          .where((b) => b.categoryId == c.id)
+                          .firstOrNull
+                          ?.budgetAmount ??
+                      0) >
+                  0
               ? (existingCategoryBudgets
-                        .where((b) => b.categoryId == c.id)
-                        .firstOrNull
-                        ?.budgetAmount ??
-                    0)
+                            .where((b) => b.categoryId == c.id)
+                            .firstOrNull
+                            ?.budgetAmount ??
+                        0)
                     .toStringAsFixed(2)
               : '',
         ),
@@ -341,14 +326,7 @@ class BudgetPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.smPlus),
-                const Text(
-                  'Edit Budget',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                Text('Edit Budget', style: AppTypography.sectionTitle(context)),
                 const SizedBox(height: AppSpacing.xs),
                 TextField(
                   controller: budgetController,
@@ -361,13 +339,9 @@ class BudgetPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.smPlus),
-                const Text(
+                Text(
                   'Category Budgets',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTypography.cardTitle(context),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 ...expenseCategories.map((c) {
@@ -479,10 +453,7 @@ class _BudgetCategoryCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   name,
-                  style: TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
+                  style: AppTypography.sectionTitle(context).copyWith(
                     color: overBudget ? const Color(0xFFFFB3A8) : Colors.white,
                   ),
                 ),
@@ -540,4 +511,3 @@ class _BudgetCategoryCard extends StatelessWidget {
     );
   }
 }
-

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/theme/app_typography.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/app_confirm_dialog.dart';
 import 'package:spendly/core/widgets/app_modal_surface.dart';
@@ -39,12 +40,7 @@ class TransactionsPage extends ConsumerWidget {
           AppSpacing.md,
         ),
         children: [
-          Text(
-            'SEARCH LEDGER',
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(letterSpacing: 2),
-          ),
+          Text('Search Ledger', style: AppTypography.screenTitle(context)),
           const SizedBox(height: AppSpacing.smPlus),
           TextField(
             onChanged: filterController.setSearchQuery,
@@ -62,7 +58,7 @@ class TransactionsPage extends ConsumerWidget {
               child: OutlinedButton.icon(
                 onPressed: () => _openFilters(context, ref, filters),
                 icon: const Icon(AppIcons.filter, size: 16),
-                label: const Text('FILTERS'),
+                label: const Text('Filters'),
               ),
             ),
           ),
@@ -88,11 +84,7 @@ class TransactionsPage extends ConsumerWidget {
                           children: [
                             Text(
                               entry.key,
-                              style: const TextStyle(
-                                fontFamily: 'Bricolage Grotesque',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: AppTypography.sectionTitle(context),
                             ),
                             const SizedBox(height: 12),
                             const Divider(color: AppColors.borderDark),
@@ -111,7 +103,8 @@ class TransactionsPage extends ConsumerWidget {
                                   return showAppDeleteConfirmDialog(
                                     context,
                                     title: 'Delete transaction?',
-                                    message: 'This transaction will be removed.',
+                                    message:
+                                        'This transaction will be removed.',
                                   );
                                 },
                                 onDismissed: (_) {
@@ -188,8 +181,8 @@ class TransactionsPage extends ConsumerWidget {
 
   static String _subtitle(TransactionEntity tx) {
     return tx.note?.trim().isNotEmpty == true
-        ? tx.note!.toUpperCase()
-        : tx.paymentMode.label.toUpperCase();
+        ? tx.note!.trim()
+        : tx.paymentMode.label;
   }
 
   static IconData _iconFor(String text) {
@@ -358,28 +351,21 @@ class _HistoryRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text(title, style: AppTypography.rowTitle(context)),
                 const SizedBox(height: AppSpacing.xxs),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
+                Text(subtitle, style: Theme.of(context).textTheme.labelMedium),
               ],
             ),
           ),
           Text(
             '${income ? '+' : '-'}${Formatters.currency(amount)}',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontFamily: 'Inter',
-              color: income ? const Color(0xFF5DF393) : Colors.white,
-            ),
+            style: AppTypography.amount(
+              context,
+              fontSize: 16,
+            ).copyWith(color: income ? const Color(0xFF5DF393) : Colors.white),
           ),
         ],
       ),
     );
   }
 }
-

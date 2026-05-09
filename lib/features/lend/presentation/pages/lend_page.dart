@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:spendly/core/widgets/app_confirm_dialog.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/theme/app_typography.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/dialog_actions_row.dart';
 import 'package:spendly/core/widgets/glass_card.dart';
@@ -34,29 +35,32 @@ class LendPage extends ConsumerWidget {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-          title: const Text(
-            'Add Person',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-          ),
-          content: TextField(
+        title: const Text(
+          'Add Person',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+        ),
+        content: SizedBox(
+          width: AppModalSizes.dialogContentWidth,
+          child: TextField(
             controller: controller,
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(hintText: 'Person name'),
           ),
-          actions: [
-            DialogActionsRow(
-              cancelText: 'Cancel',
-              confirmText: 'Add',
-              onCancel: () => Navigator.pop(dialogContext),
-              onConfirm: () async {
-                final name = controller.text.trim();
-                if (name.isEmpty) return;
-                await ref.read(lendRepositoryProvider).addPerson(name);
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-              },
-            ),
-          ],
         ),
+        actions: [
+          DialogActionsRow(
+            cancelText: 'Cancel',
+            confirmText: 'Add',
+            onCancel: () => Navigator.pop(dialogContext),
+            onConfirm: () async {
+              final name = controller.text.trim();
+              if (name.isEmpty) return;
+              await ref.read(lendRepositoryProvider).addPerson(name);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -85,14 +89,10 @@ class LendPage extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Lend & Borrow',
-                      style: TextStyle(
-                        fontFamily: 'Bricolage Grotesque',
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: AppTypography.screenTitle(context),
                     ),
                   ),
                   OutlinedButton.icon(
@@ -107,14 +107,7 @@ class LendPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Overview',
-                      style: const TextStyle(
-                        fontFamily: 'Bricolage Grotesque',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    Text('Overview', style: AppTypography.cardTitle(context)),
                     const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: [
@@ -139,14 +132,7 @@ class LendPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              const Text(
-                'People',
-                style: TextStyle(
-                  fontFamily: 'Bricolage Grotesque',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text('People', style: AppTypography.sectionTitle(context)),
               const SizedBox(height: AppSpacing.xs),
               if (data.peopleBalances.isEmpty)
                 const GlassCard(
@@ -222,7 +208,7 @@ class LendPage extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddPersonDialog(context, ref),
         icon: const Icon(AppIcons.personAdd),
-        label: const Text('ADD PERSON'),
+        label: const Text('Add person'),
       ),
     );
   }

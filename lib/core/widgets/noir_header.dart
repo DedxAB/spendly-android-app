@@ -33,13 +33,12 @@ class NoirHeader extends ConsumerWidget implements PreferredSizeWidget {
     return AppBar(
       toolbarHeight: 72,
       centerTitle: true,
-      title: const Text(
+      title: Text(
         'SPENDLY',
-        style: TextStyle(
-          fontFamily: 'Bricolage Grotesque',
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
           fontSize: 18,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.9,
         ),
       ),
       leading: showLeading
@@ -56,24 +55,24 @@ class NoirHeader extends ConsumerWidget implements PreferredSizeWidget {
                 child: InkWell(
                   onTap: onProfileTap ?? () => context.push('/settings'),
                   borderRadius: BorderRadius.zero,
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.rectangle,
-                        border: Border.all(color: AppColors.borderDark),
-                      ),
-                      child: imageUrl == null
-                          ? const Icon(Icons.person, size: 18)
-                          : Image.network(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  const Icon(Icons.person, size: 18),
-                            ),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      border: Border.all(color: AppColors.borderDark),
                     ),
+                    child: imageUrl == null
+                        ? const Icon(Icons.person, size: 18)
+                        : Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                const Icon(Icons.person, size: 18),
+                          ),
                   ),
                 ),
+              ),
             ]
           : const [],
       bottom: const PreferredSize(
@@ -83,4 +82,3 @@ class NoirHeader extends ConsumerWidget implements PreferredSizeWidget {
     );
   }
 }
-

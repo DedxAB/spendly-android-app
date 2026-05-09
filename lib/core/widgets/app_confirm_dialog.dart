@@ -34,15 +34,15 @@ Future<bool> showAppDeleteConfirmDialog(
         AppSpacing.sm,
         AppSpacing.sm,
       ),
-      title: Text(
-        title,
-        style: Theme.of(dialogContext).textTheme.titleLarge,
-      ),
-      content: Text(
-        message,
-        style: Theme.of(
-          dialogContext,
-        ).textTheme.bodyMedium?.copyWith(height: 1.45),
+      title: Text(title, style: Theme.of(dialogContext).textTheme.titleLarge),
+      content: SizedBox(
+        width: AppModalSizes.dialogContentWidth,
+        child: Text(
+          message,
+          style: Theme.of(
+            dialogContext,
+          ).textTheme.bodyMedium?.copyWith(height: 1.45),
+        ),
       ),
       actions: [
         DialogActionsRow(

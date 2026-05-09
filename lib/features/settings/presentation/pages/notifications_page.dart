@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_typography.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
 import 'package:spendly/features/home/presentation/providers/home_provider.dart';
@@ -13,7 +15,8 @@ class NotificationsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref.watch(dashboardSummaryProvider).valueOrNull;
-    final recent = ref.watch(recentTransactionsProvider).valueOrNull ?? const [];
+    final recent =
+        ref.watch(recentTransactionsProvider).valueOrNull ?? const [];
     final settings = ref.watch(settingsStreamProvider).valueOrNull;
 
     return Scaffold(
@@ -24,16 +27,14 @@ class NotificationsPage extends ConsumerWidget {
         showProfileAction: false,
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.mdPlus,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
         children: [
-          const Text(
-            'Notifications',
-            style: TextStyle(
-              fontFamily: 'Bricolage Grotesque',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text('Notifications', style: AppTypography.screenTitle(context)),
           const SizedBox(height: 8),
           const Text(
             'Recent alerts and activity updates.',
@@ -52,7 +53,7 @@ class NotificationsPage extends ConsumerWidget {
             _NoticeTile(
               title: 'Latest transaction',
               message:
-                  '${recent.first.type.name.toUpperCase()} of ${Formatters.currency(recent.first.amount)} added.',
+                  '${recent.first.type.name == 'income' ? 'Income' : 'Expense'} of ${Formatters.currency(recent.first.amount)} added.',
               color: const Color(0xFF57F28F),
             ),
           _NoticeTile(
@@ -91,13 +92,19 @@ class _NoticeTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(border: Border.all(color: const Color(0xFF2E2E2E))),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFF2E2E2E)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: color),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -109,4 +116,3 @@ class _NoticeTile extends StatelessWidget {
     );
   }
 }
-

@@ -9,9 +9,12 @@ class AppModalSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadii.lg)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadii.lg),
+        ),
         border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: child,

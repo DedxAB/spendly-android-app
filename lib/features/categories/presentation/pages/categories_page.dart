@@ -16,7 +16,9 @@ class CategoriesPage extends ConsumerWidget {
 
   static IconData _iconForCategory(String name, TransactionType type) {
     final n = name.toLowerCase();
-    if (n.contains('food') || n.contains('dining') || n.contains('restaurant')) {
+    if (n.contains('food') ||
+        n.contains('dining') ||
+        n.contains('restaurant')) {
       return AppIcons.food;
     }
     if (n.contains('grocery')) return Icons.local_grocery_store;
@@ -29,7 +31,9 @@ class CategoriesPage extends ConsumerWidget {
     if (n.contains('bill') || n.contains('utility') || n.contains('electric')) {
       return AppIcons.receipt;
     }
-    if (n.contains('health') || n.contains('medical')) return Icons.local_hospital;
+    if (n.contains('health') || n.contains('medical')) {
+      return Icons.local_hospital;
+    }
     if (n.contains('education') || n.contains('study')) return Icons.school;
     if (n.contains('entertainment') || n.contains('movie')) return Icons.movie;
     if (n.contains('gift')) return Icons.card_giftcard;
@@ -59,58 +63,61 @@ class CategoriesPage extends ConsumerWidget {
           ),
         ),
         child: StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Add Category'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-              ),
-              const SizedBox(height: 8),
-              SegmentedButton<TransactionType>(
-                segments: const [
-                  ButtonSegment(
-                    value: TransactionType.income,
-                    label: Text('Income'),
+          builder: (context, setState) => AlertDialog(
+            title: const Text('Add Category'),
+            content: SizedBox(
+              width: AppModalSizes.dialogContentWidth,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
                   ),
-                  ButtonSegment(
-                    value: TransactionType.expense,
-                    label: Text('Expense'),
+                  const SizedBox(height: 8),
+                  SegmentedButton<TransactionType>(
+                    segments: const [
+                      ButtonSegment(
+                        value: TransactionType.income,
+                        label: Text('Income'),
+                      ),
+                      ButtonSegment(
+                        value: TransactionType.expense,
+                        label: Text('Expense'),
+                      ),
+                    ],
+                    selected: {type},
+                    onSelectionChanged: (selection) =>
+                        setState(() => type = selection.first),
                   ),
                 ],
-                selected: {type},
-                onSelectionChanged: (selection) =>
-                    setState(() => type = selection.first),
+              ),
+            ),
+            actions: [
+              DialogActionsRow(
+                cancelText: 'Cancel',
+                confirmText: 'Save',
+                onCancel: () => Navigator.pop(context),
+                onConfirm: () async {
+                  final name = nameController.text.trim();
+                  if (name.isEmpty) return;
+                  final now = DateTime.now();
+                  final category = CategoryEntity(
+                    id: const Uuid().v4(),
+                    name: name,
+                    icon: 'category',
+                    color: '#00A88F',
+                    type: type,
+                    createdAt: now,
+                    updatedAt: now,
+                  );
+                  await ref.read(categoriesRepositoryProvider).add(category);
+                  if (context.mounted) Navigator.pop(context);
+                },
               ),
             ],
           ),
-          actions: [
-            DialogActionsRow(
-              cancelText: 'Cancel',
-              confirmText: 'Save',
-              onCancel: () => Navigator.pop(context),
-              onConfirm: () async {
-                final name = nameController.text.trim();
-                if (name.isEmpty) return;
-                final now = DateTime.now();
-                final category = CategoryEntity(
-                  id: const Uuid().v4(),
-                  name: name,
-                  icon: 'category',
-                  color: '#00A88F',
-                  type: type,
-                  createdAt: now,
-                  updatedAt: now,
-                );
-                await ref.read(categoriesRepositoryProvider).add(category);
-                if (context.mounted) Navigator.pop(context);
-              },
-            ),
-          ],
         ),
-      ),
       ),
     );
   }
@@ -150,20 +157,18 @@ class CategoriesPage extends ConsumerWidget {
               ),
             );
           }
-          final expenses = items
-              .where((e) => e.type == TransactionType.expense)
-              .toList()
-            ..sort((a, b) => a.name.compareTo(b.name));
-          final incomes = items
-              .where((e) => e.type == TransactionType.income)
-              .toList()
-            ..sort((a, b) => a.name.compareTo(b.name));
+          final expenses =
+              items.where((e) => e.type == TransactionType.expense).toList()
+                ..sort((a, b) => a.name.compareTo(b.name));
+          final incomes =
+              items.where((e) => e.type == TransactionType.income).toList()
+                ..sort((a, b) => a.name.compareTo(b.name));
 
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.sm,
-              AppSpacing.smPlus,
-              AppSpacing.sm,
+              AppSpacing.md,
+              AppSpacing.mdPlus,
+              AppSpacing.md,
               96,
             ),
             itemCount: expenses.length + incomes.length + 2,
@@ -250,7 +255,9 @@ class CategoriesPage extends ConsumerWidget {
                         message: 'Delete "${category.name}" category?',
                       );
                       if (shouldDelete) {
-                        await ref.read(categoriesRepositoryProvider).softDelete(category.id);
+                        await ref
+                            .read(categoriesRepositoryProvider)
+                            .softDelete(category.id);
                       }
                     },
                     child: Container(
@@ -273,9 +280,8 @@ class CategoriesPage extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
         error: (error, _) => Center(
           child: Text(
             'Failed to load: $error',

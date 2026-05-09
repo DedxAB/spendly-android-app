@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
 import 'package:spendly/core/theme/app_icons.dart';
+import 'package:spendly/core/theme/app_typography.dart';
 import 'package:spendly/core/widgets/app_confirm_dialog.dart';
 import 'package:spendly/core/widgets/app_modal_surface.dart';
 import 'package:spendly/core/widgets/noir_header.dart';
@@ -18,7 +19,10 @@ import 'package:spendly/features/user/presentation/providers/user_profile_provid
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
-  Future<void> _performGuardedLogout(BuildContext context, WidgetRef ref) async {
+  Future<void> _performGuardedLogout(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final cloudController = ref.read(cloudSyncControllerProvider.notifier);
     final cloud = ref.read(cloudSyncControllerProvider).valueOrNull;
 
@@ -36,8 +40,11 @@ class SettingsPage extends ConsumerWidget {
             context: context,
             builder: (dialogContext) => AlertDialog(
               title: const Text('Backup failed'),
-              content: const Text(
-                'Could not create latest backup before logout. What do you want to do?',
+              content: const SizedBox(
+                width: AppModalSizes.dialogContentWidth,
+                child: Text(
+                  'Could not create latest backup before logout. What do you want to do?',
+                ),
               ),
               actions: [
                 DialogActionsRow(
@@ -89,10 +96,28 @@ class SettingsPage extends ConsumerWidget {
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Logout failed. Please try again.'),
-        ),
+        const SnackBar(content: Text('Logout failed. Please try again.')),
       );
+    }
+  }
+
+  Future<void> _runCloudAction(
+    BuildContext context,
+    Future<void> Function() action, {
+    required String successMessage,
+    required String failureMessage,
+  }) async {
+    try {
+      await action();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(successMessage)));
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failureMessage)));
     }
   }
 
@@ -149,22 +174,15 @@ class SettingsPage extends ConsumerWidget {
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
-                        color: primary,
-                        fontFamily: 'Bricolage Grotesque',
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        height: 1,
-                      ),
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(color: primary, height: 1.1),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Spendly profile',
-                      style: TextStyle(
-                        color: secondary,
-                        fontSize: 14,
-                        fontFamily: 'Bricolage Grotesque',
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: secondary),
                     ),
                   ],
                 ),
@@ -178,14 +196,6 @@ class SettingsPage extends ConsumerWidget {
             icon: AppIcons.user,
             title: 'Account',
             onTap: () => _editAccount(context, ref),
-            textColor: primary,
-            iconColor: muted,
-            dividerColor: divider,
-          ),
-          _ProfileRow(
-            icon: AppIcons.shield,
-            title: 'Security',
-            onTap: () => _openSecurity(context, ref),
             textColor: primary,
             iconColor: muted,
             dividerColor: divider,
@@ -272,7 +282,7 @@ class SettingsPage extends ConsumerWidget {
               children: [
                 const Text(
                   'Cloud Sync',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
@@ -312,15 +322,28 @@ class SettingsPage extends ConsumerWidget {
                       onPressed: cloudSync?.isProcessing == true
                           ? null
                           : () async {
-                              if (cloudSync?.isConnected == true) {
-                                await ref
-                                    .read(cloudSyncControllerProvider.notifier)
-                                    .disconnectAccount();
-                              } else {
-                                await ref
-                                    .read(cloudSyncControllerProvider.notifier)
-                                    .connectAccount();
-                              }
+                              await _runCloudAction(
+                                context,
+                                () => cloudSync?.isConnected == true
+                                    ? ref
+                                          .read(
+                                            cloudSyncControllerProvider
+                                                .notifier,
+                                          )
+                                          .disconnectAccount()
+                                    : ref
+                                          .read(
+                                            cloudSyncControllerProvider
+                                                .notifier,
+                                          )
+                                          .connectAccount(),
+                                successMessage: cloudSync?.isConnected == true
+                                    ? 'Google account disconnected.'
+                                    : 'Google account connected.',
+                                failureMessage: cloudSync?.isConnected == true
+                                    ? 'Disconnect failed. Please try again.'
+                                    : 'Connect failed. Please try again.',
+                              );
                             },
                       child: Text(
                         cloudSync?.isConnected == true
@@ -331,9 +354,16 @@ class SettingsPage extends ConsumerWidget {
                     OutlinedButton(
                       onPressed: cloudSync?.isConnected == true
                           ? () async {
-                              await ref
-                                  .read(cloudSyncControllerProvider.notifier)
-                                  .backupNow();
+                              await _runCloudAction(
+                                context,
+                                () => ref
+                                    .read(cloudSyncControllerProvider.notifier)
+                                    .backupNow(),
+                                successMessage:
+                                    'Backup completed successfully.',
+                                failureMessage:
+                                    'Backup failed. Please try again.',
+                              );
                             }
                           : null,
                       child: const Text('Backup now'),
@@ -341,28 +371,16 @@ class SettingsPage extends ConsumerWidget {
                     OutlinedButton(
                       onPressed: cloudSync?.isConnected == true
                           ? () async {
-                              try {
-                                await ref
+                              await _runCloudAction(
+                                context,
+                                () => ref
                                     .read(cloudSyncControllerProvider.notifier)
-                                    .restoreFromDrive();
-                                if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Restore completed successfully.',
-                                    ),
-                                  ),
-                                );
-                              } catch (_) {
-                                if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Restore failed. Please try again.',
-                                    ),
-                                  ),
-                                );
-                              }
+                                    .restoreFromDrive(),
+                                successMessage:
+                                    'Restore completed successfully.',
+                                failureMessage:
+                                    'Restore failed. Please try again.',
+                              );
                             }
                           : null,
                       child: const Text('Restore'),
@@ -427,11 +445,11 @@ class SettingsPage extends ConsumerWidget {
                 await _performGuardedLogout(context, ref);
               },
               child: const Text(
-                'LOGOUT',
+                'Logout',
                 style: TextStyle(
                   fontSize: 18,
-                  letterSpacing: 2,
-                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -489,7 +507,9 @@ class SettingsPage extends ConsumerWidget {
               const SizedBox(height: AppSpacing.xs),
               TextField(
                 controller: image,
-                decoration: const InputDecoration(labelText: 'Profile photo URL'),
+                decoration: const InputDecoration(
+                  labelText: 'Profile photo URL',
+                ),
               ),
               const SizedBox(height: AppSpacing.xs),
               TextField(
@@ -507,61 +527,19 @@ class SettingsPage extends ConsumerWidget {
                 confirmText: 'Save',
                 onCancel: () => Navigator.pop(context),
                 onConfirm: () async {
-                  await ref.read(userProfileRepositoryProvider).updateProfile(
-                    name: name.text.trim(),
-                    imageUrl: image.text.trim(),
-                    email: email.text.trim(),
-                    phone: phone.text.trim(),
-                  );
+                  await ref
+                      .read(userProfileRepositoryProvider)
+                      .updateProfile(
+                        name: name.text.trim(),
+                        imageUrl: image.text.trim(),
+                        email: email.text.trim(),
+                        phone: phone.text.trim(),
+                      );
                   if (context.mounted) Navigator.pop(context);
                 },
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openSecurity(BuildContext context, WidgetRef ref) async {
-    final cloud = ref.read(cloudSyncControllerProvider).valueOrNull;
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => Theme(
-        data: Theme.of(dialogContext).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: Colors.white,
-            onPrimary: Colors.black,
-            surface: Color(0xFF0F0F0F),
-            onSurface: Colors.white,
-          ),
-          dialogTheme: const DialogThemeData(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-            backgroundColor: Color(0xFF0F0F0F),
-          ),
-        ),
-        child: AlertDialog(
-          title: const Text('Security'),
-          content: Text(
-            cloud?.isConnected == true
-                ? 'Google backup connected: ${cloud?.connectedEmail ?? ''}'
-                : 'No backup account connected.',
-          ),
-          actions: [
-            DialogActionsRow(
-              cancelText: 'Close',
-              confirmText: cloud?.isConnected == true ? 'Done' : 'Connect',
-              onCancel: () => Navigator.pop(dialogContext),
-              onConfirm: () async {
-                if (cloud?.isConnected != true) {
-                  await ref
-                      .read(cloudSyncControllerProvider.notifier)
-                      .connectAccount();
-                }
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-              },
-            ),
-          ],
         ),
       ),
     );
@@ -586,26 +564,26 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         child: AlertDialog(
-        title: const Text('Export JSON'),
-        content: SizedBox(
-          width: 480,
-          child: SingleChildScrollView(child: SelectableText(payload)),
-        ),
-        actions: [
-          DialogActionsRow(
-            cancelText: 'Close',
-            confirmText: 'Copy',
-            onCancel: () => Navigator.pop(dialogContext),
-            onConfirm: () {
-              Clipboard.setData(ClipboardData(text: payload));
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('JSON copied to clipboard')),
-              );
-            },
+          title: const Text('Export JSON'),
+          content: SizedBox(
+            width: AppModalSizes.dialogContentWidth,
+            child: SingleChildScrollView(child: SelectableText(payload)),
           ),
-        ],
-      ),
+          actions: [
+            DialogActionsRow(
+              cancelText: 'Close',
+              confirmText: 'Copy',
+              onCancel: () => Navigator.pop(dialogContext),
+              onConfirm: () {
+                Clipboard.setData(ClipboardData(text: payload));
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('JSON copied to clipboard')),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -628,54 +606,74 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         child: AlertDialog(
-        title: const Text('Import JSON'),
-        content: SizedBox(
-          width: 520,
-          child: TextField(
-            controller: controller,
-            maxLines: 14,
-            decoration: const InputDecoration(
-              hintText: 'Paste your exported JSON here',
+          title: const Text('Import JSON'),
+          content: SizedBox(
+            width: AppModalSizes.dialogContentWidth,
+            child: TextField(
+              controller: controller,
+              maxLines: 14,
+              decoration: const InputDecoration(
+                hintText: 'Paste your exported JSON here',
+              ),
             ),
           ),
+          actions: [
+            DialogActionsRow(
+              cancelText: 'Cancel',
+              confirmText: 'Import',
+              onCancel: () => Navigator.pop(dialogContext),
+              onConfirm: () async {
+                final raw = controller.text.trim();
+                if (raw.isEmpty) return;
+                await ref.read(settingsRepositoryProvider).importJson(raw);
+                if (!dialogContext.mounted) return;
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Import completed')),
+                );
+              },
+            ),
+          ],
         ),
-        actions: [
-          DialogActionsRow(
-            cancelText: 'Cancel',
-            confirmText: 'Import',
-            onCancel: () => Navigator.pop(dialogContext),
-            onConfirm: () async {
-              final raw = controller.text.trim();
-              if (raw.isEmpty) return;
-              await ref.read(settingsRepositoryProvider).importJson(raw);
-              if (!dialogContext.mounted) return;
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Import completed')));
-            },
-          ),
-        ],
-      ),
       ),
     );
   }
 
   Future<void> _eraseAllData(BuildContext context, WidgetRef ref) async {
+    final cloud = ref.read(cloudSyncControllerProvider).valueOrNull;
     final shouldErase = await showAppDeleteConfirmDialog(
       context,
       title: 'Erase all data?',
-      message:
-          'This will permanently remove all transactions, categories, recurring rules, and lend/borrow records.',
+      message: cloud?.isConnected == true
+          ? 'This will permanently remove local transactions, categories, recurring rules, lend/borrow records, and profile details. Google will be disconnected from this app, but your existing Drive backup will not be deleted.'
+          : 'This will permanently remove all transactions, categories, recurring rules, and lend/borrow records.',
       confirmText: 'Erase',
     );
     if (!shouldErase) return;
-    await ref.read(settingsRepositoryProvider).clearAllData();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('All data erased')));
-    context.go('/splash');
+    try {
+      if (cloud?.isConnected == true) {
+        await ref
+            .read(cloudSyncControllerProvider.notifier)
+            .disconnectAccount();
+      }
+      await ref.read(settingsRepositoryProvider).clearAllData();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            cloud?.isConnected == true
+                ? 'All data erased. Google account disconnected.'
+                : 'All data erased.',
+          ),
+        ),
+      );
+      context.go('/splash');
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erase failed. Please try again.')),
+      );
+    }
   }
 }
 
@@ -720,10 +718,9 @@ class _SectionLabel extends StatelessWidget {
       text,
       style: TextStyle(
         color: color,
-        fontFamily: 'Bricolage Grotesque',
         fontSize: 14,
         letterSpacing: 1.4,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w600,
       ),
     );
   }
@@ -769,12 +766,9 @@ class _ProfileRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      color: textColor,
-                      fontFamily: 'Bricolage Grotesque',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AppTypography.sectionTitle(
+                      context,
+                    ).copyWith(color: textColor, fontSize: 18),
                   ),
                   if (subtitle != null)
                     Padding(

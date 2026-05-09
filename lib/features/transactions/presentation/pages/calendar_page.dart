@@ -88,11 +88,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               Expanded(
                 child: Text(
                   DateFormat('MMMM yyyy').format(_displayMonth),
-                  style: const TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTypography.sectionTitle(context),
                 ),
               ),
               _MonthNav(
@@ -116,13 +112,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           const SizedBox(height: AppSpacing.sm),
           const Divider(color: AppColors.borderDark),
           const SizedBox(height: AppSpacing.smPlus),
-          Text(
-            'TOTAL SPENDING',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              letterSpacing: 2,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text('TOTAL SPENDING', style: AppTypography.metadata(context)),
           const SizedBox(height: AppSpacing.xs),
           Text(
             _currency.format(monthlyTotal),
@@ -142,11 +132,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               Expanded(
                 child: Text(
                   DateFormat('MMMM d').format(_selectedDate),
-                  style: const TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTypography.sectionTitle(context),
                 ),
               ),
               Text(
@@ -245,7 +231,11 @@ class _MonthNav extends StatelessWidget {
               child: Icon(AppIcons.chevronLeft, size: 22),
             ),
           ),
-          Container(width: 1, height: 44, color: Theme.of(context).dividerColor),
+          Container(
+            width: 1,
+            height: 44,
+            color: Theme.of(context).dividerColor,
+          ),
           InkWell(
             onTap: onNext,
             child: const SizedBox(
@@ -428,22 +418,17 @@ class _CalendarTransactionRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Bricolage Grotesque',
-                  ),
-                ),
+                Text(title, style: AppTypography.rowTitle(context)),
                 Text(subtitle, style: Theme.of(context).textTheme.labelMedium),
               ],
             ),
           ),
-          Text(_currency.format(amount), style: AppTypography.amountStyle(Colors.white)),
+          Text(
+            _currency.format(amount),
+            style: AppTypography.amountStyle(Colors.white),
+          ),
         ],
       ),
     );
   }
 }
-

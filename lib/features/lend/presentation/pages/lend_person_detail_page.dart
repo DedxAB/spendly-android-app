@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:spendly/core/constants/app_enums.dart';
 import 'package:spendly/core/widgets/app_confirm_dialog.dart';
 import 'package:spendly/core/theme/app_design_tokens.dart';
+import 'package:spendly/core/theme/app_typography.dart';
 import 'package:spendly/core/utils/formatters.dart';
 import 'package:spendly/core/utils/money.dart';
 import 'package:spendly/core/widgets/dialog_actions_row.dart';
@@ -181,38 +182,41 @@ class LendPersonDetailPage extends ConsumerWidget {
         ),
         child: AlertDialog(
           title: const Text('Settle Amount'),
-          content: StatefulBuilder(
-            builder: (context, setState) => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: amountController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
+          content: SizedBox(
+            width: AppModalSizes.dialogContentWidth,
+            child: StatefulBuilder(
+              builder: (context, setState) => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: amountController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Amount',
+                      helperText:
+                          'Remaining ${Formatters.currency(remainingAmount)}',
+                    ),
                   ),
-                  decoration: InputDecoration(
-                    labelText: 'Amount',
-                    helperText:
-                        'Remaining ${Formatters.currency(remainingAmount)}',
+                  const SizedBox(height: 10),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Settlement Date'),
+                    subtitle: Text(Formatters.date(selectedDate)),
+                    trailing: const Icon(Icons.calendar_month),
+                    onTap: () async {
+                      final picked = await _pickSettlementDate(
+                        context,
+                        selectedDate,
+                      );
+                      if (picked != null) {
+                        setState(() => selectedDate = picked);
+                      }
+                    },
                   ),
-                ),
-                const SizedBox(height: 10),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Settlement Date'),
-                  subtitle: Text(Formatters.date(selectedDate)),
-                  trailing: const Icon(Icons.calendar_month),
-                  onTap: () async {
-                    final picked = await _pickSettlementDate(
-                      context,
-                      selectedDate,
-                    );
-                    if (picked != null) {
-                      setState(() => selectedDate = picked);
-                    }
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [
@@ -299,152 +303,161 @@ class LendPersonDetailPage extends ConsumerWidget {
               'Add Entry',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SegmentedButton<LendEntryType>(
-                    showSelectedIcon: false,
-                    segments: const [
-                      ButtonSegment(
-                        value: LendEntryType.lent,
-                        label: Text('Lent'),
-                      ),
-                      ButtonSegment(
-                        value: LendEntryType.borrowed,
-                        label: Text('Borrowed'),
-                      ),
-                    ],
-                    selected: {selectedType},
-                    onSelectionChanged: (value) {
-                      setState(() => selectedType = value.first);
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      prefixText: '\u20B9 ',
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: noteController,
-                    decoration: const InputDecoration(
-                      labelText: 'Note (optional)',
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Date'),
-                    subtitle: Text(Formatters.date(selectedDate)),
-                    trailing: const Icon(Icons.calendar_month),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime.now().add(
-                          const Duration(days: 3650),
+            content: SizedBox(
+              width: AppModalSizes.dialogContentWidth,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SegmentedButton<LendEntryType>(
+                      showSelectedIcon: false,
+                      segments: const [
+                        ButtonSegment(
+                          value: LendEntryType.lent,
+                          label: Text('Lent'),
                         ),
-                        builder: (context, child) {
-                          final base = Theme.of(context);
-                          return Theme(
-                            data: base.copyWith(
-                              colorScheme: const ColorScheme.dark(
-                                primary: Colors.white,
-                                onPrimary: Colors.black,
-                                surface: Color(0xFF0F0F0F),
-                                onSurface: Colors.white,
-                              ),
-                              dialogTheme: const DialogThemeData(
-                                backgroundColor: Color(0xFF0F0F0F),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.zero,
+                        ButtonSegment(
+                          value: LendEntryType.borrowed,
+                          label: Text('Borrowed'),
+                        ),
+                      ],
+                      selected: {selectedType},
+                      onSelectionChanged: (value) {
+                        setState(() => selectedType = value.first);
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        prefixText: '\u20B9 ',
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: noteController,
+                      decoration: const InputDecoration(
+                        labelText: 'Note (optional)',
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Date'),
+                      subtitle: Text(Formatters.date(selectedDate)),
+                      trailing: const Icon(Icons.calendar_month),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 3650),
+                          ),
+                          builder: (context, child) {
+                            final base = Theme.of(context);
+                            return Theme(
+                              data: base.copyWith(
+                                colorScheme: const ColorScheme.dark(
+                                  primary: Colors.white,
+                                  onPrimary: Colors.black,
+                                  surface: Color(0xFF0F0F0F),
+                                  onSurface: Colors.white,
                                 ),
-                              ),
-                              datePickerTheme: DatePickerThemeData(
-                                backgroundColor: const Color(0xFF0F0F0F),
-                                surfaceTintColor: Colors.transparent,
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.zero,
-                                ),
-                                headerBackgroundColor: const Color(0xFF0F0F0F),
-                                headerForegroundColor: Colors.white,
-                                dayBackgroundColor:
-                                    WidgetStateProperty.resolveWith((states) {
-                                      if (states.contains(
-                                        WidgetState.selected,
-                                      )) {
-                                        return Colors.white;
-                                      }
-                                      return Colors.transparent;
-                                    }),
-                                dayForegroundColor:
-                                    WidgetStateProperty.resolveWith((states) {
-                                      if (states.contains(
-                                        WidgetState.selected,
-                                      )) {
-                                        return Colors.black;
-                                      }
-                                      return Colors.white;
-                                    }),
-                                dayOverlayColor: const WidgetStatePropertyAll(
-                                  Colors.transparent,
-                                ),
-                                dayStyle: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                todayForegroundColor:
-                                    const WidgetStatePropertyAll(Colors.white),
-                                todayBorder: const BorderSide(
-                                  color: Color(0xFF4A4A4A),
-                                ),
-                                todayBackgroundColor:
-                                    const WidgetStatePropertyAll(
-                                      Colors.transparent,
-                                    ),
-                                yearForegroundColor:
-                                    const WidgetStatePropertyAll(Colors.white),
-                                rangeSelectionBackgroundColor: const Color(
-                                  0xFF1E1E1E,
-                                ),
-                                dividerColor: const Color(0xFF2A2A2A),
-                                dayShape: const WidgetStatePropertyAll(
-                                  RoundedRectangleBorder(
+                                dialogTheme: const DialogThemeData(
+                                  backgroundColor: Color(0xFF0F0F0F),
+                                  shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.zero,
                                   ),
                                 ),
-                                yearShape: const WidgetStatePropertyAll(
-                                  RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.zero,
-                                  ),
-                                ),
-                              ),
-                              textButtonTheme: TextButtonThemeData(
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.white,
+                                datePickerTheme: DatePickerThemeData(
+                                  backgroundColor: const Color(0xFF0F0F0F),
+                                  surfaceTintColor: Colors.transparent,
                                   shape: const RoundedRectangleBorder(
                                     borderRadius: BorderRadius.zero,
                                   ),
+                                  headerBackgroundColor: const Color(
+                                    0xFF0F0F0F,
+                                  ),
+                                  headerForegroundColor: Colors.white,
+                                  dayBackgroundColor:
+                                      WidgetStateProperty.resolveWith((states) {
+                                        if (states.contains(
+                                          WidgetState.selected,
+                                        )) {
+                                          return Colors.white;
+                                        }
+                                        return Colors.transparent;
+                                      }),
+                                  dayForegroundColor:
+                                      WidgetStateProperty.resolveWith((states) {
+                                        if (states.contains(
+                                          WidgetState.selected,
+                                        )) {
+                                          return Colors.black;
+                                        }
+                                        return Colors.white;
+                                      }),
+                                  dayOverlayColor: const WidgetStatePropertyAll(
+                                    Colors.transparent,
+                                  ),
+                                  dayStyle: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  todayForegroundColor:
+                                      const WidgetStatePropertyAll(
+                                        Colors.white,
+                                      ),
+                                  todayBorder: const BorderSide(
+                                    color: Color(0xFF4A4A4A),
+                                  ),
+                                  todayBackgroundColor:
+                                      const WidgetStatePropertyAll(
+                                        Colors.transparent,
+                                      ),
+                                  yearForegroundColor:
+                                      const WidgetStatePropertyAll(
+                                        Colors.white,
+                                      ),
+                                  rangeSelectionBackgroundColor: const Color(
+                                    0xFF1E1E1E,
+                                  ),
+                                  dividerColor: const Color(0xFF2A2A2A),
+                                  dayShape: const WidgetStatePropertyAll(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.zero,
+                                    ),
+                                  ),
+                                  yearShape: const WidgetStatePropertyAll(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.zero,
+                                    ),
+                                  ),
+                                ),
+                                textButtonTheme: TextButtonThemeData(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.zero,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-                      if (picked != null) {
-                        setState(() => selectedDate = picked);
-                      }
-                    },
-                  ),
-                ],
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (picked != null) {
+                          setState(() => selectedDate = picked);
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -519,11 +532,7 @@ class LendPersonDetailPage extends ConsumerWidget {
               Expanded(
                 child: Text(
                   person?.name ?? 'Person',
-                  style: const TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTypography.screenTitle(context),
                 ),
               ),
               if (person != null)
@@ -558,24 +567,17 @@ class LendPersonDetailPage extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   Formatters.currency(net.abs()),
-                  style: TextStyle(
-                    color: net >= 0 ? AppColors.income : AppColors.expense,
-                    fontWeight: FontWeight.w800,
+                  style: AppTypography.amount(
+                    context,
                     fontSize: 20,
+                    color: net >= 0 ? AppColors.income : AppColors.expense,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text(
-            'History',
-            style: TextStyle(
-              fontFamily: 'Bricolage Grotesque',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text('History', style: AppTypography.sectionTitle(context)),
           const SizedBox(height: AppSpacing.xs),
           entriesAsync.when(
             data: (entries) {
@@ -799,7 +801,7 @@ class LendPersonDetailPage extends ConsumerWidget {
             ? null
             : () => _showAddEntryDialog(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('ADD ENTRY'),
+        label: const Text('Add entry'),
       ),
     );
   }
